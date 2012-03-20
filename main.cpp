@@ -283,7 +283,7 @@ int main(int argc, char** argv) {
     }
 
     srand(time(NULL));
-    /*if(SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         cerr << "Video initialization failed: " << SDL_GetError() << endl;
         quit(1);
     }
@@ -309,29 +309,29 @@ int main(int argc, char** argv) {
         cerr << "Setting video mode failed: " << SDL_GetError() << endl;
         quit(1);
     }
-    *///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     int sleepTime = 10000; //microsecond
     // getting coordinatates from file
     vector<PlaneType> *coordinatesList = getCoordinatesFromFile(argv[1]);
     // creating object using coordinates
     Object3D *satelliteObj = new Object3D(coordinatesList);
     // set appropriate OpenGL properties
-    /////////////////////////////////////setupOpenGL(width,height,satelliteObj->maxCoords);//!!!!!!!!!!!!!!!!
+    setupOpenGL(width,height,satelliteObj->maxCoords);//!!!!!!!!!!!!!!!!
 
     cout << "size of Particle: " << sizeof(Particle) << endl;
     cout << "size of Point: " << sizeof(Point) << endl;
     cout << "size of Vector: " << sizeof(Vector) << endl;
 
     int count = 0;
-    while(!processParticles(satelliteObj)) cout << ++count << endl;////////////////////////////////////////
-    processParticles(satelliteObj);
+    //while(!processParticles(satelliteObj)) cout << ++count << endl;////////////////////////////////////////
+    //processParticles(satelliteObj);
 
     // main program loop
-    /*while(true) {
+    while(true) {
         processEvents();
         draw(satelliteObj);
         usleep(sleepTime);
-    }*///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    } ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     return 0;
 }
