@@ -12,7 +12,6 @@ SOURCES += main.cpp \
     geometry_utils.cpp \
     types.cpp \
     time_utils.cpp \
-    constants.cpp \
     constants.cpp
 
 HEADERS += \

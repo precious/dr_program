@@ -16,7 +16,7 @@ typedef float velocity;
 extern map<string,velocity> constantsMap;
 velocity getVelocity(char*,int);
 velocity getVelocityOrb(char*);
-velocity getVelocitySi(char*);
+velocity getVelocitySi(char* velocityName);
 velocity getVelocityGl(char*);
 velocity convertVelocity(velocity,int,int);
 
