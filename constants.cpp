@@ -1,5 +1,7 @@
 #include "constants.h"
 
+// http://ceres.hsc.edu/homepages/classes/astronomy/spring99/Mathematics/sec10.html
+
 map<string,velocity> *initVelocityMap() {
     map<string,velocity> *vm = new map<string,velocity>();
     (*vm)[string("orbitalVelocity")] = 7907.343098064;
