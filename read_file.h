@@ -9,6 +9,6 @@ using namespace std;
 
 typedef OrientedPlane PlaneType;
 
-vector<PlaneType*>* getCoordinatesFromFile(char*);
+vector<PlaneType>* getCoordinatesFromFile(char*);
 
 #endif // READ_FILE_H

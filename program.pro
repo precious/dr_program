@@ -12,6 +12,7 @@ SOURCES += main.cpp \
     geometry_utils.cpp \
     types.cpp \
     time_utils.cpp \
+    constants.cpp \
     constants.cpp
 
 HEADERS += \
@@ -22,5 +23,5 @@ HEADERS += \
     constants.h
 
 LIBS += -Wall -lGL -lGLU `sdl-config --cflags --libs` -lrt
-QMAKE_CXXFLAGS += -std=c++0x -Wno-write-strings -O3
+QMAKE_CXXFLAGS += -std=c++0x -Wno-write-strings
 
