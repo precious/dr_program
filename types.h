@@ -15,8 +15,13 @@ typedef float real;
 
 using namespace std;
 
+struct Point;
+struct Plane;
+struct Vector;
 struct OrientedPlane;
 typedef OrientedPlane PlaneType;
+
+extern Point POINT_OF_ORIGIN; // (0,0,0)
 
 // system of coordinates orientation
 #define ORIENT_RIGHT_HANDED 1
@@ -42,8 +47,7 @@ public:
     InvalidPrimitiveException(string &msg): runtime_error(msg) {}
 };
 
-struct Plane;
-struct Vector;
+
 
 struct Point {
     real x;
@@ -239,22 +243,49 @@ public:
         i = Vector(_center,(_center != a())? a(): b()).normalize();
         j = normal.vectorProduct(i).normalize();
 
-        velocity averageVelocity = getVelocitySi("maxElectronVelocity") + getVelocitySi("minElectronVelocity")/2.0;
-        velocity deviation = (getVelocitySi("maxElectronVelocity") - averageVelocity)/2.0;
+        velocity averageVelocity = getVelocity("maxElectronVelocity") + getVelocity("minElectronVelocity")/2.0;
+        velocity deviation = (getVelocity("maxElectronVelocity") - averageVelocity)/2.0;
         electronVelocityGenerator = getGaussianDistributionGenerator(averageVelocity,deviation);
 
-        averageVelocity = (getVelocitySi("maxIonVelocity") + getVelocitySi("minIonVelocity"))/2.0;
-        deviation = (getVelocitySi("maxIonVelocity") - averageVelocity)/2.0;
+        averageVelocity = (getVelocity("maxIonVelocity") + getVelocity("minIonVelocity"))/2.0;
+        deviation = (getVelocity("maxIonVelocity") - averageVelocity)/2.0;
         ionVelocityGenerator = getGaussianDistributionGenerator(averageVelocity,deviation);
     }
     Point generatePoint();
     Particle generateParticle(int);
 };
 
+struct GenerativeSphere: public Sphere {
+    GaussianDistributionGenerator *electronVelocityGenerator;
+    GaussianDistributionGenerator *ionVelocityGenerator;
+    Vector objectDirection;
+
+    GenerativeSphere(Point _p, real _r,Vector _objectDirection):
+            Sphere(_p, _r), objectDirection(_objectDirection) {
+        init();
+    }
+    GenerativeSphere(const Sphere &_s,Vector _objectDirection):
+            Sphere(_s), objectDirection(_objectDirection) {
+        init();
+    }
+
+    void init() {
+        velocity averageVelocity = getVelocity("maxElectronVelocity") + getVelocity("minElectronVelocity")/2.0;
+        velocity deviation = (getVelocity("maxElectronVelocity") - averageVelocity)/2.0;
+        electronVelocityGenerator = getGaussianDistributionGenerator(averageVelocity,deviation);
+
+        averageVelocity = (getVelocity("maxIonVelocity") + getVelocity("minIonVelocity"))/2.0;
+        deviation = (getVelocity("maxIonVelocity") - averageVelocity)/2.0;
+        ionVelocityGenerator = getGaussianDistributionGenerator(averageVelocity,deviation);
+    }
+
+    Particle generateParticle(int);
+};
+
 struct Object3D {
     Vector front;
     Point maxCoords, minCoords;
-    Point nearestPoint, furthermostPoint;
+    Point nearestPoint, furthermostPoint; // relatively to front of the object
     vector<PlaneType> *polygons;
     velocity speed;
 
@@ -268,7 +299,7 @@ struct Object3D {
     }
 
     void init() {
-        speed = getVelocitySi("orbitalVelocity");
+        speed = getVelocity("orbitalVelocity");
         nearestPoint = furthermostPoint = maxCoords = minCoords = polygons->at(0).set[0];
         for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();it++)
             for(int i = 0;i < 3;i++) {

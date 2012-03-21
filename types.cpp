@@ -1,5 +1,7 @@
 #include "types.h"
 
+Point POINT_OF_ORIGIN = Point(0,0,0);
+
 bool getOrientation() {
     return ORIENTATION;
 }
@@ -47,4 +49,20 @@ Particle Particle::operator+(Vector v) {
 Plane::Plane(Point p, Vector v):
     ThreePoints(p,p + GeometryUtils::getRandomOrthogonalVector(v),
                 p + GeometryUtils::getRandomOrthogonalVector(v)) {}
+
+Particle GenerativeSphere::generateParticle(int type) {
+    Point initialPosition = GeometryUtils::getRandomPointOnSphere(*this);
+    Vector randDeviation(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
+    Vector step = objectDirection;
+    switch(type) {
+    case PTYPE_ELECTRON:
+        step = step + randDeviation.normalize()*( (*electronVelocityGenerator)() );
+        break;
+    case PTYPE_ION:
+        step = step + randDeviation.normalize()*( (*ionVelocityGenerator)() );
+        break;
+    }
+    /// TODO weight should be properly specified
+    return Particle(initialPosition,step,1);
+}
 

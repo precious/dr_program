@@ -16,10 +16,6 @@ map<string,velocity> *initVelocityMap() {
 
 map<string,velocity> *velocityMap = initVelocityMap();
 
-velocity getVelocitySi(char* velocityName) {
+velocity getVelocity(char* velocityName) {
     return velocityMap->at(string(velocityName));
-}
-
-velocity getVelocityGl(char* velocityName) {
-    return velocityMap->at(string(velocityName))*1000;
 }

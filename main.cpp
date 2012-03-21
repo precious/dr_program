@@ -22,7 +22,7 @@ Line *tempLine;
 Vector *tempVector;
 int step = 30;
 
-Point viewerPosition(0,0,-100);
+Point viewerPosition(0,0,0);
 
 const char usage[] = "Usage:\n\t%s <filename>\n";
 
@@ -103,27 +103,33 @@ void processEvents(void)
 int processParticles(Object3D* satelliteObj) {
     real stepLength = Vector(satelliteObj->nearestPoint,
                              satelliteObj->furthermostPoint).length()/10.0;
-    real timeInterval = stepLength/getVelocityGl("maxElectronVelocity");
-    /////////////////////////////////////cout << "stepLength: " << stepLength << endl;
-    /////////////////////////////////////cout << "timeInterval: " << timeInterval << endl;
+    real timeInterval = stepLength/getVelocity("maxElectronVelocity");
+    cout << "stepLength: " << stepLength << endl;
+    cout << "timeInterval: " << timeInterval << endl;
 
-    static bool firstTime = true;
+    // static bool firstTime = true;
+
+    // static vector<Particle> particles(count);
+
+    GenerativeSphere generativeSphere(satelliteObj->center(),
+                                      10*Vector(satelliteObj->center(),satelliteObj->maxCoords).length(),
+                                      satelliteObj->front.normalize()*satelliteObj->speed);
+    Particle particle;
     int count = 10000;
-    static vector<Particle> particles(count);
-    OrientedPlane* plane = new OrientedPlane(satelliteObj->center() +
-                                             satelliteObj->front.normalize()*(satelliteObj->speed + getVelocitySi("maxElectronVelocity")),
-                                             satelliteObj->front*-1);
-    /// TODO height/width of generativeSurface
-    cout << "distance: " << GeometryUtils::getDistanceBetweenPointAndPlane(*plane,satelliteObj->center()) << endl;
-    GenerativeSurface generativeSurface(*plane,
-                                        GeometryUtils::getPointOnPlaneProjection(*plane,satelliteObj->center()),
-                                        2*GeometryUtils::getDistanceBetweenPointAndPlane(*plane,satelliteObj->center()),
-                                        2*GeometryUtils::getDistanceBetweenPointAndPlane(*plane,satelliteObj->center()),
-                                        satelliteObj->front.normalize()*satelliteObj->speed);
-    if (/*firstTime*/true) { ////////////////////////////////////////////////////////////////////////////!!!!!!!!!!!!!!!
+    int numOfItersections = 0;
+    for (int j = 0;j < count;j++) {
+        particle = generativeSphere.generateParticle(PTYPE_ELECTRON);
+        if (GeometryUtils::doesParticlesTrajectoryIntersectObject(particle,*satelliteObj)) {
+            ++numOfItersections;
+        }
+    }
+
+    cout << "coefficient: " << float(numOfItersections)/count << endl;
+
+    /*if (true) { ////////////////////////////////////////////////////////////////////////////!!!!!!!!!!!!!!!
         firstTime = false;
         for(int i = 0;i < count;i++) {
-            particles[i] = generativeSurface.generateParticle(PTYPE_ELECTRON);
+
             //cout << particles[i].step << " [" << i << "] " << endl;//////////////////////////////////////////
             //cout << particles[i] << " [" << i << "] " << endl;//////////////////////////////////////////
         }
@@ -133,30 +139,24 @@ int processParticles(Object3D* satelliteObj) {
     }*/
 
     ////////////////////////////////////////////////////////////
-    cout << particles[0] << " [0] " << endl;//.step = Vector(particles[0],satelliteObj->center()).normalize()*particles[0].step.length();
-    cout << "normal: " << generativeSurface.normal << endl;/////////////////////////////
+    //cout << particles[0] << " [0] " << endl;//.step = Vector(particles[0],satelliteObj->center()).normalize()*particles[0].step.length();
+    //cout << "normal: " << generativeSurface.normal << endl;/////////////////////////////
     ////////////////////////////////////////////////////////////
 
-    //particles.push_back(Particle(satelliteObj->polygons->at(0).a(),Vector(generativeSurface.center,satelliteObj->polygons->at(0).a()),0));/////////////////////////////////////////////////////
-    Particle fastestParticle = GeometryUtils::getFastestParticle(particles,satelliteObj->center(),
+    /*Particle fastestParticle = GeometryUtils::getFastestParticle(particles,satelliteObj->center(),
                                 [satelliteObj](Particle p) -> bool {
                                     return GeometryUtils::doesParticlesTrajectoryIntersectObject(p,*satelliteObj);
                                 });
-    ////////////////////////////////////////////////////////////
     if (fastestParticle == Point()) {
         return 0;
     }
     else
         return 1;
-    ///////////////////////////////////////////////////////////////////////////////////
     cout << "fastest: " << fastestParticle << endl;
     cout << "center: " << satelliteObj->center() << endl;
-    real time = convertVelocity(Vector(fastestParticle,satelliteObj->center()).length(),GL_UNIT,SI_UNIT) / fastestParticle.step.length();
-    cout << "time: " << time << endl;
-    /// TODO first
-    // быстрейшую частицу
-    // расчитать время, за которое она долетит до аппарата, и согласно ему увеличить координаты всех частиц
-    // далее можно приступать к непосредственно моделированию столкновения частиц с аппаратом
+    real time = Vector(fastestParticle,satelliteObj->center()).length() / fastestParticle.step.length();
+    cout << "time: " << time << endl;*/
+
     return 0;
 }
 
@@ -282,8 +282,15 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    int sleepTime = 10000; //microsecond
+    // getting coordinatates from file
+    vector<PlaneType> *coordinatesList = getCoordinatesFromFile(argv[1]);
+
+    // creating object using coordinates
+    Object3D *satelliteObj = new Object3D(coordinatesList);
+
     srand(time(NULL));
-    if(SDL_Init(SDL_INIT_VIDEO) < 0) {
+    /*if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         cerr << "Video initialization failed: " << SDL_GetError() << endl;
         quit(1);
     }
@@ -309,14 +316,8 @@ int main(int argc, char** argv) {
         cerr << "Setting video mode failed: " << SDL_GetError() << endl;
         quit(1);
     }
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    int sleepTime = 10000; //microsecond
-    // getting coordinatates from file
-    vector<PlaneType> *coordinatesList = getCoordinatesFromFile(argv[1]);
-    // creating object using coordinates
-    Object3D *satelliteObj = new Object3D(coordinatesList);
     // set appropriate OpenGL properties
-    setupOpenGL(width,height,satelliteObj->maxCoords);//!!!!!!!!!!!!!!!!
+    setupOpenGL(width,height,satelliteObj->maxCoords);*/
 
     cout << "size of Particle: " << sizeof(Particle) << endl;
     cout << "size of Point: " << sizeof(Point) << endl;
@@ -325,13 +326,15 @@ int main(int argc, char** argv) {
     int count = 0;
     //while(!processParticles(satelliteObj)) cout << ++count << endl;////////////////////////////////////////
     //processParticles(satelliteObj);
+    processParticles(satelliteObj);
+
 
     // main program loop
-    while(true) {
+    /*while(true) {
         processEvents();
         draw(satelliteObj);
         usleep(sleepTime);
-    } ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    }*/
 
     return 0;
 }

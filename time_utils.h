@@ -28,7 +28,7 @@ private:
     Distrib distribution;
 public:
     Generator(Eng e,Distrib d): engine(e), distribution(d) {}
-    double operator() () { ////////////////////////////// WHY double?
+    double operator() () {
         return distribution(engine);
     }
 };

@@ -90,8 +90,13 @@ Point GeometryUtils::getRandomPointFromSphere(Sphere s) {
         randPoint.x = (getRandom()*2 - 1)*s.radius;
         randPoint.y = (getRandom()*2 - 1)*s.radius;
         randPoint.z = (getRandom()*2 - 1)*s.radius;
-    } while(Vector(randPoint,s.center).length() > s.radius);
-    return randPoint;
+    } while(Vector(randPoint,POINT_OF_ORIGIN).length() > s.radius);
+    return s.center + Vector(POINT_OF_ORIGIN,randPoint);
+}
+
+Point GeometryUtils::getRandomPointOnSphere(Sphere s) {
+    Vector offsetVector(s.center,getRandomPointFromSphere(s));
+    return s.center + offsetVector.normalize()*s.radius;
 }
 
 Vector GeometryUtils::getRandomOrthogonalVector(Vector v) {

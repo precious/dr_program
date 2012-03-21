@@ -41,6 +41,8 @@ public:
 
     static Point getRandomPointFromSphere(Sphere);
 
+    static Point getRandomPointOnSphere(Sphere);
+
     static Vector getRandomOrthogonalVector(Vector);
 
     static Point getPointOnPlaneProjection(ThreePoints&,Point);
