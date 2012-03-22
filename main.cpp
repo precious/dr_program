@@ -103,7 +103,7 @@ void processEvents(void)
 int processParticles(Object3D* satelliteObj) {
     real stepLength = Vector(satelliteObj->nearestPoint,
                              satelliteObj->furthermostPoint).length()/10.0;
-    real timeInterval = stepLength/getVelocity("maxElectronVelocity");
+    real timeInterval = stepLength/(2*ELECTRON_VELOCITY);
     cout << "stepLength: " << stepLength << endl;
     cout << "timeInterval: " << timeInterval << endl;
 

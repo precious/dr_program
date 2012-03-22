@@ -1,16 +1,11 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#include <map>
-#include <vector>
-#include <string>
-
-using namespace std;
-
 typedef float velocity;
 
-extern map<string,velocity> constantsMap;
-velocity getVelocity(char*);
+extern velocity ORBITAL_VELOCITY;
+extern velocity ION_VELOCITY;
+extern velocity ELECTRON_VELOCITY;
 
 #endif // CONSTANTS_H
 

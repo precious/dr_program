@@ -243,13 +243,8 @@ public:
         i = Vector(_center,(_center != a())? a(): b()).normalize();
         j = normal.vectorProduct(i).normalize();
 
-        velocity averageVelocity = getVelocity("maxElectronVelocity") + getVelocity("minElectronVelocity")/2.0;
-        velocity deviation = (getVelocity("maxElectronVelocity") - averageVelocity)/2.0;
-        electronVelocityGenerator = getGaussianDistributionGenerator(averageVelocity,deviation);
-
-        averageVelocity = (getVelocity("maxIonVelocity") + getVelocity("minIonVelocity"))/2.0;
-        deviation = (getVelocity("maxIonVelocity") - averageVelocity)/2.0;
-        ionVelocityGenerator = getGaussianDistributionGenerator(averageVelocity,deviation);
+        electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
+        ionVelocityGenerator = getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/3.0);
     }
     Point generatePoint();
     Particle generateParticle(int);
@@ -270,13 +265,10 @@ struct GenerativeSphere: public Sphere {
     }
 
     void init() {
-        velocity averageVelocity = getVelocity("maxElectronVelocity") + getVelocity("minElectronVelocity")/2.0;
-        velocity deviation = (getVelocity("maxElectronVelocity") - averageVelocity)/2.0;
-        electronVelocityGenerator = getGaussianDistributionGenerator(averageVelocity,deviation);
-
-        averageVelocity = (getVelocity("maxIonVelocity") + getVelocity("minIonVelocity"))/2.0;
-        deviation = (getVelocity("maxIonVelocity") - averageVelocity)/2.0;
-        ionVelocityGenerator = getGaussianDistributionGenerator(averageVelocity,deviation);
+        // expectation and standart standart deviation are calculated due the 3-sigma rule
+        // max and min possible velocities are 2*ELECTRON_VELOCITY and 0 respectively
+        electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
+        ionVelocityGenerator = getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/3.0);
     }
 
     Particle generateParticle(int);
@@ -299,7 +291,7 @@ struct Object3D {
     }
 
     void init() {
-        speed = getVelocity("orbitalVelocity");
+        speed = ORBITAL_VELOCITY;
         nearestPoint = furthermostPoint = maxCoords = minCoords = polygons->at(0).set[0];
         for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();it++)
             for(int i = 0;i < 3;i++) {
