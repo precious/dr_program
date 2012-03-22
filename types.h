@@ -19,6 +19,7 @@ struct Point;
 struct Plane;
 struct Vector;
 struct OrientedPlane;
+struct Object3D;
 typedef OrientedPlane PlaneType;
 
 extern Point POINT_OF_ORIGIN; // (0,0,0)
@@ -128,17 +129,17 @@ struct Locus { // collection of points
 
 struct Line: public Locus<2> {
     Vector directionVector;
-    Line(Point a,Point b) {
-        set[0] = a; set[1] = b;
-        directionVector = Vector(a,b);
+    Line(Point _a,Point _b): a(set[0]), b(set[1]) {
+        set[0] = _a; set[1] = _b;
+        directionVector = Vector(_a,_b);
     }
-    Line(Point a,Vector v) {
+    Line(Point _a,Vector v): a(set[0]), b(set[1]) {
         directionVector = v;
-        set[0] = a;
-        set[1] = a + v;
+        set[0] = _a;
+        set[1] = _a + v;
     }
-    Point& a() {return set[0];}
-    Point& b() {return set[1];}
+    Point& a;
+    Point& b;
     Point getPointByCoef(real coef) {
         return Point(set[0].x - coef*directionVector.x,
                      set[0].y - coef*directionVector.y,
@@ -147,18 +148,22 @@ struct Line: public Locus<2> {
 };
 
 struct ThreePoints: public Locus<3> {
-    ThreePoints() {}
-    ThreePoints(ThreePoints &tP) {
+    ThreePoints(): a(set[0]), b(set[1]), c(set[2]) {}
+    ThreePoints(const ThreePoints &tP): a(set[0]), b(set[1]), c(set[2]) {
         set[0] = tP.set[0]; set[1] = tP.set[1]; set[2] = tP.set[2];
     }
-    ThreePoints(Point _a,Point _b,Point _c) {
+    ThreePoints(Point _a,Point _b,Point _c): a(set[0]), b(set[1]), c(set[2]) {
         set[0] = _a; set[1] = _b; set[2] = _c;
     }
-    Point& a() {return set[0];}
-    Point& b() {return set[1];}
-    Point& c() {return set[2];}
+    ThreePoints& operator=(const ThreePoints& right) {
+        return *(new ThreePoints(right));
+    }
+
+    Point& a;
+    Point& b;
+    Point& c;
     virtual Vector getNormal() {
-        return Vector(a(),b()).vectorProduct(Vector(a(),c()) );
+        return Vector(a,b).vectorProduct(Vector(a,c) );
     }
 };
 
@@ -174,7 +179,7 @@ struct Plane: public ThreePoints {
     Plane(Point, Vector);
     bool doesPointBelongPlane(Point p) {
         /// TODO possible error because of mashine precision
-        return Vector(a(),p)*getNormal() == 0;
+        return Vector(a,p)*getNormal() == 0;
     }
 };
 
@@ -200,8 +205,8 @@ struct OrientedPlane: public Plane {
 private:
     bool pointsOrder;
     void initNormal() {
-        Vector ab(a(),b());
-        Vector ac(a(),c());
+        Vector ab(a,b);
+        Vector ac(a,c);
         // get cross product
         normal = ab.vectorProduct(ac);
         if (pointsOrder == ORDER_CW) {
@@ -212,12 +217,12 @@ private:
 
 struct Particle: public Point {
 public:
-
+    int ttl;
     Vector step;
     real weight;
     Particle operator+(Vector v);
-    Particle(): Point(), step(), weight(0) {}
-    Particle(Point p, Vector s, real w): Point(p), step(s), weight(w) {}
+    Particle(): Point(), step(), weight(0), ttl(-1) {}
+    Particle(Point p, Vector s, real w): Point(p), step(s), weight(w), ttl(-1) {}
 };
 
 struct Sphere {
@@ -228,6 +233,7 @@ struct Sphere {
     Sphere(const Sphere &_s): center(_s.center), radius(_s.radius) {}
 };
 
+// i'm using GenerativeSphere, not this class >>
 struct GenerativeSurface: public OrientedPlane {
 public:
     GaussianDistributionGenerator *electronVelocityGenerator;
@@ -240,7 +246,7 @@ public:
                       real _width, real _height, Vector _objectDirection):
             OrientedPlane(oP,oP.normal), center(_center),
             width(_width), height(_height), objectDirection(_objectDirection) {
-        i = Vector(_center,(_center != a())? a(): b()).normalize();
+        i = Vector(_center,(_center != a)? a: b).normalize();
         j = normal.vectorProduct(i).normalize();
 
         electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
@@ -265,7 +271,7 @@ struct GenerativeSphere: public Sphere {
     }
 
     void init() {
-        // expectation and standart standart deviation are calculated due the 3-sigma rule
+        // expectation and standart deviation are calculated due the 3-sigma rule
         // max and min possible velocities are 2*ELECTRON_VELOCITY and 0 respectively
         electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
         ionVelocityGenerator = getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/3.0);

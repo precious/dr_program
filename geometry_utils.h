@@ -30,6 +30,7 @@ struct Triangle;
 struct Particle;
 struct Object3D;
 
+
 class GeometryUtils {
 public:
     static bool isPointInsideTriangle(ThreePoints&,Point&);
@@ -47,11 +48,15 @@ public:
 
     static Point getPointOnPlaneProjection(ThreePoints&,Point);
 
+    static Point getPointOnLineProjection(Line,Point);
+
     static real getDistanceBetweenPoints(Point,Point);
 
     static real getDistanceBetweenPointAndPlane(ThreePoints&,Point);
 
     static Particle getFastestParticle(vector<Particle>&,Point,function<bool (Particle)>);
+
+    static real getChordLength(Sphere,Line);
 
     static bool isPointInsideParallelepiped(Point,Point,Point);
 

@@ -13,7 +13,7 @@ inline bool inInterval(T x,T a,T b) {
 }
 
 bool GeometryUtils::isPointInsideTriangle(ThreePoints &t,Point &k) {
-    Vector v0(Point(0,0,0)), v1(k,t.a()), v2(k,t.b()), v3(k,t.c());
+    Vector v0(Point(0,0,0)), v1(k,t.a), v2(k,t.b), v3(k,t.c);
     if (v1 == v0 || v2 == v0 || v3 == v0)
         return true;
     real cos1 = v1.cos(v2), cos2 = v1.cos(v3), cos3 = v2.cos(v3);
@@ -30,13 +30,11 @@ bool GeometryUtils::isPointInsideTriangle(ThreePoints &t,Point &k) {
     }
 }
 
+// коэффициент точки пересечения находим подставляя параметрические уравнения прямой
+// в векторное уравнение плоскости
 Point GeometryUtils::getPlaneAndLineIntersection2(ThreePoints &plane,Line line) {
-    Vector planeNormal = plane.getNormal();
-    Vector lineDirection = line.directionVector;
-    real coef = planeNormal.x*(line.a().x - plane.a().x) +
-                planeNormal.y*(line.a().y - plane.a().y) +
-                planeNormal.z*(line.a().z - plane.a().z);
-    coef /= planeNormal*lineDirection;
+    real coef = plane.getNormal()*Vector(plane.a,line.a) /
+            (plane.getNormal()*line.directionVector);
     return line.getPointByCoef(coef);
 }
 
@@ -44,16 +42,19 @@ Point GeometryUtils::getPointOnPlaneProjection(ThreePoints& plane,Point p) {
     return getPlaneAndLineIntersection2(plane,Line(p,plane.getNormal()));
 }
 
+// this method is deprecated. use getPlaneAndLineIntersection2 instead.
+// коэффициент точки пересечения находим подставляя параметрические уравнения прямой
+// в каноническое уравнение плоскости
 Point GeometryUtils::getPlaneAndLineIntersection(ThreePoints &plane,Line line) {
-    real coef1 = (plane.b().y - plane.a().y)*(plane.c().z - plane.a().z) -
-            (plane.c().y - plane.a().y)*(plane.b().z - plane.a().z);
-    real coef2 = (plane.b().x - plane.a().x)*(plane.c().z - plane.a().z) -
-            (plane.c().x - plane.a().x)*(plane.b().z - plane.a().z);
-    real coef3 = (plane.b().x - plane.a().x)*(plane.c().y - plane.a().y) -
-            (plane.c().x - plane.a().x)*(plane.b().y - plane.a().y);
-    real coef = ((line.a().x - plane.a().x)*coef1 -
-                 (line.a().y - plane.a().y)*coef2 +
-                 (line.a().z - plane.a().z)*coef3) /
+    real coef1 = (plane.b.y - plane.a.y)*(plane.c.z - plane.a.z) -
+            (plane.c.y - plane.a.y)*(plane.b.z - plane.a.z);
+    real coef2 = (plane.b.x - plane.a.x)*(plane.c.z - plane.a.z) -
+            (plane.c.x - plane.a.x)*(plane.b.z - plane.a.z);
+    real coef3 = (plane.b.x - plane.a.x)*(plane.c.y - plane.a.y) -
+            (plane.c.x - plane.a.x)*(plane.b.y - plane.a.y);
+    real coef = ((line.a.x - plane.a.x)*coef1 -
+                 (line.a.y - plane.a.y)*coef2 +
+                 (line.a.z - plane.a.z)*coef3) /
                 (line.directionVector.x*coef1 - line.directionVector.y*coef2 +
                  line.directionVector.z*coef3);
 
@@ -63,6 +64,15 @@ Point GeometryUtils::getPlaneAndLineIntersection(ThreePoints &plane,Line line) {
         return Point(coef,coef,coef);
     }
 
+    return line.getPointByCoef(coef);
+}
+
+// коэффициент точки пересечения находим из условия перпендикулярности напрвляющего вектора
+// прямой и вектора, образованного заданной точкой и ее проекией (в качестве координат последней
+// берем параметрические уравнения прямой)
+Point GeometryUtils::getPointOnLineProjection(Line line,Point point) {
+    real coef = line.directionVector*Vector(line.a,point) /
+            (line.directionVector*line.directionVector);
     return line.getPointByCoef(coef);
 }
 
@@ -90,7 +100,7 @@ Point GeometryUtils::getRandomPointFromSphere(Sphere s) {
         randPoint.x = (getRandom()*2 - 1)*s.radius;
         randPoint.y = (getRandom()*2 - 1)*s.radius;
         randPoint.z = (getRandom()*2 - 1)*s.radius;
-    } while(Vector(randPoint,POINT_OF_ORIGIN).length() > s.radius);
+    } while(GeometryUtils::getDistanceBetweenPoints(randPoint,POINT_OF_ORIGIN) > s.radius);
     return s.center + Vector(POINT_OF_ORIGIN,randPoint);
 }
 
@@ -177,5 +187,12 @@ bool GeometryUtils::doesParticlesTrajectoryIntersectObject(Particle p,Object3D &
         if (doesLineIntersectTriangle(*it,line))
             return true;
     return false;
+}
+
+// line should intersect sphere
+real GeometryUtils::getChordLength(Sphere sphere,Line line) {
+    return 2*sqrt(sphere.radius*sphere.radius -
+                  pow(getDistanceBetweenPoints(sphere.center,
+                                               getPointOnLineProjection(line,sphere.center)),2) );
 }
 

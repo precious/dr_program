@@ -32,10 +32,10 @@ Particle GenerativeSurface::generateParticle(int type) {
     Vector step = objectDirection;
     switch(type) {
     case PTYPE_ELECTRON:
-        step = step + randDeviation.normalize()*( (*electronVelocityGenerator)() );
+        step = randDeviation.normalize()*( (*electronVelocityGenerator)() ) - step;
         break;
     case PTYPE_ION:
-        step = step + randDeviation.normalize()*( (*ionVelocityGenerator)() );
+        step = randDeviation.normalize()*( (*ionVelocityGenerator)() ) - step;
         break;
     }
     /// TODO weight should be properly specified
@@ -56,10 +56,10 @@ Particle GenerativeSphere::generateParticle(int type) {
     Vector step = objectDirection;
     switch(type) {
     case PTYPE_ELECTRON:
-        step = step + randDeviation.normalize()*( (*electronVelocityGenerator)() );
+        step = randDeviation.normalize()*( (*electronVelocityGenerator)() ) - step;
         break;
     case PTYPE_ION:
-        step = step + randDeviation.normalize()*( (*ionVelocityGenerator)() );
+        step = randDeviation.normalize()*( (*ionVelocityGenerator)() ) - step;
         break;
     }
     /// TODO weight should be properly specified

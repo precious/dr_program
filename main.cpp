@@ -44,34 +44,34 @@ static void handleKeyDown(SDL_keysym* keysym)
     case SDLK_KP_PLUS:
     case SDLK_PLUS:
         //viewerPosition.z += 20;
-        tempLine->a().z += step;
-        tempLine->b().z += step;
+        tempLine->a.z += step;
+        tempLine->b.z += step;
         break;
     case SDLK_KP_MINUS:
     case SDLK_MINUS:
         //viewerPosition.z -= 20;
-        tempLine->a().z -= step;
-        tempLine->b().z -= step;
+        tempLine->a.z -= step;
+        tempLine->b.z -= step;
         break;
     case SDLK_UP:
         cout << "up" << endl;
-        tempLine->a().y += step;
-        tempLine->b().y += step;
+        tempLine->a.y += step;
+        tempLine->b.y += step;
         break;
     case SDLK_DOWN:
         cout << "down" << endl;
-        tempLine->a().y -= step;
-        tempLine->b().y -= step;
+        tempLine->a.y -= step;
+        tempLine->b.y -= step;
         break;
     case SDLK_LEFT:
         cout << "left" << endl;
-        tempLine->a().x -= step;
-        tempLine->b().x -= step;
+        tempLine->a.x -= step;
+        tempLine->b.x -= step;
         break;
     case SDLK_RIGHT:
         cout << "right" << endl;
-        tempLine->a().x += step;
-        tempLine->b().x += step;
+        tempLine->a.x += step;
+        tempLine->b.x += step;
         break;
     default:
         break;
@@ -101,8 +101,8 @@ void processEvents(void)
 
 
 int processParticles(Object3D* satelliteObj) {
-    real stepLength = Vector(satelliteObj->nearestPoint,
-                             satelliteObj->furthermostPoint).length()/10.0;
+    real stepLength = GeometryUtils::getDistanceBetweenPoints(satelliteObj->nearestPoint,
+                             satelliteObj->furthermostPoint)/10.0;
     real timeInterval = stepLength/(2*ELECTRON_VELOCITY);
     cout << "stepLength: " << stepLength << endl;
     cout << "timeInterval: " << timeInterval << endl;
@@ -112,8 +112,31 @@ int processParticles(Object3D* satelliteObj) {
     // static vector<Particle> particles(count);
 
     GenerativeSphere generativeSphere(satelliteObj->center(),
-                                      10*Vector(satelliteObj->center(),satelliteObj->maxCoords).length(),
+                                      5*GeometryUtils::getDistanceBetweenPoints(satelliteObj->center(),satelliteObj->maxCoords),
                                       satelliteObj->front.normalize()*satelliteObj->speed);
+    /*int n = 10000;
+
+    // initialization
+    int TEMP = 0;
+    Particle *particles = new Particle[n];
+    for (int i = 0;i < n;) {
+        particles[i] = generativeSphere.generateParticle(PTYPE_ELECTRON);
+        // if particles[i] is directed inside of sphere then process and store it
+        // else generate new particle
+        if (particles[i].step.cos(Vector(particles[i],generativeSphere.center)) > 0 ) {
+            if (! GeometryUtils::doesParticlesTrajectoryIntersectObject(particles[i],*satelliteObj)) {
+                ++TEMP;
+                particles[i].ttl = GeometryUtils::getChordLength(generativeSphere,Line(particles[i],particles[i].step));
+                // cout << particles[i].ttl << "/" << 2*generativeSphere.radius << endl;
+            } else {
+                cout << "bingo!" << endl;
+            }
+            ++i;
+        }
+    }
+
+    cout << "coefficient: " << TEMP << "/" << n << endl;*/
+
     Particle particle;
     int count = 10000;
     int numOfItersections = 0;
@@ -126,22 +149,6 @@ int processParticles(Object3D* satelliteObj) {
 
     cout << "coefficient: " << float(numOfItersections)/count << endl;
 
-    /*if (true) { ////////////////////////////////////////////////////////////////////////////!!!!!!!!!!!!!!!
-        firstTime = false;
-        for(int i = 0;i < count;i++) {
-
-            //cout << particles[i].step << " [" << i << "] " << endl;//////////////////////////////////////////
-            //cout << particles[i] << " [" << i << "] " << endl;//////////////////////////////////////////
-        }
-    }/* else {
-        for(int i = 0;i < count;i++)
-            particles[i] = particles[i] + particles[i].step;
-    }*/
-
-    ////////////////////////////////////////////////////////////
-    //cout << particles[0] << " [0] " << endl;//.step = Vector(particles[0],satelliteObj->center()).normalize()*particles[0].step.length();
-    //cout << "normal: " << generativeSurface.normal << endl;/////////////////////////////
-    ////////////////////////////////////////////////////////////
 
     /*Particle fastestParticle = GeometryUtils::getFastestParticle(particles,satelliteObj->center(),
                                 [satelliteObj](Particle p) -> bool {
@@ -231,8 +238,8 @@ void draw(Object3D* satelliteObj)
 
     glBegin(GL_LINES);
     glColor4ubv(grey);
-    glVertex3d(tempLine->a().x,tempLine->a().y,tempLine->a().z);
-    glVertex3d(tempLine->b().x,tempLine->b().y,tempLine->b().z);
+    glVertex3d(tempLine->a.x,tempLine->a.y,tempLine->a.z);
+    glVertex3d(tempLine->b.x,tempLine->b.y,tempLine->b.z);
     glEnd();
 
     SDL_GL_SwapBuffers();
@@ -272,7 +279,7 @@ void setupOpenGL(int width, int height,Point &maxObjCoords) {
     //glOrtho(-objWidth/2,objWidth/2,-objHeight/2,objHeight/2,1.0,5000.0);
     tempLine = //new Line(Point(-maxObjCoords.x,0,maxObjCoords.z),Point(maxObjCoords.x,0,maxObjCoords.z));
             new Line(viewerPosition,Point(100,12,33));
-    tempVector = new Vector(tempLine->b(),tempLine->a());
+    tempVector = new Vector(tempLine->b,tempLine->a);
 }
 
 
