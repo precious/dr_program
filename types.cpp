@@ -39,11 +39,11 @@ Particle GenerativeSurface::generateParticle(int type) {
         break;
     }
     /// TODO weight should be properly specified
-    return Particle(initialPosition,step,1);
+    return Particle(initialPosition,step/*,1*/);
 }
 
 Particle Particle::operator+(Vector v) {
-    return Particle(Point(*this) + v,step,weight);
+    return Particle(Point(*this) + v,step/*,weight*/);
 }
 
 Plane::Plane(Point p, Vector v):
@@ -51,7 +51,7 @@ Plane::Plane(Point p, Vector v):
                 p + GeometryUtils::getRandomOrthogonalVector(v)) {}
 
 Particle GenerativeSphere::generateParticle(int type) {
-    Point initialPosition = GeometryUtils::getRandomPointOnSphere(*this);
+    Point initialPosition = GeometryUtils::getRandomPointFromSphere(*this);
     Vector randDeviation(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
     Vector step = objectDirection;
     switch(type) {
@@ -63,6 +63,6 @@ Particle GenerativeSphere::generateParticle(int type) {
         break;
     }
     /// TODO weight should be properly specified
-    return Particle(initialPosition,step,1);
+    return Particle(initialPosition,step/*,1*/);
 }
 

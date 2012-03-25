@@ -141,9 +141,9 @@ struct Line: public Locus<2> {
     Point& a;
     Point& b;
     Point getPointByCoef(real coef) {
-        return Point(set[0].x - coef*directionVector.x,
-                     set[0].y - coef*directionVector.y,
-                     set[0].z - coef*directionVector.z);
+        return Point(set[0].x + coef*directionVector.x,
+                     set[0].y + coef*directionVector.y,
+                     set[0].z + coef*directionVector.z);
     }
 };
 
@@ -217,12 +217,11 @@ private:
 
 struct Particle: public Point {
 public:
-    int ttl;
     Vector step;
-    real weight;
+    // real weight;
     Particle operator+(Vector v);
-    Particle(): Point(), step(), weight(0), ttl(-1) {}
-    Particle(Point p, Vector s, real w): Point(p), step(s), weight(w), ttl(-1) {}
+    Particle(): Point(), step()/*, weight(0), ttl(-1)*/ {}
+    Particle(Point p, Vector s/*, real w*/): Point(p), step(s)/*, weight(w), ttl(-1)*/ {}
 };
 
 struct Sphere {

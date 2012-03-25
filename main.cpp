@@ -112,43 +112,29 @@ int processParticles(Object3D* satelliteObj) {
     // static vector<Particle> particles(count);
 
     GenerativeSphere generativeSphere(satelliteObj->center(),
-                                      5*GeometryUtils::getDistanceBetweenPoints(satelliteObj->center(),satelliteObj->maxCoords),
+                                      136,//100*GeometryUtils::getDistanceBetweenPoints(satelliteObj->center(),satelliteObj->maxCoords),
                                       satelliteObj->front.normalize()*satelliteObj->speed);
-    /*int n = 10000;
+    int n = 10000000;
 
     // initialization
     int TEMP = 0;
-    Particle *particles = new Particle[n];
+    //Particle *particles = new Particle[n];
+    Particle particle;
     for (int i = 0;i < n;) {
-        particles[i] = generativeSphere.generateParticle(PTYPE_ELECTRON);
+        particle = generativeSphere.generateParticle(PTYPE_ELECTRON);
         // if particles[i] is directed inside of sphere then process and store it
         // else generate new particle
-        if (particles[i].step.cos(Vector(particles[i],generativeSphere.center)) > 0 ) {
-            if (! GeometryUtils::doesParticlesTrajectoryIntersectObject(particles[i],*satelliteObj)) {
+        if (true) {//particle.step.cos(Vector(particle,generativeSphere.center)) > 0 ) {
+            if (! GeometryUtils::doesParticlesTrajectoryIntersectObject(particle,*satelliteObj)) {
                 ++TEMP;
-                particles[i].ttl = GeometryUtils::getChordLength(generativeSphere,Line(particles[i],particles[i].step));
+                ////////particles[i].ttl = GeometryUtils::getChordLength(generativeSphere,Line(particle,particle.step));
                 // cout << particles[i].ttl << "/" << 2*generativeSphere.radius << endl;
-            } else {
-                cout << "bingo!" << endl;
             }
             ++i;
         }
     }
 
-    cout << "coefficient: " << TEMP << "/" << n << endl;*/
-
-    Particle particle;
-    int count = 10000;
-    int numOfItersections = 0;
-    for (int j = 0;j < count;j++) {
-        particle = generativeSphere.generateParticle(PTYPE_ELECTRON);
-        if (GeometryUtils::doesParticlesTrajectoryIntersectObject(particle,*satelliteObj)) {
-            ++numOfItersections;
-        }
-    }
-
-    cout << "coefficient: " << float(numOfItersections)/count << endl;
-
+    cout << "coefficient: " << TEMP << "/" << n << endl;
 
     /*Particle fastestParticle = GeometryUtils::getFastestParticle(particles,satelliteObj->center(),
                                 [satelliteObj](Particle p) -> bool {
@@ -334,6 +320,14 @@ int main(int argc, char** argv) {
     //while(!processParticles(satelliteObj)) cout << ++count << endl;////////////////////////////////////////
     //processParticles(satelliteObj);
     processParticles(satelliteObj);
+
+    /*Plane p(Point(0,0,0),Point(1,0,0),Point(0,1,0));
+    Line l(Point(2,2,2),Point(2,2,-2));
+    cout << "----------" << endl;
+    cout << GeometryUtils::getPlaneAndLineIntersection(p,l) << endl;
+    cout << GeometryUtils::getPlaneAndLineIntersection2(p,l) << endl;
+
+    cout << GeometryUtils::getPointOnLineProjection(l,Point()) << endl;*/
 
 
     // main program loop

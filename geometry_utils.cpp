@@ -33,7 +33,7 @@ bool GeometryUtils::isPointInsideTriangle(ThreePoints &t,Point &k) {
 // коэффициент точки пересечения находим подставляя параметрические уравнения прямой
 // в векторное уравнение плоскости
 Point GeometryUtils::getPlaneAndLineIntersection2(ThreePoints &plane,Line line) {
-    real coef = plane.getNormal()*Vector(plane.a,line.a) /
+    real coef = plane.getNormal()*Vector(line.a,plane.a) /
             (plane.getNormal()*line.directionVector);
     return line.getPointByCoef(coef);
 }
@@ -64,7 +64,7 @@ Point GeometryUtils::getPlaneAndLineIntersection(ThreePoints &plane,Line line) {
         return Point(coef,coef,coef);
     }
 
-    return line.getPointByCoef(coef);
+    return line.getPointByCoef(-coef);
 }
 
 // коэффициент точки пересечения находим из условия перпендикулярности напрвляющего вектора
@@ -136,7 +136,7 @@ real GeometryUtils::getDistanceBetweenPointAndPlane(ThreePoints& plane,Point p) 
 }
 
 Particle GeometryUtils::getFastestParticle(vector<Particle>& vec,Point target,function<bool (Particle)> check) {
-    Particle fastestParticle = Particle(Point(),Vector(),0);
+    Particle fastestParticle = Particle(Point(),Vector()/*,0*/);
     real longestProjectionLength = 0, projectionLength, cos;
     for (vector<Particle>::iterator it = vec.begin();it != vec.end();it++) {
         cos = Vector((*it),target).cos((*it).step);
