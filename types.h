@@ -232,53 +232,6 @@ struct Sphere {
     Sphere(const Sphere &_s): center(_s.center), radius(_s.radius) {}
 };
 
-// i'm using GenerativeSphere, not this class >>
-struct GenerativeSurface: public OrientedPlane {
-public:
-    GaussianDistributionGenerator *electronVelocityGenerator;
-    GaussianDistributionGenerator *ionVelocityGenerator;
-    Point center;
-    real width, height;
-    Vector i, j;
-    Vector objectDirection;
-    GenerativeSurface(OrientedPlane oP, Point _center,
-                      real _width, real _height, Vector _objectDirection):
-            OrientedPlane(oP,oP.normal), center(_center),
-            width(_width), height(_height), objectDirection(_objectDirection) {
-        i = Vector(_center,(_center != a)? a: b).normalize();
-        j = normal.vectorProduct(i).normalize();
-
-        electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
-        ionVelocityGenerator = getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/3.0);
-    }
-    Point generatePoint();
-    Particle generateParticle(int);
-};
-
-struct GenerativeSphere: public Sphere {
-    GaussianDistributionGenerator *electronVelocityGenerator;
-    GaussianDistributionGenerator *ionVelocityGenerator;
-    Vector objectDirection;
-
-    GenerativeSphere(Point _p, real _r,Vector _objectDirection):
-            Sphere(_p, _r), objectDirection(_objectDirection) {
-        init();
-    }
-    GenerativeSphere(const Sphere &_s,Vector _objectDirection):
-            Sphere(_s), objectDirection(_objectDirection) {
-        init();
-    }
-
-    void init() {
-        // expectation and standart deviation are calculated due the 3-sigma rule
-        // max and min possible velocities are 2*ELECTRON_VELOCITY and 0 respectively
-        electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
-        ionVelocityGenerator = getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/3.0);
-    }
-
-    Particle generateParticle(int);
-};
-
 struct Object3D {
     Vector front;
     Point maxCoords, minCoords;
@@ -321,6 +274,32 @@ struct Object3D {
                      (maxCoords.y + minCoords.y)/2,
                      (maxCoords.z + minCoords.z)/2);
     }
+    Vector getStep() {
+        return front.normalize()*speed;
+    }
+};
+
+struct GenerativeSphere: public Sphere {
+private:
+    GaussianDistributionGenerator *electronVelocityGenerator;
+    GaussianDistributionGenerator *ionVelocityGenerator;
+    Object3D &object;
+    Vector objectStep;
+    Sphere sphereAroundObject;
+    void init();
+
+public:
+    GenerativeSphere(Point _p, real _r,Object3D _object):
+            Sphere(_p, _r), object(_object) {
+        init();
+    }
+    GenerativeSphere(const Sphere &_s,Object3D _object):
+            Sphere(_s), object(_object) {
+        init();
+    }
+
+    Particle generateRandomParticle(int);
+    Particle generateParticleWhichIntersectsObject(int);
 };
 
 #endif // TYPES_H

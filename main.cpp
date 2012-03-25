@@ -100,9 +100,9 @@ void processEvents(void)
 }
 
 
-int processParticles(Object3D* satelliteObj) {
-    real stepLength = GeometryUtils::getDistanceBetweenPoints(satelliteObj->nearestPoint,
-                             satelliteObj->furthermostPoint)/10.0;
+int processParticles(Object3D &satelliteObj) {
+    real stepLength = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
+                             satelliteObj.furthermostPoint)/10.0;
     real timeInterval = stepLength/(2*ELECTRON_VELOCITY);
     cout << "stepLength: " << stepLength << endl;
     cout << "timeInterval: " << timeInterval << endl;
@@ -111,30 +111,7 @@ int processParticles(Object3D* satelliteObj) {
 
     // static vector<Particle> particles(count);
 
-    GenerativeSphere generativeSphere(satelliteObj->center(),
-                                      136,//100*GeometryUtils::getDistanceBetweenPoints(satelliteObj->center(),satelliteObj->maxCoords),
-                                      satelliteObj->front.normalize()*satelliteObj->speed);
-    int n = 10000000;
 
-    // initialization
-    int TEMP = 0;
-    //Particle *particles = new Particle[n];
-    Particle particle;
-    for (int i = 0;i < n;) {
-        particle = generativeSphere.generateParticle(PTYPE_ELECTRON);
-        // if particles[i] is directed inside of sphere then process and store it
-        // else generate new particle
-        if (true) {//particle.step.cos(Vector(particle,generativeSphere.center)) > 0 ) {
-            if (! GeometryUtils::doesParticlesTrajectoryIntersectObject(particle,*satelliteObj)) {
-                ++TEMP;
-                ////////particles[i].ttl = GeometryUtils::getChordLength(generativeSphere,Line(particle,particle.step));
-                // cout << particles[i].ttl << "/" << 2*generativeSphere.radius << endl;
-            }
-            ++i;
-        }
-    }
-
-    cout << "coefficient: " << TEMP << "/" << n << endl;
 
     /*Particle fastestParticle = GeometryUtils::getFastestParticle(particles,satelliteObj->center(),
                                 [satelliteObj](Particle p) -> bool {
@@ -154,7 +131,7 @@ int processParticles(Object3D* satelliteObj) {
 }
 
 
-void draw(Object3D* satelliteObj)
+void draw(Object3D &satelliteObj)
 {
     static float angle = 0.0f;
     static GLubyte purple[] = {255,   230, 255,   0 };
@@ -187,7 +164,7 @@ void draw(Object3D* satelliteObj)
     }
 
 
-    vector<PlaneType> *coords = satelliteObj->polygons;
+    vector<PlaneType> *coords = satelliteObj.polygons;
     for(vector<PlaneType>::iterator it = coords->begin();it != coords->end();it++) {
         glBegin(GL_LINE_LOOP);
         glColor4ubv(purple);
@@ -268,8 +245,24 @@ void setupOpenGL(int width, int height,Point &maxObjCoords) {
     tempVector = new Vector(tempLine->b,tempLine->a);
 }
 
+int initRandomParticles(Particle *particlesArray,int size,GenerativeSphere generativeSphere) {
+    int n;
+    for(n = 0;n < size/sizeof(Particle);++n) {
+        particlesArray[n] = generativeSphere.generateRandomParticle(PTYPE_ELECTRON);
+    }
+    return n;
+}
+
+int initParticleWhichIntersectsObject(Particle *particlesArray,int size,GenerativeSphere generativeSphere) {
+    int n;
+    for(n = 0;n < size/sizeof(Particle);++n) {
+        particlesArray[n] = generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON);
+    }
+    return n;
+}
 
 int main(int argc, char** argv) {
+    // check arguments
     if (argc == 1) {
         fprintf(stderr,usage,argv[0]);
         exit(1);
@@ -280,7 +273,27 @@ int main(int argc, char** argv) {
     vector<PlaneType> *coordinatesList = getCoordinatesFromFile(argv[1]);
 
     // creating object using coordinates
-    Object3D *satelliteObj = new Object3D(coordinatesList);
+    Object3D satelliteObj(coordinatesList);
+
+    // allocating memory for particles array
+    int memSize = int(50*pow(1024,2));
+    Particle *particlesArray = (Particle*)calloc(memSize/sizeof(Particle),sizeof(Particle));
+
+    GenerativeSphere generativeSphere(satelliteObj.center(),
+                                      136,//100*GeometryUtils::getDistanceBetweenPoints(satelliteObj->center(),satelliteObj->maxCoords),
+                                      satelliteObj);
+
+    int n = initParticleWhichIntersectsObject(particlesArray,memSize,generativeSphere);
+    int num = 0;
+    for(int j = 0;j < n;++j) {
+        if (GeometryUtils::doesParticlesTrajectoryIntersectObject(particlesArray[j],satelliteObj))
+            ++num;
+        if (j % 1000 == 0)
+            cout << j << endl;
+    }
+
+    cout << num << "/" << n << "=" << float(num)/n << endl;
+
 
     srand(time(NULL));
     /*if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -319,7 +332,7 @@ int main(int argc, char** argv) {
     int count = 0;
     //while(!processParticles(satelliteObj)) cout << ++count << endl;////////////////////////////////////////
     //processParticles(satelliteObj);
-    processParticles(satelliteObj);
+    //////////processParticles(satelliteObj);
 
     /*Plane p(Point(0,0,0),Point(1,0,0),Point(0,1,0));
     Line l(Point(2,2,2),Point(2,2,-2));
@@ -337,6 +350,7 @@ int main(int argc, char** argv) {
         usleep(sleepTime);
     }*/
 
+    free(particlesArray);
     return 0;
 }
 
