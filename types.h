@@ -156,7 +156,8 @@ struct ThreePoints: public Locus<3> {
         set[0] = _a; set[1] = _b; set[2] = _c;
     }
     ThreePoints& operator=(const ThreePoints& right) {
-        return *(new ThreePoints(right));
+        ThreePoints tp(right);
+        return tp;
     }
 
     Point& a;
@@ -170,6 +171,11 @@ struct ThreePoints: public Locus<3> {
 struct Triangle: public ThreePoints {
     Triangle(Point _a,Point _b,Point _c): ThreePoints(_a,_b,_c) {}
     Triangle(ThreePoints &tP): ThreePoints(tP) {}
+    Point getCenterOfMass() {
+        return Point( (a.x + b.x + c.x) / 3.0,
+                      (a.y + b.y + c.y) / 3.0,
+                      (a.z + b.z + c.z) / 3.0);
+    }
 };
 
 struct Plane: public ThreePoints {
@@ -232,7 +238,7 @@ struct Sphere {
     Sphere(const Sphere &_s): center(_s.center), radius(_s.radius) {}
 };
 
-struct Object3D {
+struct Object3D: public Sphere {
     Vector front;
     Point maxCoords, minCoords;
     Point nearestPoint, furthermostPoint; // relatively to front of the object
@@ -244,36 +250,16 @@ struct Object3D {
         init();
     }
     Object3D(vector<PlaneType> *_polygons, Vector _front = Vector(100,0,0)):
-            front(_front), polygons(_polygons) {
+        front(_front), polygons(_polygons) {
         init();
     }
 
-    void init() {
-        speed = ORBITAL_VELOCITY;
-        nearestPoint = furthermostPoint = maxCoords = minCoords = polygons->at(0).set[0];
-        for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();it++)
-            for(int i = 0;i < 3;i++) {
-                if (Vector(nearestPoint,(*it).set[i]).cos(front) > 0)
-                    nearestPoint = (*it).set[i];
-                if (Vector(furthermostPoint,(*it).set[i]).cos(front) < 0)
-                    furthermostPoint = (*it).set[i];
+    void init();
 
-                if (maxCoords.x < (*it).set[i].x) maxCoords.x = (*it).set[i].x;
-                if (maxCoords.y < (*it).set[i].y) maxCoords.y = (*it).set[i].y;
-                if (maxCoords.z < (*it).set[i].z) maxCoords.z = (*it).set[i].z;
-                if (minCoords.x > (*it).set[i].x) minCoords.x = (*it).set[i].x;
-                if (minCoords.y > (*it).set[i].y) minCoords.y = (*it).set[i].y;
-                if (minCoords.z > (*it).set[i].z) minCoords.z = (*it).set[i].z;
-            }
-    }
     PlaneType& operator[](int i) {
         return polygons->at(i);
     }
-    Point center() {
-        return Point((maxCoords.x + minCoords.x)/2,
-                     (maxCoords.y + minCoords.y)/2,
-                     (maxCoords.z + minCoords.z)/2);
-    }
+
     Vector getStep() {
         return front.normalize()*speed;
     }
@@ -285,16 +271,16 @@ private:
     GaussianDistributionGenerator *ionVelocityGenerator;
     Object3D &object;
     Vector objectStep;
-    Sphere sphereAroundObject;
+    // Sphere sphereAroundObject;
     void init();
 
 public:
     GenerativeSphere(Point _p, real _r,Object3D _object):
-            Sphere(_p, _r), object(_object) {
+        Sphere(_p, _r), object(_object) {
         init();
     }
     GenerativeSphere(const Sphere &_s,Object3D _object):
-            Sphere(_s), object(_object) {
+        Sphere(_s), object(_object) {
         init();
     }
 

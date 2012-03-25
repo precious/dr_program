@@ -13,7 +13,17 @@ inline bool inInterval(T x,T a,T b) {
 }
 
 bool GeometryUtils::isPointInsideTriangle(ThreePoints &t,Point &k) {
-    Vector v0(Point(0,0,0)), v1(k,t.a), v2(k,t.b), v3(k,t.c);
+    Point p = getPointOnLineProjection(Line(t.a,t.b),t.c);
+    if (Vector(p,t.c).cos(Vector(p,k)) < 0)
+        return false;
+    p = getPointOnLineProjection(Line(t.c,t.b),t.a);
+    if (Vector(p,t.a).cos(Vector(p,k)) < 0)
+        return false;
+    p = getPointOnLineProjection(Line(t.c,t.a),t.b);
+    if (Vector(p,t.b).cos(Vector(p,k)) < 0)
+        return false;
+    return true;
+    /*    Vector v0(Point(0,0,0)), v1(k,t.a), v2(k,t.b), v3(k,t.c);
     if (v1 == v0 || v2 == v0 || v3 == v0)
         return true;
     real cos1 = v1.cos(v2), cos2 = v1.cos(v3), cos3 = v2.cos(v3);
@@ -27,7 +37,7 @@ bool GeometryUtils::isPointInsideTriangle(ThreePoints &t,Point &k) {
             // delta is required to prevent mashine imprecision
             real delta = 0.0001;
             return !(acos(cos1) + acos(cos2) + acos(cos3) < M_PI*2 - delta);
-    }
+    }*/
 }
 
 // коэффициент точки пересечения находим подставляя параметрические уравнения прямой
@@ -55,8 +65,8 @@ Point GeometryUtils::getPlaneAndLineIntersection(ThreePoints &plane,Line line) {
     real coef = ((line.a.x - plane.a.x)*coef1 -
                  (line.a.y - plane.a.y)*coef2 +
                  (line.a.z - plane.a.z)*coef3) /
-                (line.directionVector.x*coef1 - line.directionVector.y*coef2 +
-                 line.directionVector.z*coef3);
+            (line.directionVector.x*coef1 - line.directionVector.y*coef2 +
+             line.directionVector.z*coef3);
 
     // inf means that the line is parallel towards plane
     // nan means that the line belongs to plane
@@ -181,10 +191,12 @@ bool GeometryUtils::doesLineIntersectParallelepiped(Line l,Point p1,Point p2) {
 
 bool GeometryUtils::doesParticlesTrajectoryIntersectObject(Particle p,Object3D &obj) {
     Line line(p,p.step);
-    if (!doesLineIntersectParallelepiped(line,obj.maxCoords,obj.minCoords))
+    /*if (!doesLineIntersectParallelepiped(line,obj.maxCoords,obj.minCoords))
+        return false;*/
+    if ( !doesLineIntersectSphere(Line(p,p.step),obj) )
         return false;
-    for (vector<PlaneType>::iterator it = obj.polygons->begin();it != obj.polygons->end();it++)
-        if (doesLineIntersectTriangle(*it,line))
+    for (int i = 0;i < obj.polygons->size();i++)
+        if (doesLineIntersectTriangle(obj.polygons->at(i),line))
             return true;
     return false;
 }
@@ -194,5 +206,13 @@ real GeometryUtils::getChordLength(Sphere sphere,Line line) {
     return 2*sqrt(sphere.radius*sphere.radius -
                   pow(getDistanceBetweenPoints(sphere.center,
                                                getPointOnLineProjection(line,sphere.center)),2) );
+}
+
+Point GeometryUtils::getRandomPointFromTriangle(ThreePoints& tp) {
+    return tp.a + ( Vector(tp.a,tp.b)*getRandom() + Vector(tp.a,tp.c)*getRandom() )*0.5;
+}
+
+bool GeometryUtils::doesLineIntersectSphere(Line l,Sphere s) {
+    return getDistanceBetweenPoints(getPointOnLineProjection(l,s.center), s.center) <= s.radius;
 }
 

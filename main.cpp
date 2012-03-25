@@ -102,7 +102,7 @@ void processEvents(void)
 
 int processParticles(Object3D &satelliteObj) {
     real stepLength = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
-                             satelliteObj.furthermostPoint)/10.0;
+                                                              satelliteObj.furthermostPoint)/10.0;
     real timeInterval = stepLength/(2*ELECTRON_VELOCITY);
     cout << "stepLength: " << stepLength << endl;
     cout << "timeInterval: " << timeInterval << endl;
@@ -170,7 +170,7 @@ void draw(Object3D &satelliteObj)
         glColor4ubv(purple);
         for(int i = 0;i < 3;i++)
             glVertex3d((*it).set[i].x,(*it).set[i].y,(*it).set[i].z);
-    /*    if (tempVector->cos((*it).normal) < 0)
+        /*    if (tempVector->cos((*it).normal) < 0)
             continue;
         if (GeometryUtils::doesLineIntersectTriangle(*it,*tempLine)) {
             glBegin(GL_TRIANGLES);
@@ -276,15 +276,17 @@ int main(int argc, char** argv) {
     Object3D satelliteObj(coordinatesList);
 
     // allocating memory for particles array
-    int memSize = int(50*pow(1024,2));
+    int memSize = int(2000*pow(1024,2));
     Particle *particlesArray = (Particle*)calloc(memSize/sizeof(Particle),sizeof(Particle));
 
-    GenerativeSphere generativeSphere(satelliteObj.center(),
+    GenerativeSphere generativeSphere(satelliteObj.center,
                                       136,//100*GeometryUtils::getDistanceBetweenPoints(satelliteObj->center(),satelliteObj->maxCoords),
                                       satelliteObj);
 
     int n = initParticleWhichIntersectsObject(particlesArray,memSize,generativeSphere);
+    cout << n << endl;
     int num = 0;
+    n = 1000;/////////////////
     for(int j = 0;j < n;++j) {
         if (GeometryUtils::doesParticlesTrajectoryIntersectObject(particlesArray[j],satelliteObj))
             ++num;

@@ -32,39 +32,35 @@ struct Object3D;
 
 
 class GeometryUtils {
-public:
-    static bool isPointInsideTriangle(ThreePoints&,Point&);
+public:    
+    // geometry utils with random
+    static Point getRandomPointFromSphere(Sphere);
+    static Point getRandomPointOnSphere(Sphere);
+    static Vector getRandomOrthogonalVector(Vector);
+    static Point getRandomPointFromTriangle(ThreePoints&);
 
+    // geometry utils returning distances and lengths
+    static real getDistanceBetweenPoints(Point,Point);
+    static real getDistanceBetweenPointAndPlane(ThreePoints&,Point);
+    static real getChordLength(Sphere,Line);
+
+    // geometry utils for intersections and projections calculation
+    static Point getPointOnPlaneProjection(ThreePoints&,Point);
+    static Point getPointOnLineProjection(Line,Point);
     DEPRECATED(static Point getPlaneAndLineIntersection(ThreePoints&,Line));
     static Point getPlaneAndLineIntersection2(ThreePoints&,Line);
 
+    // geometry utils for conditions checking
+    static bool isPointInsideTriangle(ThreePoints&,Point&);
     static bool doesLineIntersectTriangle(ThreePoints&,Line&);
-
-    static Point getRandomPointFromSphere(Sphere);
-
-    static Point getRandomPointOnSphere(Sphere);
-
-    static Vector getRandomOrthogonalVector(Vector);
-
-    static Point getPointOnPlaneProjection(ThreePoints&,Point);
-
-    static Point getPointOnLineProjection(Line,Point);
-
-    static real getDistanceBetweenPoints(Point,Point);
-
-    static real getDistanceBetweenPointAndPlane(ThreePoints&,Point);
-
-    static Particle getFastestParticle(vector<Particle>&,Point,function<bool (Particle)>);
-
-    static real getChordLength(Sphere,Line);
-
     static bool isPointInsideParallelepiped(Point,Point,Point);
-
-    //static bool isPointInsideObject(Point,Object3D&);
-
+    /*static bool isPointInsideObject(Point,Object3D&);*/
     static bool doesParticlesTrajectoryIntersectObject(Particle,Object3D&);
-
     static bool doesLineIntersectParallelepiped(Line,Point,Point);
+    static bool doesLineIntersectSphere(Line,Sphere);
+
+    // other geometry utils
+    static Particle getFastestParticle(vector<Particle>&,Point,function<bool (Particle)>);
 };
 
 #endif // GEOMETRY_UTILS_H

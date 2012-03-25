@@ -3,7 +3,7 @@
 int CLOCK_ID = CLOCK_THREAD_CPUTIME_ID;
 
 void printTimespec(timespec *ts) {
-        cout << "seconds: " << ts->tv_sec << ", nanoseconds: " << ts->tv_nsec << endl;
+    cout << "seconds: " << ts->tv_sec << ", nanoseconds: " << ts->tv_nsec << endl;
 }
 
 timespec* getTimespecDelta(timespec *older,timespec *newer) {
@@ -29,7 +29,7 @@ UniformDistributionGenerator* getUniformDistributionGenerator(real min,real max)
 }
 
 GaussianDistributionGenerator* getGaussianDistributionGenerator(real M,real D) {
-   static random_device seed;
-   return new GaussianDistributionGenerator(Engine(seed()),GaussianDistribution(M,D));
+    static random_device seed;
+    return new GaussianDistributionGenerator(Engine(seed()),GaussianDistribution(M,D));
 }
 

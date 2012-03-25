@@ -42,8 +42,9 @@ Particle GenerativeSphere::generateRandomParticle(int type) {
 }
 
 Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type) {
-    Point initialPosition = GeometryUtils::getRandomPointFromSphere(*this);
-    Vector step(initialPosition,GeometryUtils::getRandomPointFromSphere(sphereAroundObject));
+    PlaneType polygon = object.polygons->at( RAND(object.polygons->size()) );
+    Vector step(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
+
     switch(type) {
     case PTYPE_ELECTRON:
         step = step.normalize()*( (*electronVelocityGenerator)() ) - objectStep;
@@ -52,17 +53,59 @@ Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type) {
         step = step.normalize()*( (*ionVelocityGenerator)() ) - objectStep;
         break;
     }
-    return Particle(initialPosition,step);
+
+    if (polygon.getNormal().cos(step) < 0) {
+        // if now: step = particleStep - objectStep
+        step = step*-1 - objectStep*2;
+        // then after this operation step will be:
+        // step = - particleStep - objectStep
+    }
+
+    Point p = GeometryUtils::getRandomPointFromTriangle(polygon);
+
+    // now we should calculate point on sphere were particle will be initially placed
+    // see explanation at page 1 of workbook
+    real a = GeometryUtils::getDistanceBetweenPoints(center,p);
+    double cos = Vector(center,p).cos(step);
+    real step_length = sqrt(a*a*(cos*cos - 1) + radius*radius) - a*cos;
+
+    // now p is point on sphere
+    p = p + step.normalize()*step_length;
+
+    return Particle(p,step);
 }
 
 void GenerativeSphere::init()
 {
     objectStep = object.getStep();
-    sphereAroundObject = Sphere(object.center(),
-                                max(GeometryUtils::getDistanceBetweenPoints(object.center(),object.maxCoords),
-                                    GeometryUtils::getDistanceBetweenPoints(object.center(),object.minCoords)));
+    /*sphereAroundObject = Sphere(object.center(),
+                                GeometryUtils::getDistanceBetweenPoints(object.center(),object.maxCoords));
+    */
     // expectation and standart deviation are calculated due the 3-sigma rule
     // max and min possible velocities are 2*ELECTRON_VELOCITY and 0 respectively
     electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
     ionVelocityGenerator = getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/3.0);
+}
+
+void Object3D::init() {
+    speed = ORBITAL_VELOCITY;
+    nearestPoint = furthermostPoint = maxCoords = minCoords = polygons->at(0).set[0];
+    for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();it++)
+        for(int i = 0;i < 3;i++) {
+            if (Vector(nearestPoint,(*it).set[i]).cos(front) > 0)
+                nearestPoint = (*it).set[i];
+            if (Vector(furthermostPoint,(*it).set[i]).cos(front) < 0)
+                furthermostPoint = (*it).set[i];
+
+            if (maxCoords.x < (*it).set[i].x) maxCoords.x = (*it).set[i].x;
+            if (maxCoords.y < (*it).set[i].y) maxCoords.y = (*it).set[i].y;
+            if (maxCoords.z < (*it).set[i].z) maxCoords.z = (*it).set[i].z;
+            if (minCoords.x > (*it).set[i].x) minCoords.x = (*it).set[i].x;
+            if (minCoords.y > (*it).set[i].y) minCoords.y = (*it).set[i].y;
+            if (minCoords.z > (*it).set[i].z) minCoords.z = (*it).set[i].z;
+        }
+    center = Point((maxCoords.x + minCoords.x)/2,
+                   (maxCoords.y + minCoords.y)/2,
+                   (maxCoords.z + minCoords.z)/2);
+    radius = GeometryUtils::getDistanceBetweenPoints(center,maxCoords);
 }
