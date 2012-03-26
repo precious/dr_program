@@ -195,7 +195,7 @@ bool GeometryUtils::doesParticlesTrajectoryIntersectObject(Particle p,Object3D &
         return false;*/
     if ( !doesLineIntersectSphere(Line(p,p.step),obj) )
         return false;
-    for (int i = 0;i < obj.polygons->size();i++)
+    for (unsigned int i = 0;i < obj.polygons->size();i++)
         if (doesLineIntersectTriangle(obj.polygons->at(i),line))
             return true;
     return false;

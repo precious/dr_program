@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <cmath>
 #include <vector>
+#include <cstring>
 
 typedef float real;
 
@@ -156,8 +157,10 @@ struct ThreePoints: public Locus<3> {
         set[0] = _a; set[1] = _b; set[2] = _c;
     }
     ThreePoints& operator=(const ThreePoints& right) {
-        ThreePoints tp(right);
-        return tp;
+        if (this != &right) {
+            memcpy(this->set, right.set, 3*sizeof(Point));
+        }
+        return *this;
     }
 
     Point& a;
