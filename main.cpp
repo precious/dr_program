@@ -7,14 +7,18 @@
 #include <cstdio>
 #include <vector>
 #include <errno.h>
+#include <unistd.h>
+#include <assert.h>
 
 #include "types.h"
 #include "read_file.h"
 #include "geometry_utils.h"
 #include "constants.h"
 
-#define exitErr(msg) { cerr << msg << "\nerrno: " << errno << endl; exit(1); }
+#define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; exit(1); }
 #define rand(max) rand()%max
+#define PRINTLN(str) cout << str << endl;
+#define PRINT(str) cout << str && cout.flush();
 
 
 static GLboolean should_rotate = GL_FALSE;
@@ -24,7 +28,7 @@ int step = 30;
 
 Point viewerPosition(0,0,0);
 
-const char usage[] = "Usage:\n\t%s <filename>\n";
+const char usage[] = "Usage:\n\tprogram [-t number][-v] <filename>\n";
 
 void quit(int code) {
     SDL_Quit();
@@ -245,45 +249,88 @@ void setupOpenGL(int width, int height,Point &maxObjCoords) {
     tempVector = new Vector(tempLine->b,tempLine->a);
 }
 
-int initRandomParticles(Particle *particlesArray,int size,GenerativeSphere generativeSphere) {
+int initRandomParticles(Particle *particlesArray,int count,GenerativeSphere generativeSphere) {
     int n;
-    for(n = 0;n < size/sizeof(Particle);++n) {
+    for(n = 0;n < count;++n) {
         particlesArray[n] = generativeSphere.generateRandomParticle(PTYPE_ELECTRON);
     }
     return n;
 }
 
-int initParticleWhichIntersectsObject(Particle *particlesArray,int size,GenerativeSphere generativeSphere) {
+int initParticleWhichIntersectsObject(Particle *particlesArray,int count,GenerativeSphere generativeSphere) {
     int n;
-    for(n = 0;n < size/sizeof(Particle);++n) {
+    for(n = 0;n < count;++n) {
         particlesArray[n] = generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON);
     }
     return n;
 }
 
 int main(int argc, char** argv) {
-    // check arguments
-    if (argc == 1) {
-        fprintf(stderr,usage,argv[0]);
-        exit(1);
+    // process arguments
+    int c;
+    bool memInfoFlag = false;
+    bool verboseFlag = false;
+    char *filename = NULL;
+    int testProbabilityCount = -1;
+    while ((c = getopt (argc, argv, ":vt:")) != -1) {
+        switch(c) {
+        case 't':
+            testProbabilityCount = atoi(optarg);
+            break;
+        case 'v':
+            verboseFlag = true;
+            break;
+        case '?':
+        default:
+            EXIT_ERR(usage);
+        }
     }
+    if (optind == argc) {
+        EXIT_ERR(usage);
+    }
+    filename = argv[optind];
 
+
+    /*------------------------------------*/
     int sleepTime = 10000; //microsecond
     // getting coordinatates from file
-    vector<PlaneType> *coordinatesList = getCoordinatesFromFile(argv[1]);
+    vector<PlaneType> *coordinatesList = getCoordinatesFromFile(filename);
 
     // creating object using coordinates
     Object3D satelliteObj(coordinatesList);
-
-    // allocating memory for particles array
-    int memSize = int(2000*pow(1024,2));
-    Particle *particlesArray = (Particle*)calloc(memSize/sizeof(Particle),sizeof(Particle));
 
     GenerativeSphere generativeSphere(satelliteObj.center,
                                       136,//100*GeometryUtils::getDistanceBetweenPoints(satelliteObj->center(),satelliteObj->maxCoords),
                                       satelliteObj);
 
-    int n = initParticleWhichIntersectsObject(particlesArray,memSize,generativeSphere);
+
+    if (testProbabilityCount > 0) {
+        // allocating memory for particles array
+        verboseFlag && PRINTLN("memory allocation...");
+        Particle *particlesArray = (Particle*)calloc(testProbabilityCount,sizeof(Particle));
+
+        verboseFlag && cout << "memory usage: " << testProbabilityCount*sizeof(Particle)/(1024*1024.0) << " MB" << endl;
+        verboseFlag && PRINTLN("particles generation...");
+        int n = initRandomParticles(particlesArray,testProbabilityCount,generativeSphere);
+        assert(n == testProbabilityCount);
+
+        int intersectionsCounter = 0;
+        verboseFlag && PRINTLN("checking for intersections...");
+        for(int j = 0;j < n;++j) {
+            if (GeometryUtils::doesParticlesTrajectoryIntersectObject(particlesArray[j],satelliteObj))
+                ++intersectionsCounter;
+            verboseFlag && (!(j%(n/20 + 1))) && PRINT('.');
+        }
+        verboseFlag && PRINTLN("");
+        cout << "percentage: " << intersectionsCounter << "/" << n << " = " << intersectionsCounter/float(n)*100 << '%' << endl;
+        free(particlesArray);
+    }
+
+
+
+
+
+  /*  int n = initParticleWhichIntersectsObject(particlesArray,memSize,generativeSphere);
     cout << n << endl;
     int num = 0;
     n = 1000;/////////////////
@@ -295,7 +342,7 @@ int main(int argc, char** argv) {
     }
 
     cout << num << "/" << n << "=" << float(num)/n << endl;
-
+*/
 
     srand(time(NULL));
     /*if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -327,9 +374,9 @@ int main(int argc, char** argv) {
     // set appropriate OpenGL properties
     setupOpenGL(width,height,satelliteObj->maxCoords);*/
 
-    cout << "size of Particle: " << sizeof(Particle) << endl;
+ /*   cout << "size of Particle: " << sizeof(Particle) << endl;
     cout << "size of Point: " << sizeof(Point) << endl;
-    cout << "size of Vector: " << sizeof(Vector) << endl;
+    cout << "size of Vector: " << sizeof(Vector) << endl;*/
 
     int count = 0;
     //while(!processParticles(satelliteObj)) cout << ++count << endl;////////////////////////////////////////
@@ -352,7 +399,6 @@ int main(int argc, char** argv) {
         usleep(sleepTime);
     }*/
 
-    free(particlesArray);
     return 0;
 }
 
