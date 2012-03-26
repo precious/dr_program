@@ -295,6 +295,7 @@ int main(int argc, char** argv) {
     int sleepTime = 10000; //microsecond
     // getting coordinatates from file
     vector<PlaneType> *coordinatesList = getCoordinatesFromFile(filename);
+    assert(coordinatesList != NULL);
 
     // creating object using coordinates
     Object3D satelliteObj(coordinatesList);
