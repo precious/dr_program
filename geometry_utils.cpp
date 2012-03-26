@@ -89,7 +89,7 @@ Point GeometryUtils::getPointOnLineProjection(Line line,Point point) {
 bool GeometryUtils::doesLineIntersectTriangle(ThreePoints &triangle,Line &line) {
     Point intersection = getPlaneAndLineIntersection2(triangle,line);
     if (isinf(intersection.x)) {
-        cout << "INF" << endl;////////////////////////////////////////////////
+        cerr << "INF" << endl;////////////////////////////////////////////////
         /// TODO: here should be checking whether the line intersects
         /// at least one of the triangles side
         /// for this function for finding two lines intersection should be
@@ -97,7 +97,7 @@ bool GeometryUtils::doesLineIntersectTriangle(ThreePoints &triangle,Line &line) 
         return false;
     }
     if (isnan(intersection.x)) {
-        cout << "NAN" << endl;////////////////////////////////////////////////
+        cerr << "NAN" << endl;////////////////////////////////////////////////
         return false;
     }
     bool retVal = isPointInsideTriangle(triangle,intersection);
