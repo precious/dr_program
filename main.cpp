@@ -17,8 +17,8 @@
 
 #define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; exit(1); }
 #define rand(max) rand()%max
-#define PRINTLN(str) cout << str << endl;
-#define PRINT(str) cout << str && cout.flush();
+#define PRINTLN(arg) cout << arg << endl;
+#define PRINT(arg) cout << arg && cout.flush();
 
 
 static GLboolean should_rotate = GL_FALSE;
@@ -28,7 +28,7 @@ int step = 30;
 
 Point viewerPosition(0,0,0);
 
-const char usage[] = "Usage:\n\tprogram [-t number][-v] <filename>\n";
+const char usage[] = "Usage:\n\tprogram [-t number][-r radius][-v] <filename>\n";
 
 void quit(int code) {
     SDL_Quit();
@@ -260,22 +260,29 @@ int initRandomParticles(Particle *particlesArray,int count,GenerativeSphere gene
 int initParticleWhichIntersectsObject(Particle *particlesArray,int count,GenerativeSphere generativeSphere) {
     int n;
     for(n = 0;n < count;++n) {
-        particlesArray[n] = generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON);
+        particlesArray[n] =
+                generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON);
     }
     return n;
 }
 
 int main(int argc, char** argv) {
+    cout.precision(16);
+    cout.setf(ios::fixed, ios::floatfield);
     // process arguments
     int c;
     bool memInfoFlag = false;
     bool verboseFlag = false;
     char *filename = NULL;
     int testProbabilityCount = -1;
-    while ((c = getopt (argc, argv, ":vt:")) != -1) {
+    int generativeSphereRadius = -1;
+    while ((c = getopt (argc, argv, ":vt:r:")) != -1) {
         switch(c) {
         case 't':
             testProbabilityCount = atoi(optarg);
+            break;
+        case 'r':
+            generativeSphereRadius = atoi(optarg);
             break;
         case 'v':
             verboseFlag = true;
@@ -289,6 +296,7 @@ int main(int argc, char** argv) {
         EXIT_ERR(usage);
     }
     filename = argv[optind];
+    if (generativeSphereRadius < 0) generativeSphereRadius = 136;
 
 
     /*------------------------------------*/
@@ -301,7 +309,7 @@ int main(int argc, char** argv) {
     Object3D satelliteObj(coordinatesList);
 
     GenerativeSphere generativeSphere(satelliteObj.center,
-                                      136,//100*GeometryUtils::getDistanceBetweenPoints(satelliteObj->center(),satelliteObj->maxCoords),
+                                      generativeSphereRadius,//100*GeometryUtils::getDistanceBetweenPoints(satelliteObj->center(),satelliteObj->maxCoords),
                                       satelliteObj);
 
 
@@ -323,7 +331,11 @@ int main(int argc, char** argv) {
             verboseFlag && (!(j%(n/20 + 1))) && PRINT('.');
         }
         verboseFlag && PRINTLN("");
-        cout << "percentage: " << intersectionsCounter << "/" << n << " = " << intersectionsCounter/float(n)*100 << '%' << endl;
+        if (verboseFlag)
+            cout << "percentage: " << intersectionsCounter << "/" << n
+                 << " = " << intersectionsCounter/double(n)*100 << '%' << endl;
+        else
+            cout << intersectionsCounter/double(n) << endl;
         free(particlesArray);
     }
 
