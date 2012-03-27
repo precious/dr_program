@@ -107,7 +107,7 @@ void processEvents(void)
 int processParticles(Object3D &satelliteObj) {
     real stepLength = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
                                                               satelliteObj.furthermostPoint)/10.0;
-    real timeInterval = stepLength/(2*ELECTRON_VELOCITY);
+    real timeInterval = stepLength/(ELECTRON_VELOCITY); // average velocity
     cout << "stepLength: " << stepLength << endl;
     cout << "timeInterval: " << timeInterval << endl;
 
