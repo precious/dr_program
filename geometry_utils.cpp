@@ -13,17 +13,7 @@ inline bool inInterval(T x,T a,T b) {
 }
 
 bool GeometryUtils::isPointInsideTriangle(ThreePoints &t,Point &k) {
-    Point p = getPointOnLineProjection(Line(t.a,t.b),t.c);
-    if (Vector(p,t.c).cos(Vector(p,k)) < 0)
-        return false;
-    p = getPointOnLineProjection(Line(t.c,t.b),t.a);
-    if (Vector(p,t.a).cos(Vector(p,k)) < 0)
-        return false;
-    p = getPointOnLineProjection(Line(t.c,t.a),t.b);
-    if (Vector(p,t.b).cos(Vector(p,k)) < 0)
-        return false;
-    return true;
-    /*    Vector v0(Point(0,0,0)), v1(k,t.a), v2(k,t.b), v3(k,t.c);
+    Vector v0(Point(0,0,0)), v1(k,t.a), v2(k,t.b), v3(k,t.c);
     if (v1 == v0 || v2 == v0 || v3 == v0)
         return true;
     real cos1 = v1.cos(v2), cos2 = v1.cos(v3), cos3 = v2.cos(v3);
@@ -37,7 +27,20 @@ bool GeometryUtils::isPointInsideTriangle(ThreePoints &t,Point &k) {
             // delta is required to prevent mashine imprecision
             real delta = 0.0001;
             return !(acos(cos1) + acos(cos2) + acos(cos3) < M_PI*2 - delta);
-    }*/
+    }
+}
+
+bool GeometryUtils::isPointInsideTriangle2(ThreePoints &t,Point &k) {
+    Point p = getPointOnLineProjection(Line(t.a,t.b),t.c);
+    if (Vector(p,t.c).cos(Vector(p,k)) < 0)
+        return false;
+    p = getPointOnLineProjection(Line(t.c,t.b),t.a);
+    if (Vector(p,t.a).cos(Vector(p,k)) < 0)
+        return false;
+    p = getPointOnLineProjection(Line(t.c,t.a),t.b);
+    if (Vector(p,t.b).cos(Vector(p,k)) < 0)
+        return false;
+    return true;
 }
 
 // коэффициент точки пересечения находим подставляя параметрические уравнения прямой
@@ -100,7 +103,7 @@ bool GeometryUtils::doesLineIntersectTriangle(ThreePoints &triangle,Line &line) 
         cerr << "NAN" << endl;////////////////////////////////////////////////
         return false;
     }
-    bool retVal = isPointInsideTriangle(triangle,intersection);
+    bool retVal = isPointInsideTriangle2(triangle,intersection);
     return retVal;
 }
 
@@ -143,23 +146,6 @@ real GeometryUtils::getDistanceBetweenPoints(Point a,Point b) {
 
 real GeometryUtils::getDistanceBetweenPointAndPlane(ThreePoints& plane,Point p) {
     return getDistanceBetweenPoints(getPointOnPlaneProjection(plane,p),p);
-}
-
-Particle GeometryUtils::getFastestParticle(vector<Particle>& vec,Point target,function<bool (Particle)> check) {
-    Particle fastestParticle = Particle(Point(),Vector()/*,0*/);
-    real longestProjectionLength = 0, projectionLength, cos;
-    for (vector<Particle>::iterator it = vec.begin();it != vec.end();it++) {
-        cos = Vector((*it),target).cos((*it).step);
-        if (cos <= 0)
-            continue;
-        projectionLength = (*it).step.length()*cos;
-        if (projectionLength > longestProjectionLength && check(*it)) {
-            cout << "i'm here" << endl;//////////////////////////////////////////////////////
-            longestProjectionLength = projectionLength;
-            fastestParticle = *it;
-        }
-    }
-    return fastestParticle;
 }
 
 bool GeometryUtils::isPointInsideParallelepiped(Point a,Point v1,Point v2) {
@@ -214,5 +200,9 @@ Point GeometryUtils::getRandomPointFromTriangle(ThreePoints& tp) {
 
 bool GeometryUtils::doesLineIntersectSphere(Line l,Sphere s) {
     return getDistanceBetweenPoints(getPointOnLineProjection(l,s.center), s.center) <= s.radius;
+}
+
+Point GeometryUtils::getNearestObject3DAndParticleTrajectoryIntersection(Object3D&,Particle) {
+    return Point();
 }
 

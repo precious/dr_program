@@ -14,6 +14,7 @@
 #include "read_file.h"
 #include "geometry_utils.h"
 #include "constants.h"
+#include "data_utils.h"
 
 #define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; exit(1); }
 #define rand(max) rand()%max
@@ -125,8 +126,9 @@ int processParticles(Object3D &satelliteObj) {
         return 0;
     }
     else
-        return 1;
-    cout << "fastest: " << fastestParticle << endl;
+        return 1;*/
+
+    /*cout << "fastest: " << fastestParticle << endl;
     cout << "center: " << satelliteObj->center() << endl;
     real time = Vector(fastestParticle,satelliteObj->center()).length() / fastestParticle.step.length();
     cout << "time: " << time << endl;*/
@@ -257,7 +259,7 @@ int initRandomParticles(Particle *particlesArray,int count,GenerativeSphere gene
     return n;
 }
 
-int initParticleWhichIntersectsObject(Particle *particlesArray,int count,GenerativeSphere generativeSphere) {
+int initParticlesWhichIntersectsObject(Particle *particlesArray,int count,GenerativeSphere &generativeSphere) {
     int n;
     for(n = 0;n < count;++n) {
         particlesArray[n] =
@@ -299,7 +301,7 @@ int main(int argc, char** argv) {
         EXIT_ERR(usage);
     }
     filename = argv[optind];
-    if (generativeSphereRadius < 0) generativeSphereRadius = 100;
+    if (generativeSphereRadius < 0) generativeSphereRadius = DEFAULT_GENERATIVE_SPHERE_RADIUS;
 
 
     /*------------------------------------*/
@@ -318,16 +320,16 @@ int main(int argc, char** argv) {
 
     if (testProbabilityCount > 0) {
         // allocating memory for particles array
-        verboseFlag && PRINTLN("memory allocation...");
+        verboseFlag && PRINTLN("memory allocation");
         Particle *particlesArray = (Particle*)calloc(testProbabilityCount,sizeof(Particle));
 
         verboseFlag && cout << "memory usage: " << testProbabilityCount*sizeof(Particle)/(1024*1024.0) << " MB" << endl;
-        verboseFlag && PRINTLN("particles generation...");
+        verboseFlag && PRINTLN("particles generation");
         int n = initRandomParticles(particlesArray,testProbabilityCount,generativeSphere);
         assert(n == testProbabilityCount);
 
         int intersectionsCounter = 0;
-        verboseFlag && PRINTLN("checking for intersections...");
+        verboseFlag && PRINTLN("checking for intersections");
         for(int j = 0;j < n;++j) {
             if (GeometryUtils::doesParticlesTrajectoryIntersectObject(particlesArray[j],satelliteObj))
                 ++intersectionsCounter;
@@ -347,22 +349,80 @@ int main(int argc, char** argv) {
         // for generating count of particles that intersects object
         // parameters for generator obtained using script test_intersections.sh
         // see also results of this script in freq.ods
-        double a = 0.0000874633333333;
-        double sigma = 0.0000049781511517;
+        double a = 0.0001608266666667; //0.0000874633333333;
+        double sigma = 0.0000080581883820; //0.0000049781511517;
+
+
         GaussianDistributionGenerator *particlesAmountRateGenerator = getGaussianDistributionGenerator(a,sigma);
 
-        int density = 200000;
-        float volume = 4.0/3*M_PI*pow(generativeSphereRadius,3);
-        unsigned long long totalAmount = density*volume;
+        // constants
+        const int density = 200000; // density is 0.2 cm^-3
+        const float volume = 4.0/3*M_PI*pow(generativeSphereRadius,3);
+        const unsigned long long totalAmount = density*volume;
+        // see explanation in workbook, page 1
+        const int maxParticlesAmount = (a + 4*sigma)*totalAmount;
 
+        /*GaussianDistributionGenerator *electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
+        for(int i = 0;i < 30;++i) {
+            PRINTLN((*electronVelocityGenerator)());
+        }*/
+
+        verboseFlag && PRINT("particles array initialization; memory will be allocated (MB): ");
+        verboseFlag && PRINTLN(maxParticlesAmount*sizeof(Particle)/pow(1024.,2));
+        int particlesAmount = min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));
+        Particle *particlesArray = (Particle*)malloc(maxParticlesAmount*sizeof(Particle));
+        assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere) == particlesAmount);
+
+        verboseFlag && PRINTLN("searching for fastest particle");
+        Particle fastestParticle2 = DataUtils::reduce<Particle*,Particle>(
+                    [](Particle p1,Particle p2) -> Particle& {return (p2.step.length() > p1.step.length())? p2: p1;},
+                    particlesArray,particlesAmount);
+
+        verboseFlag && PRINTLN("decreasing distance to object for all particles");
+        double stepLength = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
+                                                                  satelliteObj.furthermostPoint)/10.0;
+        double timeInterval = stepLength/ELECTRON_VELOCITY; // time to pass 1/10 of object for particle with average velocity
+
+        /// TODO -- see geometry utils
+        ///// double timeDelta = GeometryUtils::getDistanceBetweenPoints(satelliteObj.fastestParticleStep
+
+        cout << "stepLength: " << stepLength << endl;
+        cout << "timeInterval: " << timeInterval << endl;
+
+        // static bool firstTime = true;
+
+        // static vector<Particle> particles(count);
+
+
+
+        /*Particle fastestParticle = GeometryUtils::getFastestParticle(particles,satelliteObj->center(),
+                                    [satelliteObj](Particle p) -> bool {
+                                        return GeometryUtils::doesParticlesTrajectoryIntersectObject(p,*satelliteObj);
+                                    });
+        if (fastestParticle == Point()) {
+            return 0;
+        }
+        else
+            return 1;*/
+
+        /*cout << "fastest: " << fastestParticle << endl;
+        cout << "center: " << satelliteObj->center() << endl;
+        real time = Vector(fastestParticle,satelliteObj->center()).length() / fastestParticle.step.length();
+        cout << "time: " << time << endl;*/
+
+        free(particlesArray);
+
+        /*double tmp;
+        for(int i = 0; i < 15;++i) {
+            tmp = (*particlesAmountRateGenerator)();
+            cout << tmp << "  " << tmp*totalAmount << "  " << tmp*totalAmount/pow(1024.0,2) << endl;
+        }*/
 
     }
 
 
 
-
-
-  /*  int n = initParticleWhichIntersectsObject(particlesArray,memSize,generativeSphere);
+  /*  int n = initParticlesWhichIntersectsObject(particlesArray,memSize,generativeSphere);
     cout << n << endl;
     int num = 0;
     n = 1000;/////////////////

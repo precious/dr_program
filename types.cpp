@@ -45,6 +45,7 @@ Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type) {
     PlaneType polygon = object.polygons->at( RAND(object.polygons->size()) );
     Vector step(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
 
+    ////////step = Vector(1,0,0)*( (*electronVelocityGenerator)() ) ; /////////////////
     switch(type) {
     case PTYPE_ELECTRON:
         step = step.normalize()*( (*electronVelocityGenerator)() ) - objectStep;
@@ -81,10 +82,10 @@ void GenerativeSphere::init()
     /*sphereAroundObject = Sphere(object.center(),
                                 GeometryUtils::getDistanceBetweenPoints(object.center(),object.maxCoords));
     */
-    // expectation and standart deviation are calculated due the 3-sigma rule
+    // expectation and standart deviation are calculated due the 4-sigma rule
     // max and min possible velocities are 2*ELECTRON_VELOCITY and 0 respectively
-    electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
-    ionVelocityGenerator = getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/3.0);
+    electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/4.0);
+    ionVelocityGenerator = getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/4.0);
 }
 
 void Object3D::init() {

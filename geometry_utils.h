@@ -49,18 +49,17 @@ public:
     static Point getPointOnLineProjection(Line,Point);
     DEPRECATED(static Point getPlaneAndLineIntersection(ThreePoints&,Line));
     static Point getPlaneAndLineIntersection2(ThreePoints&,Line);
+    static Point getNearestObject3DAndParticleTrajectoryIntersection(Object3D&,Particle);
 
     // geometry utils for conditions checking
-    static bool isPointInsideTriangle(ThreePoints&,Point&);
+    DEPRECATED(static bool isPointInsideTriangle(ThreePoints&,Point&));
+    static bool isPointInsideTriangle2(ThreePoints&,Point&);
     static bool doesLineIntersectTriangle(ThreePoints&,Line&);
     static bool isPointInsideParallelepiped(Point,Point,Point);
     /*static bool isPointInsideObject(Point,Object3D&);*/
     static bool doesParticlesTrajectoryIntersectObject(Particle,Object3D&);
     static bool doesLineIntersectParallelepiped(Line,Point,Point);
     static bool doesLineIntersectSphere(Line,Sphere);
-
-    // other geometry utils
-    static Particle getFastestParticle(vector<Particle>&,Point,function<bool (Particle)>);
 };
 
 #endif // GEOMETRY_UTILS_H
