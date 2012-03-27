@@ -28,7 +28,7 @@ int step = 30;
 
 Point viewerPosition(0,0,0);
 
-const char usage[] = "Usage:\n\tprogram [-t number][-r radius][-v] <filename>\n";
+const char usage[] = "Usage:\n\tprogram [-t number][-r radius][-m][-v] <filename>\n";
 
 void quit(int code) {
     SDL_Quit();
@@ -271,12 +271,12 @@ int main(int argc, char** argv) {
     cout.setf(ios::fixed, ios::floatfield);
     // process arguments
     int c;
-    bool memInfoFlag = false;
+    bool modelingFlag = false;
     bool verboseFlag = false;
     char *filename = NULL;
     int testProbabilityCount = -1;
     int generativeSphereRadius = -1;
-    while ((c = getopt (argc, argv, ":vt:r:")) != -1) {
+    while ((c = getopt (argc, argv, ":mvt:r:")) != -1) {
         switch(c) {
         case 't':
             testProbabilityCount = atoi(optarg);
@@ -287,6 +287,9 @@ int main(int argc, char** argv) {
         case 'v':
             verboseFlag = true;
             break;
+        case 'm':
+            modelingFlag = true;
+            break;
         case '?':
         default:
             EXIT_ERR(usage);
@@ -296,7 +299,7 @@ int main(int argc, char** argv) {
         EXIT_ERR(usage);
     }
     filename = argv[optind];
-    if (generativeSphereRadius < 0) generativeSphereRadius = 136;
+    if (generativeSphereRadius < 0) generativeSphereRadius = 100;
 
 
     /*------------------------------------*/
@@ -337,6 +340,22 @@ int main(int argc, char** argv) {
         else
             cout << intersectionsCounter/double(n) << endl;
         free(particlesArray);
+    }
+
+
+    if (modelingFlag) {
+        // for generating count of particles that intersects object
+        // parameters for generator obtained using script test_intersections.sh
+        // see also results of this script in freq.ods
+        double a = 0.0000874633333333;
+        double sigma = 0.0000049781511517;
+        GaussianDistributionGenerator *particlesAmountRateGenerator = getGaussianDistributionGenerator(a,sigma);
+
+        int density = 200000;
+        float volume = 4.0/3*M_PI*pow(generativeSphereRadius,3);
+        unsigned long long totalAmount = density*volume;
+
+
     }
 
 

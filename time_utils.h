@@ -38,8 +38,8 @@ typedef Generator<Engine,GaussianDistribution> GaussianDistributionGenerator;
 
 void printTimespec(timespec*);
 
-UniformDistributionGenerator* getUniformDistributionGenerator(real,real);
-GaussianDistributionGenerator* getGaussianDistributionGenerator(real,real);
+UniformDistributionGenerator* getUniformDistributionGenerator(double,double);
+GaussianDistributionGenerator* getGaussianDistributionGenerator(double,double);
 
 timespec* getTimespecDelta(timespec*,timespec*);
 

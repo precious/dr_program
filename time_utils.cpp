@@ -23,12 +23,12 @@ double getRandom() {
     return (*generator)();
 }
 
-UniformDistributionGenerator* getUniformDistributionGenerator(real min,real max) {
+UniformDistributionGenerator* getUniformDistributionGenerator(double min,double max) {
     static random_device seed;
     return new UniformDistributionGenerator(Engine(seed()),UniformDistribution(min,max));
 }
 
-GaussianDistributionGenerator* getGaussianDistributionGenerator(real M,real D) {
+GaussianDistributionGenerator* getGaussianDistributionGenerator(double M,double D) {
     static random_device seed;
     return new GaussianDistributionGenerator(Engine(seed()),GaussianDistribution(M,D));
 }
