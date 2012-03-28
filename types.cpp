@@ -45,7 +45,6 @@ Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type) {
     PlaneType polygon = object.polygons->at( RAND(object.polygons->size()) );
     Vector step(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
 
-    ////////step = Vector(1,0,0)*( (*electronVelocityGenerator)() ) ; /////////////////
     switch(type) {
     case PTYPE_ELECTRON:
         step = step.normalize()*( (*electronVelocityGenerator)() ) - objectStep;
@@ -62,16 +61,39 @@ Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type) {
         // step = - particleStep - objectStep
     }
 
-    Point p = GeometryUtils::getRandomPointFromTriangle(polygon);
+    // sometimes generated particle's trajectory didn't intersect polygon because of mashine imprecision
+    // in this case we will generate particle secondarily
+    int tmp = 0;
+    Line *tmpLine = NULL;
+    Point p;
+    do {
+        p = GeometryUtils::getRandomPointFromTriangle(polygon);
 
-    // now we should calculate point on sphere were particle will be initially placed
-    // see explanation at page 1 of workbook
-    real a = GeometryUtils::getDistanceBetweenPoints(center,p);
-    double cos = Vector(center,p).cos(step);
-    real step_length = sqrt(a*a*(cos*cos - 1) + radius*radius) - a*cos;
+        // now we should calculate point on sphere were particle will be initially placed
+        // see explanation at page 1 of workbook
+        real a = GeometryUtils::getDistanceBetweenPoints(center,p);
+        double cos = Vector(center,p).cos(step);
+        real step_length = sqrt(a*a*(cos*cos - 1) + radius*radius) - a*cos;
 
-    // now p is point on sphere
-    p = p + step.normalize()*step_length;
+        // now p is point on sphere
+        p = p + step.normalize()*step_length;
+
+        /*static int counter = 0;
+        Line tmp(p,step);//(p + step.normalize()*step_length,Vector(p + step.normalize()*step_length,p).normalize()*step_length);
+        if () {
+            cout << counter++ << ",";
+            cout.flush();
+        }*/
+
+        if (tmpLine != NULL) delete tmpLine;
+        tmpLine = new Line(p,step);
+
+        /*++tmp && */cout << tmp << "," && cout.flush();
+        tmp++;
+    } while(!GeometryUtils::doesLineIntersectTriangle(polygon,*tmpLine));
+    tmp && cout << endl;
+
+    delete tmpLine;
 
     return Particle(p,step);
 }

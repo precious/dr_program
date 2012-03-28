@@ -370,6 +370,7 @@ int main(int argc, char** argv) {
         verboseFlag && PRINT("particles array initialization; memory will be allocated (MB): ");
         verboseFlag && PRINTLN(maxParticlesAmount*sizeof(Particle)/pow(1024.,2));
         int particlesAmount = min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));
+        verboseFlag && PRINTLN(particlesAmount);
         Particle *particlesArray = (Particle*)malloc(maxParticlesAmount*sizeof(Particle));
         assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere) == particlesAmount);
 
