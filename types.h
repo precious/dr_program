@@ -21,7 +21,10 @@ struct Plane;
 struct Vector;
 struct OrientedPlane;
 struct Object3D;
+struct Particle;
+
 typedef OrientedPlane PlaneType;
+typedef pair<Particle,PlaneType*> ParticlePolygon;
 
 extern Point POINT_OF_ORIGIN; // (0,0,0)
 
@@ -158,7 +161,7 @@ struct ThreePoints: public Locus<3> {
     }
     ThreePoints& operator=(const ThreePoints& right) {
         if (this != &right) {
-            memcpy(this->set, right.set, 3*sizeof(Point));
+            memcpy(set, right.set, 3*sizeof(Point));
         }
         return *this;
     }
@@ -229,6 +232,7 @@ public:
     Vector step;
     // real weight;
     Particle operator+(Vector v);
+    Particle operator-(Vector v);
     Particle(): Point(), step()/*, weight(0), ttl(-1)*/ {}
     Particle(Point p, Vector s/*, real w*/): Point(p), step(s)/*, weight(w), ttl(-1)*/ {}
 };
@@ -288,7 +292,8 @@ public:
     }
 
     Particle generateRandomParticle(int);
-    Particle generateParticleWhichIntersectsObject(int);
+    //Particle generateParticleWhichIntersectsObject(int);
+    ParticlePolygon generateParticleWhichIntersectsObject(int);
 };
 
 #endif // TYPES_H

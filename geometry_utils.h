@@ -62,5 +62,7 @@ public:
     static bool doesLineIntersectSphere(Line,Sphere);
 };
 
+typedef GeometryUtils GU;
+
 #endif // GEOMETRY_UTILS_H
 

@@ -20,7 +20,11 @@ Point Point::operator-(Vector v) {
 }
 
 Particle Particle::operator+(Vector v) {
-    return Particle(Point(*this) + v,step/*,weight*/);
+    return Particle(Point(*this) + v,step);
+}
+
+Particle Particle::operator-(Vector v) {
+    return Particle(Point(*this) - v,step);
 }
 
 Plane::Plane(Point p, Vector v):
@@ -41,28 +45,27 @@ Particle GenerativeSphere::generateRandomParticle(int type) {
     return Particle(initialPosition,step);
 }
 
-Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type) {
-    PlaneType polygon = object.polygons->at( RAND(object.polygons->size()) );
-    Vector step(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
+ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type) {
+    PlaneType *polygon = &object.polygons->at(RAND(object.polygons->size()));
+    Vector step;
 
-    ////////step = Vector(1,0,0)*( (*electronVelocityGenerator)() ) ; /////////////////
-    switch(type) {
-    case PTYPE_ELECTRON:
-        step = step.normalize()*( (*electronVelocityGenerator)() ) - objectStep;
-        break;
-    case PTYPE_ION:
-        step = step.normalize()*( (*ionVelocityGenerator)() ) - objectStep;
-        break;
-    }
+    do {
+        step =  Vector(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
+        switch(type) {
+        case PTYPE_ELECTRON:
+            step = step.normalize()*( (*electronVelocityGenerator)() ) - objectStep;
+            break;
+        case PTYPE_ION:
+            step = step.normalize()*( (*ionVelocityGenerator)() ) - objectStep;
+            break;
+        }
+    } while(polygon->getNormal().cos(step) > 0);
 
-    if (polygon.getNormal().cos(step) < 0) {
-        // if now: step = particleStep - objectStep
-        step = step*-1 - objectStep*2;
-        // then after this operation step will be:
-        // step = - particleStep - objectStep
-    }
+    /*if (polygon->getNormal().cos(step) > 0) {
+        cout << "fail" << endl;
+    }*/
 
-    Point p = GeometryUtils::getRandomPointFromTriangle(polygon);
+    Point p = GeometryUtils::getRandomPointFromTriangle(*polygon);
 
     // now we should calculate point on sphere were particle will be initially placed
     // see explanation at page 1 of workbook
@@ -73,7 +76,11 @@ Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type) {
     // now p is point on sphere
     p = p + step.normalize()*step_length;
 
-    return Particle(p,step);
+    /*if (abs(radius- GU::getDistanceBetweenPoints(p,center)) > 0.00001) {
+        cout << "fail" << endl;
+    }*/
+
+    return ParticlePolygon(Particle(p,step),polygon);
 }
 
 void GenerativeSphere::init()

@@ -29,7 +29,7 @@ int step = 30;
 
 Point viewerPosition(0,0,0);
 
-const char usage[] = "Usage:\n\tprogram [-t number][-r radius][-m][-v] <filename>\n";
+const char usage[] = "Usage:\n\tprogram [-t number][-r radius][-m][-v][-d] <filename>\n";
 
 void quit(int code) {
     SDL_Quit();
@@ -140,7 +140,7 @@ int processParticles(Object3D &satelliteObj) {
 void draw(Object3D &satelliteObj)
 {
     static float angle = 0.0f;
-    static GLubyte purple[] = {255,   230, 255,   0 };
+    static GLubyte purple[] = {255,   150, 255,   0 };
     static GLubyte grey[] = {200,200,200,0};
     static GLubyte black[] = {0,0,0,0};
     static GLubyte blue[] = {0,0,255,0};
@@ -170,10 +170,12 @@ void draw(Object3D &satelliteObj)
     }
 
 
+    Vector tmpVector(Point(),viewerPosition);
+
     vector<PlaneType> *coords = satelliteObj.polygons;
     for(vector<PlaneType>::iterator it = coords->begin();it != coords->end();it++) {
         glBegin(GL_LINE_LOOP);
-        glColor4ubv(purple);
+        glColor4ubv(purple);//tmpVector.cos((*it).getNormal()) > 0? black: purple);
         for(int i = 0;i < 3;i++)
             glVertex3d((*it).set[i].x,(*it).set[i].y,(*it).set[i].z);
         /*    if (tempVector->cos((*it).normal) < 0)
@@ -207,6 +209,7 @@ void draw(Object3D &satelliteObj)
 
     glBegin(GL_LINES);
     glColor4ubv(grey);
+    tempLine = new Line(Point(),viewerPosition);
     glVertex3d(tempLine->a.x,tempLine->a.y,tempLine->a.z);
     glVertex3d(tempLine->b.x,tempLine->b.y,tempLine->b.z);
     glEnd();
@@ -220,9 +223,9 @@ void setupOpenGL(int width, int height,Point &maxObjCoords) {
 
     glShadeModel(GL_SMOOTH);
 
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
-    glEnable(GL_CULL_FACE);
+   /////// glCullFace(GL_BACK);
+   /////// glFrontFace(GL_CCW);
+   /////// glEnable(GL_CULL_FACE);
 
     glViewport(0, 0, width, height);
 
@@ -241,7 +244,7 @@ void setupOpenGL(int width, int height,Point &maxObjCoords) {
               maxObjCoords.y,
               3*maxObjCoords.z,
               1.0);*/
-    gluPerspective(40,ratio,1.0,6*maxObjCoords.z);
+    gluPerspective(35,ratio,/*1.0*/-10,3*maxObjCoords.z); /////////////// 40
     viewerPosition.z = -5*maxObjCoords.z;
     ///cout << max(viewerPosition.z - maxObjCoords.z,1.0) << endl;
     ///cout << max(viewerPosition.z + maxObjCoords.z,2.0) << endl;
@@ -259,32 +262,39 @@ int initRandomParticles(Particle *particlesArray,int count,GenerativeSphere gene
     return n;
 }
 
-int initParticlesWhichIntersectsObject(Particle *particlesArray,int count,GenerativeSphere &generativeSphere) {
+int initParticlesWhichIntersectsObject(ParticlePolygon *particlesArray,int count,GenerativeSphere &generativeSphere) {
     int n;
+    ParticlePolygon tmp(Particle(),NULL);
     for(n = 0;n < count;++n) {
-        particlesArray[n] =
-                generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON);
+        tmp = generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON);
+        memcpy(particlesArray + n,&tmp,sizeof(ParticlePolygon));
     }
     return n;
 }
 
 int main(int argc, char** argv) {
+    srand(time(NULL));
     cout.precision(16);
     cout.setf(ios::fixed, ios::floatfield);
+
     // process arguments
     int c;
     bool modelingFlag = false;
     bool verboseFlag = false;
+    bool drawFlag = false;
     char *filename = NULL;
     int testProbabilityCount = -1;
     int generativeSphereRadius = -1;
-    while ((c = getopt (argc, argv, ":mvt:r:")) != -1) {
+    while ((c = getopt (argc, argv, ":mvdt:r:")) != -1) {
         switch(c) {
         case 't':
             testProbabilityCount = atoi(optarg);
             break;
         case 'r':
             generativeSphereRadius = atoi(optarg);
+            break;
+        case 'd':
+            drawFlag = true;
             break;
         case 'v':
             verboseFlag = true;
@@ -370,32 +380,59 @@ int main(int argc, char** argv) {
         verboseFlag && PRINT("particles array initialization; memory will be allocated (MB): ");
         verboseFlag && PRINTLN(maxParticlesAmount*sizeof(Particle)/pow(1024.,2));
         int particlesAmount = min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));
-        Particle *particlesArray = (Particle*)malloc(maxParticlesAmount*sizeof(Particle));
+        ParticlePolygon *particlesArray = (ParticlePolygon*)malloc(maxParticlesAmount*sizeof(ParticlePolygon));
         assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere) == particlesAmount);
 
         verboseFlag && PRINTLN("searching for fastest particle");
-        Particle fastestParticle2 = DataUtils::reduce<Particle*,Particle>(
-                    [](Particle p1,Particle p2) -> Particle& {return (p2.step.length() > p1.step.length())? p2: p1;},
+        ParticlePolygon fastestPP = DU::reduce<ParticlePolygon*,ParticlePolygon>(
+                    [](ParticlePolygon &p1,ParticlePolygon &p2) -> ParticlePolygon&
+        {return (p2.first.step.length() > p1.first.step.length())? p2: p1;},
+        particlesArray,particlesAmount);
+        verboseFlag && cout << "fastest particle speed: " << fastestPP.first.step.length() << endl;
+
+        double distanceStep = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
+                                                                    satelliteObj.furthermostPoint)/10.0;
+        double timeStep = distanceStep/ELECTRON_VELOCITY; // time to pass 1/10 of object for particle with average velocity
+
+        verboseFlag && PRINTLN("decreasing distance to object for all particles");      
+        // time during the fastest particle will reach object
+        double distanceDelta = GU::getDistanceBetweenPoints(fastestPP.first,
+                                                            GU::getPlaneAndLineIntersection(*fastestPP.second,
+                                                                                            Line(fastestPP.first,fastestPP.first.step)));
+        double timeDelta = (distanceDelta - 5*distanceStep)/fastestPP.first.step.length();
+        verboseFlag && cout << "distanceDelta: " << distanceDelta << endl;
+        verboseFlag && cout << "timeDelta: " << timeDelta << endl;
+
+        cout << "0 p: "  << particlesArray[0].first << endl;
+        DU::map<ParticlePolygon*,ParticlePolygon>(
+                    [timeDelta](ParticlePolygon &pp) -> void {pp.first = pp.first + pp.first.step*timeDelta;},
                     particlesArray,particlesAmount);
-
-        verboseFlag && PRINTLN("decreasing distance to object for all particles");
-        double stepLength = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
-                                                                  satelliteObj.furthermostPoint)/10.0;
-        double timeInterval = stepLength/ELECTRON_VELOCITY; // time to pass 1/10 of object for particle with average velocity
-
-        /// TODO -- see geometry utils
-        ///// double timeDelta = GeometryUtils::getDistanceBetweenPoints(satelliteObj.fastestParticleStep
-
-        cout << "stepLength: " << stepLength << endl;
-        cout << "timeInterval: " << timeInterval << endl;
-
-        // static bool firstTime = true;
-
-        // static vector<Particle> particles(count);
+        cout << "0 p: "  << particlesArray[0].first << endl;
 
 
+///////////////////////////////////////////
+        fastestPP = DU::reduce<ParticlePolygon*,ParticlePolygon>(
+                            [](ParticlePolygon &p1,ParticlePolygon &p2) -> ParticlePolygon&
+                {return (p2.first.step.length() > p1.first.step.length())? p2: p1;},
+                particlesArray,particlesAmount);
+                    verboseFlag && cout << "fastest particle speed: " << fastestPP.first.step.length() << endl;
+                    distanceDelta = GU::getDistanceBetweenPoints(fastestPP.first,
+                                                                                GU::getPlaneAndLineIntersection(*fastestPP.second,
+                                                                                                                Line(fastestPP.first,fastestPP.first.step)));
+                    verboseFlag && cout << "distanceDelta: " << distanceDelta << endl;
+////////////////////////////////////////////
 
-        /*Particle fastestParticle = GeometryUtils::getFastestParticle(particles,satelliteObj->center(),
+
+        cout << "distanceStep: " << distanceStep << endl;
+        cout << "timeStep: " << timeStep << endl;
+
+    // static bool firstTime = true;
+
+    // static vector<Particle> particles(count);
+
+
+
+    /*Particle fastestParticle = GeometryUtils::getFastestParticle(particles,satelliteObj->center(),
                                     [satelliteObj](Particle p) -> bool {
                                         return GeometryUtils::doesParticlesTrajectoryIntersectObject(p,*satelliteObj);
                                     });
@@ -405,14 +442,14 @@ int main(int argc, char** argv) {
         else
             return 1;*/
 
-        /*cout << "fastest: " << fastestParticle << endl;
+    /*cout << "fastest: " << fastestParticle << endl;
         cout << "center: " << satelliteObj->center() << endl;
         real time = Vector(fastestParticle,satelliteObj->center()).length() / fastestParticle.step.length();
         cout << "time: " << time << endl;*/
 
         free(particlesArray);
 
-        /*double tmp;
+    /*double tmp;
         for(int i = 0; i < 15;++i) {
             tmp = (*particlesAmountRateGenerator)();
             cout << tmp << "  " << tmp*totalAmount << "  " << tmp*totalAmount/pow(1024.0,2) << endl;
@@ -420,77 +457,65 @@ int main(int argc, char** argv) {
 
     }
 
+    if (drawFlag) {
+    cout << "polygons: " << satelliteObj.polygons->size() << endl;
+    cout << "center: " << satelliteObj.center << endl;
+    cout << "radius: " << satelliteObj.radius << endl;
+        if(SDL_Init(SDL_INIT_VIDEO) < 0) {
+            cerr << "Video initialization failed: " << SDL_GetError() << endl;
+            quit(1);
+        }
 
+        const SDL_VideoInfo* info = NULL;
+        info = SDL_GetVideoInfo( );
+        if(!info) {
+            cerr << "Getting video info failed: " << SDL_GetError() << endl;
+            quit(1);
+        }
 
-  /*  int n = initParticlesWhichIntersectsObject(particlesArray,memSize,generativeSphere);
-    cout << n << endl;
-    int num = 0;
-    n = 1000;/////////////////
-    for(int j = 0;j < n;++j) {
-        if (GeometryUtils::doesParticlesTrajectoryIntersectObject(particlesArray[j],satelliteObj))
-            ++num;
-        if (j % 1000 == 0)
-            cout << j << endl;
-    }
+       SDL_GL_SetAttribute(SDL_GL_RED_SIZE,5);
+       SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,5);
+       SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,5);
+       SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,16);
+       SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
 
-    cout << num << "/" << n << "=" << float(num)/n << endl;
-*/
+       int width = 640;
+       int height = 480;
+       int bitsPerPixel = info->vfmt->BitsPerPixel;
+       int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_ASYNCBLIT | SDL_RESIZABLE;
+       if(SDL_SetVideoMode(width,height,bitsPerPixel,flags) == 0) {
+           cerr << "Setting video mode failed: " << SDL_GetError() << endl;
+           quit(1);
+       }
+       // set appropriate OpenGL properties
+       setupOpenGL(width,height,satelliteObj.maxCoords);
 
-    srand(time(NULL));
-    /*if(SDL_Init(SDL_INIT_VIDEO) < 0) {
-        cerr << "Video initialization failed: " << SDL_GetError() << endl;
-        quit(1);
-    }
+    /*   cout << "size of Particle: " << sizeof(Particle) << endl;
+          cout << "size of Point: " << sizeof(Point) << endl;
+          cout << "size of Vector: " << sizeof(Vector) << endl;*/
 
-    const SDL_VideoInfo* info = NULL;
-    info = SDL_GetVideoInfo( );
-    if(!info) {
-        cerr << "Getting video info failed: " << SDL_GetError() << endl;
-        quit(1);
-    }
-
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE,5);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,5);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,5);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,16);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
-
-    int width = 640;
-    int height = 480;
-    int bitsPerPixel = info->vfmt->BitsPerPixel;
-    int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_ASYNCBLIT | SDL_RESIZABLE;
-    if(SDL_SetVideoMode(width,height,bitsPerPixel,flags) == 0) {
-        cerr << "Setting video mode failed: " << SDL_GetError() << endl;
-        quit(1);
-    }
-    // set appropriate OpenGL properties
-    setupOpenGL(width,height,satelliteObj->maxCoords);*/
-
- /*   cout << "size of Particle: " << sizeof(Particle) << endl;
-    cout << "size of Point: " << sizeof(Point) << endl;
-    cout << "size of Vector: " << sizeof(Vector) << endl;*/
-
-    int count = 0;
+        int count = 0;
     //while(!processParticles(satelliteObj)) cout << ++count << endl;////////////////////////////////////////
     //processParticles(satelliteObj);
     //////////processParticles(satelliteObj);
 
     /*Plane p(Point(0,0,0),Point(1,0,0),Point(0,1,0));
-    Line l(Point(2,2,2),Point(2,2,-2));
-    cout << "----------" << endl;
-    cout << GeometryUtils::getPlaneAndLineIntersection(p,l) << endl;
-    cout << GeometryUtils::getPlaneAndLineIntersection2(p,l) << endl;
+          Line l(Point(2,2,2),Point(2,2,-2));
+          cout << "----------" << endl;
+          cout << GeometryUtils::getPlaneAndLineIntersection(p,l) << endl;
+          cout << GeometryUtils::getPlaneAndLineIntersection2(p,l) << endl;
 
-    cout << GeometryUtils::getPointOnLineProjection(l,Point()) << endl;*/
+          cout << GeometryUtils::getPointOnLineProjection(l,Point()) << endl;*/
 
 
     // main program loop
-    /*while(true) {
-        processEvents();
-        draw(satelliteObj);
-        usleep(sleepTime);
-    }*/
+        while(true) {
+            processEvents();
+            draw(satelliteObj);
+            usleep(sleepTime);
+        }
+    }
 
-    return 0;
+return 0;
 }
 
