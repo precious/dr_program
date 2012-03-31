@@ -381,6 +381,7 @@ int main(int argc, char** argv) {
         verboseFlag && PRINTLN(maxParticlesAmount*sizeof(Particle)/pow(1024.,2));
         int particlesAmount = min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));
         ParticlePolygon *particlesArray = (ParticlePolygon*)malloc(maxParticlesAmount*sizeof(ParticlePolygon));
+        verboseFlag && PRINTLN(particlesAmount);
         assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere) == particlesAmount);
 
         verboseFlag && PRINTLN("searching for fastest particle");

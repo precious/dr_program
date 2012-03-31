@@ -61,6 +61,7 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
         }
     } while(polygon->getNormal().cos(step) > 0);
 
+
     /*if (polygon->getNormal().cos(step) > 0) {
         cout << "fail" << endl;
     }*/
