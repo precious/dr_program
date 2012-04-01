@@ -23,16 +23,22 @@ vector<PlaneType>* getCoordinatesFromFile(char *filename) {
                 if (!fileInputStream.eof())
                     fileInputStream.clear();
                 break;
-            } else {
+            } /*else {
                 tempThreePoints->set[i].x *= SCALE;
                 tempThreePoints->set[i].y *= SCALE;
                 tempThreePoints->set[i].z *= SCALE;
-            }
+            }*/
         }
 
         // if all values have been read successfuly then push array to result list
-        if (i == 3)
+        if (i == 3) {
             coordinatesList->push_back(PlaneType(*tempThreePoints));
+            for (i = 0;i < 3;i++) {
+                coordinatesList->back().set[i].x *= SCALE;
+                coordinatesList->back().set[i].y *= SCALE;
+                coordinatesList->back().set[i].z *= SCALE;
+            }
+        }
         // then delete it
         delete tempThreePoints;
         // scipping remaining characters in current string

@@ -266,7 +266,7 @@ int initParticlesWhichIntersectsObject(ParticlePolygon *particlesArray,int count
     int n;
     ParticlePolygon tmp(Particle(),NULL);
     for(n = 0;n < count;++n) {
-        tmp = generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON);
+        tmp = generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON,false);
         memcpy(particlesArray + n,&tmp,sizeof(ParticlePolygon));
     }
     return n;
@@ -369,7 +369,7 @@ int main(int argc, char** argv) {
         const int density = 200000; // density is 0.2 cm^-3
         const float volume = 4.0/3*M_PI*pow(generativeSphereRadius,3);
         const unsigned long long totalAmount = density*volume;
-        // see explanation in workbook, page 1
+        // see explanation in draft, page 1
         const int maxParticlesAmount = (a + 4*sigma)*totalAmount;
 
         /*GaussianDistributionGenerator *electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
@@ -392,7 +392,7 @@ int main(int argc, char** argv) {
         verboseFlag && cout << "fastest particle speed: " << fastestPP.first.step.length() << endl;
 
         double distanceStep = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
-                                                                    satelliteObj.furthermostPoint)/10.0;
+                                                                    satelliteObj.furthermostPoint)/2.;
         double timeStep = distanceStep/ELECTRON_VELOCITY; // time to pass 1/10 of object for particle with average velocity
 
         verboseFlag && PRINTLN("decreasing distance to object for all particles");      
@@ -401,56 +401,42 @@ int main(int argc, char** argv) {
                                                             GU::getPlaneAndLineIntersection(*fastestPP.second,
                                                                                             Line(fastestPP.first,fastestPP.first.step)));
         double timeDelta = (distanceDelta - 5*distanceStep)/fastestPP.first.step.length();
-        verboseFlag && cout << "distanceDelta: " << distanceDelta << endl;
-        verboseFlag && cout << "timeDelta: " << timeDelta << endl;
 
-        cout << "0 p: "  << particlesArray[0].first << endl;
+        verboseFlag && cout << "distanceDelta: " << distanceDelta << endl;//////////
+        verboseFlag && cout << "timeDelta: " << timeDelta << endl;/////////////
+
         DU::map<ParticlePolygon*,ParticlePolygon>(
                     [timeDelta](ParticlePolygon &pp) -> void {pp.first = pp.first + pp.first.step*timeDelta;},
                     particlesArray,particlesAmount);
-        cout << "0 p: "  << particlesArray[0].first << endl;
 
-
-///////////////////////////////////////////
-        fastestPP = DU::reduce<ParticlePolygon*,ParticlePolygon>(
-                            [](ParticlePolygon &p1,ParticlePolygon &p2) -> ParticlePolygon&
-                {return (p2.first.step.length() > p1.first.step.length())? p2: p1;},
-                particlesArray,particlesAmount);
-                    verboseFlag && cout << "fastest particle speed: " << fastestPP.first.step.length() << endl;
-                    distanceDelta = GU::getDistanceBetweenPoints(fastestPP.first,
-                                                                                GU::getPlaneAndLineIntersection(*fastestPP.second,
-                                                                                                                Line(fastestPP.first,fastestPP.first.step)));
-                    verboseFlag && cout << "distanceDelta: " << distanceDelta << endl;
-////////////////////////////////////////////
-
+                    ///////////////////////////////////////////
+                            fastestPP = DU::reduce<ParticlePolygon*,ParticlePolygon>(
+                                                [](ParticlePolygon &p1,ParticlePolygon &p2) -> ParticlePolygon&
+                                    {return (p2.first.step.length() > p1.first.step.length())? p2: p1;},
+                                    particlesArray,particlesAmount);
+                                        verboseFlag && cout << "fastest particle speed: " << fastestPP.first.step.length() << endl;
+                                       distanceDelta = GU::getDistanceBetweenPoints(fastestPP.first,
+                                                                                                    GU::getPlaneAndLineIntersection(*fastestPP.second,
+                                                                                                                                    Line(fastestPP.first,fastestPP.first.step)));
+                                        verboseFlag && cout << "distanceDelta: " << distanceDelta << endl;
+                    ////////////////////////////////////////////
 
         cout << "distanceStep: " << distanceStep << endl;
         cout << "timeStep: " << timeStep << endl;
 
-    // static bool firstTime = true;
+      //static bool firstTime = true;
 
-    // static vector<Particle> particles(count);
+      //static vector<Particle> particles(count);
 
 
-
-    /*Particle fastestParticle = GeometryUtils::getFastestParticle(particles,satelliteObj->center(),
-                                    [satelliteObj](Particle p) -> bool {
-                                        return GeometryUtils::doesParticlesTrajectoryIntersectObject(p,*satelliteObj);
-                                    });
-        if (fastestParticle == Point()) {
-            return 0;
-        }
-        else
-            return 1;*/
-
-    /*cout << "fastest: " << fastestParticle << endl;
+      /*cout << "fastest: " << fastestParticle << endl;
         cout << "center: " << satelliteObj->center() << endl;
         real time = Vector(fastestParticle,satelliteObj->center()).length() / fastestParticle.step.length();
         cout << "time: " << time << endl;*/
 
         free(particlesArray);
 
-    /*double tmp;
+      /*double tmp;
         for(int i = 0; i < 15;++i) {
             tmp = (*particlesAmountRateGenerator)();
             cout << tmp << "  " << tmp*totalAmount << "  " << tmp*totalAmount/pow(1024.0,2) << endl;

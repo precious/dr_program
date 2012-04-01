@@ -23,6 +23,10 @@ double getRandom() {
     return (*generator)();
 }
 
+double getRandom(double left,double right) {
+    return getRandom()*(right - left) + left;
+}
+
 UniformDistributionGenerator* getUniformDistributionGenerator(double min,double max) {
     static random_device seed;
     return new UniformDistributionGenerator(Engine(seed()),UniformDistribution(min,max));

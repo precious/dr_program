@@ -1,4 +1,5 @@
 #include "types.h"
+#include <assert.h>
 
 Point POINT_OF_ORIGIN = Point(0,0,0);
 
@@ -45,43 +46,56 @@ Particle GenerativeSphere::generateRandomParticle(int type) {
     return Particle(initialPosition,step);
 }
 
-ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type) {
+ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type,bool isParticleOnSphere = false) {
     PlaneType *polygon = &object.polygons->at(RAND(object.polygons->size()));
-    Vector step;
+    Vector s(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5); // step
+    Vector n = polygon->getNormal();
+    velocity particleSpeed;
 
-    do {
-        step =  Vector(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
-        switch(type) {
-        case PTYPE_ELECTRON:
-            step = step.normalize()*( (*electronVelocityGenerator)() ) - objectStep;
-            break;
-        case PTYPE_ION:
-            step = step.normalize()*( (*ionVelocityGenerator)() ) - objectStep;
-            break;
-        }
-    } while(polygon->getNormal().cos(step) > 0);
+    // !!! - objectStep
 
+    switch(type) {
+    case PTYPE_ELECTRON:
+        particleSpeed = ( (*electronVelocityGenerator)() );
+        break;
+    case PTYPE_ION:
+        particleSpeed = ( (*ionVelocityGenerator)() );
+        break;
+    }
 
-    /*if (polygon->getNormal().cos(step) > 0) {
-        cout << "fail" << endl;
-    }*/
+    // see explanation at page 2 of draft
+    s = s.normalize()*max(particleSpeed,1 - object.speed*n.cos(objectStep));
+    double cos = getRandom(-1,object.speed*n.cos(objectStep)/s.length());
+    if (n.x != 0) {
+        s.x = (cos*s.length()*n.length() - s.z*n.z - s.y*n.y)/n.x;
+    } else if (n.y != 0) {
+        s.y = (cos*s.length()*n.length() - s.x*n.x - s.z*n.z)/n.y;
+    } else {
+        s.z = (cos*s.length()*n.length() - s.x*n.x - s.y*n.y)/n.z;
+    }
 
     Point p = GeometryUtils::getRandomPointFromTriangle(*polygon);
 
-    // now we should calculate point on sphere were particle will be initially placed
-    // see explanation at page 1 of workbook
-    real a = GeometryUtils::getDistanceBetweenPoints(center,p);
-    double cos = Vector(center,p).cos(step);
-    real step_length = sqrt(a*a*(cos*cos - 1) + radius*radius) - a*cos;
+    if (isParticleOnSphere) {
+        // now we should calculate point on sphere were particle will be initially placed
+        // see explanation at page 1 of draft
+        real a = GeometryUtils::getDistanceBetweenPoints(center,p);
+        cos = Vector(center,p).cos(s);
+        real step_length = sqrt(a*a*(cos*cos - 1) + radius*radius) + a*cos;
 
-    // now p is point on sphere
-    p = p + step.normalize()*step_length;
+        // now p is point on sphere
+        p = p - s.normalize()*step_length;
 
-    /*if (abs(radius- GU::getDistanceBetweenPoints(p,center)) > 0.00001) {
-        cout << "fail" << endl;
-    }*/
+        if (abs(radius- GU::getDistanceBetweenPoints(p,center)) > 0.00001) {
+            cout << "fail" << endl;
+        }/////////////////////////////////
+    } else {
+        // see explanation at page 5 of draft
+        real distanceBetweenParticleAndPolygon = sqrt(getRandom(object.radius,radius)*radius);
+        p = p - s.normalize()*distanceBetweenParticleAndPolygon;
+    }
 
-    return ParticlePolygon(Particle(p,step),polygon);
+    return ParticlePolygon(Particle(p,s),polygon);
 }
 
 void GenerativeSphere::init()

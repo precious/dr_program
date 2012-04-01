@@ -45,6 +45,8 @@ timespec* getTimespecDelta(timespec*,timespec*);
 
 double getRandom();
 
+double getRandom(double,double);
+
 
 
 #endif // TIME_UTILS_H

@@ -293,7 +293,7 @@ public:
 
     Particle generateRandomParticle(int);
     //Particle generateParticleWhichIntersectsObject(int);
-    ParticlePolygon generateParticleWhichIntersectsObject(int);
+    ParticlePolygon generateParticleWhichIntersectsObject(int,bool);
 };
 
 #endif // TYPES_H
