@@ -372,11 +372,6 @@ int main(int argc, char** argv) {
         // see explanation in draft, page 1
         const int maxParticlesAmount = (a + 4*sigma)*totalAmount;
 
-        /*GaussianDistributionGenerator *electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/3.0);
-        for(int i = 0;i < 30;++i) {
-            PRINTLN((*electronVelocityGenerator)());
-        }*/
-
         verboseFlag && PRINT("particles array initialization; memory will be allocated (MB): ");
         verboseFlag && PRINTLN(maxParticlesAmount*sizeof(Particle)/pow(1024.,2));
         int particlesAmount = min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));
@@ -402,24 +397,9 @@ int main(int argc, char** argv) {
                                                                                             Line(fastestPP.first,fastestPP.first.step)));
         double timeDelta = (distanceDelta - 5*distanceStep)/fastestPP.first.step.length();
 
-        verboseFlag && cout << "distanceDelta: " << distanceDelta << endl;//////////
-        verboseFlag && cout << "timeDelta: " << timeDelta << endl;/////////////
-
         DU::map<ParticlePolygon*,ParticlePolygon>(
                     [timeDelta](ParticlePolygon &pp) -> void {pp.first = pp.first + pp.first.step*timeDelta;},
                     particlesArray,particlesAmount);
-
-                    ///////////////////////////////////////////
-                            fastestPP = DU::reduce<ParticlePolygon*,ParticlePolygon>(
-                                                [](ParticlePolygon &p1,ParticlePolygon &p2) -> ParticlePolygon&
-                                    {return (p2.first.step.length() > p1.first.step.length())? p2: p1;},
-                                    particlesArray,particlesAmount);
-                                        verboseFlag && cout << "fastest particle speed: " << fastestPP.first.step.length() << endl;
-                                       distanceDelta = GU::getDistanceBetweenPoints(fastestPP.first,
-                                                                                                    GU::getPlaneAndLineIntersection(*fastestPP.second,
-                                                                                                                                    Line(fastestPP.first,fastestPP.first.step)));
-                                        verboseFlag && cout << "distanceDelta: " << distanceDelta << endl;
-                    ////////////////////////////////////////////
 
         cout << "distanceStep: " << distanceStep << endl;
         cout << "timeStep: " << timeStep << endl;

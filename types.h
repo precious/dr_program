@@ -230,11 +230,11 @@ private:
 struct Particle: public Point {
 public:
     Vector step;
-    // real weight;
+    real ttl;
     Particle operator+(Vector v);
     Particle operator-(Vector v);
-    Particle(): Point(), step()/*, weight(0), ttl(-1)*/ {}
-    Particle(Point p, Vector s/*, real w*/): Point(p), step(s)/*, weight(w), ttl(-1)*/ {}
+    Particle(): Point(), step(), ttl(-1) {}
+    Particle(Point p, Vector s,real ttl_ = -1): Point(p), step(s), ttl(ttl_) {}
 };
 
 struct Sphere {
