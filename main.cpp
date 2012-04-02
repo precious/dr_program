@@ -1,6 +1,3 @@
-#include <SDL/SDL.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <unistd.h>
 #include <cmath>
 #include <algorithm>
@@ -11,30 +8,31 @@
 #include <assert.h>
 
 #include "types.h"
-#include "read_file.h"
+#include "file_utils.h"
 #include "geometry_utils.h"
 #include "constants.h"
 #include "data_utils.h"
+#include "graphics_utils.h"
 
-#define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; exit(1); }
+#define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; quit(1); }
 #define rand(max) rand()%max
 #define PRINTLN(arg) cout << arg << endl;
 #define PRINT(arg) cout << arg && cout.flush();
+#define COUT(args) cout << args << endl;
 
 
 static GLboolean should_rotate = GL_FALSE;
-Line *tempLine;
-Vector *tempVector;
-int step = 30;
+//Line *tempLine;
+//Vector *tempVector;
+//int step = 30;
 
-Point viewerPosition(0,0,0);
-
-const char usage[] = "Usage:\n\tprogram [-t number][-r radius][-m][-v][-d] <filename>\n";
-
-void quit(int code) {
-    SDL_Quit();
-    exit(code);
-}
+const char usage[] = "Usage:\n\tprogram [-t number][-r radius][-m][-v][-d][-l] <filename>\n\
+        -t NUMBER - test probabilty with number of particles NUMBER\n\
+        -r RADIUS - radius of generative sphere\n\
+        -m - model particles\n\
+        -v - verbose mode\n\
+        -d - draw (requires also -d option)\n\
+        -l - run mainloop";
 
 static void handleKeyDown(SDL_keysym* keysym)
 {
@@ -49,34 +47,34 @@ static void handleKeyDown(SDL_keysym* keysym)
     case SDLK_KP_PLUS:
     case SDLK_PLUS:
         //viewerPosition.z += 20;
-        tempLine->a.z += step;
-        tempLine->b.z += step;
+        //tempLine->a.z += step;
+        //tempLine->b.z += step;
         break;
     case SDLK_KP_MINUS:
     case SDLK_MINUS:
         //viewerPosition.z -= 20;
-        tempLine->a.z -= step;
-        tempLine->b.z -= step;
+        //tempLine->a.z -= step;
+        //tempLine->b.z -= step;
         break;
     case SDLK_UP:
         cout << "up" << endl;
-        tempLine->a.y += step;
-        tempLine->b.y += step;
+        //tempLine->a.y += step;
+        //tempLine->b.y += step;
         break;
     case SDLK_DOWN:
         cout << "down" << endl;
-        tempLine->a.y -= step;
-        tempLine->b.y -= step;
+        //tempLine->a.y -= step;
+        //tempLine->b.y -= step;
         break;
     case SDLK_LEFT:
         cout << "left" << endl;
-        tempLine->a.x -= step;
-        tempLine->b.x -= step;
+        //tempLine->a.x -= step;
+        //tempLine->b.x -= step;
         break;
     case SDLK_RIGHT:
         cout << "right" << endl;
-        tempLine->a.x += step;
-        tempLine->b.x += step;
+        //tempLine->a.x += step;
+        //tempLine->b.x += step;
         break;
     default:
         break;
@@ -141,14 +139,18 @@ void processParticlesWhichIntersectObject(ParticlePolygon *particlesArray,int &c
         particlesArray[i].first = particlesArray[i].first + particlesArray[i].first.step*timeStep;
         particlesArray[i].first.ttl -= timeStep;
     }
-    /*for(int i = 0;i < count && count > 2;) {
+    // checking all particlees including he last one
+    for(int i = 0;i < count - 1;) {
         if (particlesArray[i].first.ttl <= 0) {
             memcpy(particlesArray + i,particlesArray + count - 1,sizeof(ParticlePolygon));
             --count;
         } else {
             ++i;
         }
-    }*/
+    }
+    // checking the last particle
+    if (count > 0 && particlesArray[count - 1].first.ttl <= 0)
+        --count;
 }
 
 
@@ -244,68 +246,6 @@ void draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NULL,int part
     SDL_GL_SwapBuffers();
 }
 
-
-void setupGraphics(int width, int height,Point &maxObjCoords) {
-    if(SDL_Init(SDL_INIT_VIDEO) < 0) {
-        cerr << "Video initialization failed: " << SDL_GetError() << endl;
-        quit(1);
-    }
-
-    const SDL_VideoInfo* info = NULL;
-    info = SDL_GetVideoInfo( );
-    if(!info) {
-        cerr << "Getting video info failed: " << SDL_GetError() << endl;
-        quit(1);
-    }
-
-   SDL_GL_SetAttribute(SDL_GL_RED_SIZE,5);
-   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,5);
-   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,5);
-   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,16);
-   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
-
-   int bitsPerPixel = info->vfmt->BitsPerPixel;
-   int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_ASYNCBLIT | SDL_RESIZABLE;
-   if(SDL_SetVideoMode(width,height,bitsPerPixel,flags) == 0) {
-       cerr << "Setting video mode failed: " << SDL_GetError() << endl;
-       quit(1);
-   }
-
-    float ratio = (float)width/(float)height;
-
-    glShadeModel(GL_SMOOTH);
-
-   glCullFace(GL_BACK);
-   glFrontFace(GL_CCW);
-   glEnable(GL_CULL_FACE);
-
-    glViewport(0, 0, width, height);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    /// TODO find max Z coord and set is as last argument in this func
-    //gluPerspective(150.0, ratio, 1.0, 5000.0);
-
-    /*double maxObjSize = 3000.0;
-    double objHeight = (height > width)? maxObjSize : maxObjSize*height/width;
-    double objWidth = (width > height)? maxObjSize : maxObjSize*width/height;*/
-    /*glFrustum(-maxObjCoords.x,
-              maxObjCoords.x,
-              -maxObjCoords.y,
-              maxObjCoords.y,
-              3*maxObjCoords.z,
-              1.0);*/
-    gluPerspective(45,ratio,1.0,30*maxObjCoords.z); /////////////// 40
-    viewerPosition.z = -20*maxObjCoords.z;
-    ///cout << max(viewerPosition.z - maxObjCoords.z,1.0) << endl;
-    ///cout << max(viewerPosition.z + maxObjCoords.z,2.0) << endl;
-    //glOrtho(-objWidth/2,objWidth/2,-objHeight/2,objHeight/2,1.0,5000.0);
-    tempLine = //new Line(Point(-maxObjCoords.x,0,maxObjCoords.z),Point(maxObjCoords.x,0,maxObjCoords.z));
-            new Line(viewerPosition,Point(100,12,33));
-    tempVector = new Vector(tempLine->b,tempLine->a);
-}
-
 int initRandomParticles(Particle *particlesArray,int count,GenerativeSphere generativeSphere) {
     int n;
     for(n = 0;n < count;++n) {
@@ -334,11 +274,14 @@ int main(int argc, char** argv) {
     bool modelingFlag = false;
     bool verboseFlag = false;
     bool drawFlag = false;
+    bool testModeFlag = false;
+    bool mainloopFlag = false;
     char *filename = NULL;
     int testProbabilityCount = -1;
     int generativeSphereRadius = -1;
-    int testModeFlag = false;
-    while ((c = getopt (argc, argv, ":mvdxt:r:")) != -1) {
+
+
+    while ((c = getopt (argc, argv, ":mvdlxt:r:")) != -1) {
         switch(c) {
         case 't':
             testProbabilityCount = atoi(optarg);
@@ -357,6 +300,9 @@ int main(int argc, char** argv) {
             break;
         case 'x':
             testModeFlag = true;
+            break;
+        case 'l':
+            mainloopFlag = true;
             break;
         case '?':
         default:
@@ -389,7 +335,7 @@ int main(int argc, char** argv) {
         verboseFlag && PRINTLN("memory allocation");
         Particle *particlesArray = (Particle*)calloc(testProbabilityCount,sizeof(Particle));
 
-        verboseFlag && cout << "memory usage: " << testProbabilityCount*sizeof(Particle)/(1024*1024.0) << " MB" << endl;
+        verboseFlag && COUT("memory usage: " << testProbabilityCount*sizeof(Particle)/(1024*1024.0) << " MB");
         verboseFlag && PRINTLN("particles generation");
         int n = initRandomParticles(particlesArray,testProbabilityCount,generativeSphere);
         assert(n == testProbabilityCount);
@@ -402,11 +348,11 @@ int main(int argc, char** argv) {
             verboseFlag && (!(j%(n/20 + 1))) && PRINT('.');
         }
         verboseFlag && PRINTLN("");
-        if (verboseFlag)
-            cout << "percentage: " << intersectionsCounter << "/" << n
-                 << " = " << intersectionsCounter/double(n)*100 << '%' << endl;
-        else
+        if (verboseFlag) {
+            COUT("percentage: " << intersectionsCounter << "/" << n << " = " << intersectionsCounter/double(n)*100 << '%');
+        } else {
             cout << intersectionsCounter/double(n) << endl;
+        }
         free(particlesArray);
     }
 
@@ -414,13 +360,13 @@ int main(int argc, char** argv) {
     ParticlePolygon *particlesArray = NULL;
     int particlesAmount = 0;
     double timeStep = 0;
+    GaussianDistributionGenerator *particlesAmountRateGenerator = NULL;
     if (modelingFlag) {
         // for generating count of particles that intersects object
         // parameters for generator obtained using script test_intersections.sh
         // see also results of this script in freq.ods
         double a = 0.00001;//0.0001608266666667; //0.0000874633333333;
         double sigma = 0.0000080581883820; //0.0000049781511517;
-
 
         GaussianDistributionGenerator *particlesAmountRateGenerator = getGaussianDistributionGenerator(a,sigma);
 
@@ -431,19 +377,19 @@ int main(int argc, char** argv) {
         // see explanation in draft, page 1
         const int maxParticlesAmount = (a + 4*sigma)*totalAmount;
 
-        verboseFlag && PRINT("particles array initialization; memory will be allocated (MB): ");
-        verboseFlag && PRINTLN(maxParticlesAmount*sizeof(Particle)/pow(1024.,2));
+        verboseFlag && PRINTLN("particles array initialization...");
+        verboseFlag && COUT("(memory will be allocated: " << maxParticlesAmount*sizeof(Particle)/pow(1024.,2) << " MB)");
         particlesAmount = min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));
         particlesArray = (ParticlePolygon*)malloc(maxParticlesAmount*sizeof(ParticlePolygon));
         verboseFlag && PRINTLN(particlesAmount);
         assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere) == particlesAmount);
 
-        verboseFlag && PRINTLN("searching for fastest particle");
+        verboseFlag && PRINTLN("searching for fastest particle...");
         ParticlePolygon fastestPP = DU::reduce<ParticlePolygon*,ParticlePolygon>(
                     [](ParticlePolygon &p1,ParticlePolygon &p2) -> ParticlePolygon&
         {return (p2.first.step.length() > p1.first.step.length())? p2: p1;},
         particlesArray,particlesAmount);
-        verboseFlag && cout << "fastest particle speed: " << fastestPP.first.step.length() << endl;
+        verboseFlag && COUT("fastest particle speed: " << fastestPP.first.step.length());
 
         double distanceStep = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
                                                                     satelliteObj.furthermostPoint)/2.;
@@ -456,77 +402,70 @@ int main(int argc, char** argv) {
                                                                                             Line(fastestPP.first,fastestPP.first.step)));
         double timeDelta = (distanceDelta - 5*distanceStep)/fastestPP.first.step.length();
 
-        DU::map<ParticlePolygon*,ParticlePolygon>(
+        /*DU::map<ParticlePolygon*,ParticlePolygon>(
                     [timeDelta](ParticlePolygon &pp) -> void {pp.first = pp.first + pp.first.step*timeDelta;},
-                    particlesArray,particlesAmount);
-
+                    particlesArray,particlesAmount); /// TODO change ttl here
+*/
         verboseFlag && cout << "distanceStep: " << distanceStep << "; timeStep: " << timeStep << endl;
-
-        /// TODO ttl
-
-      /*double tmp;
-        for(int i = 0; i < 15;++i) {
-            tmp = (*particlesAmountRateGenerator)();
-            cout << tmp << "  " << tmp*totalAmount << "  " << tmp*totalAmount/pow(1024.0,2) << endl;
-        }*/
-
     }
 
+    // video mode initialization
     if (drawFlag) {
         verboseFlag && cout << "polygons: " << satelliteObj.polygons->size() << endl;
         verboseFlag && cout << "center: " << satelliteObj.center << endl;
         verboseFlag && cout << "radius: " << satelliteObj.radius << endl;
 
-       // set appropriate OpenGL & properties SDL
-       int width = 640;
-       int height = 480;
-       setupGraphics(width,height,satelliteObj.maxCoords);
-
-    /*   cout << "size of Particle: " << sizeof(Particle) << endl;
-          cout << "size of Point: " << sizeof(Point) << endl;
-          cout << "size of Vector: " << sizeof(Vector) << endl;*/
-
-        int count = 0;
-    //while(!processParticles(satelliteObj)) cout << ++count << endl;////////////////////////////////////////
-    //processParticles(satelliteObj);
-    //////////processParticles(satelliteObj);
+        // set appropriate OpenGL & properties SDL
+        int width = 640;
+        int height = 480;
+        setupGraphics(width,height,satelliteObj.maxCoords);
+    }
 
     timespec start, stop, *delta;
     int framesCount = 0;
     double seconds = 0;
     int frames = 0;
-    // main program loop
+    // -------- main program loop --------
+    if (mainloopFlag) {
         while(true) {
-            processEvents();
 
-            clock_gettime(CLOCK_ID,&start);
-            draw(satelliteObj,particlesArray,particlesAmount);
-            clock_gettime(CLOCK_ID,&stop);
+            if (drawFlag) {
+                processEvents();
 
-            delta = getTimespecDelta(&start,&stop);
-            ++frames;
-            seconds += delta->tv_sec + delta->tv_nsec/pow(10,9);
-            if (seconds >= 1) {
-                framesCount += frames;
-                cout << frames/seconds << " fps; frames drawed: " << framesCount << endl;
-                seconds = frames = 0;
+                clock_gettime(CLOCK_ID,&start);
+                draw(satelliteObj,particlesArray,particlesAmount);
+                clock_gettime(CLOCK_ID,&stop);
+
+                delta = getTimespecDelta(&start,&stop);
+                ++frames;
+                seconds += delta->tv_sec + delta->tv_nsec/pow(10,9);
+                if (seconds >= 1) {
+                    framesCount += frames;
+                    verboseFlag && COUT(frames/seconds << " fps; frames drawed: " << framesCount);
+                    seconds = frames = 0;
+                }
+
             }
 
-            if (particlesArray != NULL) {
+            if (modelingFlag) {
                 processParticlesWhichIntersectObject(particlesArray,particlesAmount,timeStep);
-                usleep(1*pow(10,6));
             }
-        }
-    }
 
-    if (particlesArray != NULL) {
-        free(particlesArray);
+            //usleep(/**pow(10,6)*/50000);
+            //cout << "count" << particlesAmount << endl;
+        }
     }
 
     if (testModeFlag) {
             cout << GU::rotatePointAroundLine(Point(0,0,1),Line(Point(0,0,0),Point(1,0,0)),M_PI/2.) << endl;
     }
 
-return 0;
+    if (particlesArray != NULL) {
+        free(particlesArray);
+    }
+
+    quit(0);
+
+    return 0;
 }
 

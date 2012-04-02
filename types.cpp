@@ -21,11 +21,11 @@ Point Point::operator-(Vector v) {
 }
 
 Particle Particle::operator+(Vector v) {
-    return Particle(Point(*this) + v,step);
+    return Particle(Point(*this) + v,step,ttl);
 }
 
 Particle Particle::operator-(Vector v) {
-    return Particle(Point(*this) - v,step);
+    return Particle(Point(*this) - v,step,ttl);
 }
 
 Plane::Plane(Point p, Vector v):
