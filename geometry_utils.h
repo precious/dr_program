@@ -34,7 +34,8 @@ struct Object3D;
 class GeometryUtils {
 public:    
     // geometry utils with random
-    static Point getRandomPointFromSphere(Sphere);
+    DEPRECATED(static Point getRandomPointFromSphere(Sphere));
+    static Point getRandomPointFromSphere2(Sphere);
     static Point getRandomPointOnSphere(Sphere);
     static Vector getRandomOrthogonalVector(Vector);
     static Point getRandomPointFromTriangle(ThreePoints&);
@@ -60,6 +61,9 @@ public:
     static bool doesParticlesTrajectoryIntersectObject(Particle,Object3D&);
     static bool doesLineIntersectParallelepiped(Line,Point,Point);
     static bool doesLineIntersectSphere(Line,Sphere);
+
+    // other geometry utils
+    static Point rotatePointAroundLine(Point,Line,double);
 };
 
 typedef GeometryUtils GU;

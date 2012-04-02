@@ -114,9 +114,19 @@ struct Vector: public Point {
         return Vector(y*left.z - z*left.y, -x*left.z +
                       z*left.x, x*left.y - y*left.x);
     }
-    Vector normalize() {
+    Vector normalized() {
         double len = length();
         return Vector(x/len,y/len,z/len);
+    }
+    Vector resized(real _length) {
+        double coef = _length/length();
+        return Vector(x*coef,y*coef,z*coef);
+    }
+    void resize(real _length) {
+        double coef = _length/length();
+        x *= coef;
+        y *= coef;
+        z *= coef;
     }
 };
 
@@ -144,7 +154,7 @@ struct Line: public Locus<2> {
     }
     Point& a;
     Point& b;
-    Point getPointByCoef(real coef) {
+    Point pointByCoef(real coef) {
         return Point(set[0].x + coef*directionVector.x,
                      set[0].y + coef*directionVector.y,
                      set[0].z + coef*directionVector.z);
@@ -177,7 +187,7 @@ struct ThreePoints: public Locus<3> {
 struct Triangle: public ThreePoints {
     Triangle(Point _a,Point _b,Point _c): ThreePoints(_a,_b,_c) {}
     Triangle(ThreePoints &tP): ThreePoints(tP) {}
-    Point getCenterOfMass() {
+    Point centerOfMass() {
         return Point( (a.x + b.x + c.x) / 3.0,
                       (a.y + b.y + c.y) / 3.0,
                       (a.z + b.z + c.z) / 3.0);
@@ -267,8 +277,8 @@ struct Object3D: public Sphere {
         return polygons->at(i);
     }
 
-    Vector getStep() {
-        return front.normalize()*speed;
+    Vector step() {
+        return front.normalized()*speed;
     }
 };
 

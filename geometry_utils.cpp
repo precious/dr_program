@@ -48,7 +48,7 @@ bool GeometryUtils::isPointInsideTriangle2(ThreePoints &t,Point &k) {
 Point GeometryUtils::getPlaneAndLineIntersection2(ThreePoints &plane,Line line) {
     real coef = plane.getNormal()*Vector(line.a,plane.a) /
             (plane.getNormal()*line.directionVector);
-    return line.getPointByCoef(coef);
+    return line.pointByCoef(coef);
 }
 
 Point GeometryUtils::getPointOnPlaneProjection(ThreePoints& plane,Point p) {
@@ -77,7 +77,7 @@ Point GeometryUtils::getPlaneAndLineIntersection(ThreePoints &plane,Line line) {
         return Point(coef,coef,coef);
     }
 
-    return line.getPointByCoef(-coef);
+    return line.pointByCoef(-coef);
 }
 
 // коэффициент точки пересечения находим из условия перпендикулярности напрвляющего вектора
@@ -86,7 +86,7 @@ Point GeometryUtils::getPlaneAndLineIntersection(ThreePoints &plane,Line line) {
 Point GeometryUtils::getPointOnLineProjection(Line line,Point point) {
     real coef = line.directionVector*Vector(line.a,point) /
             (line.directionVector*line.directionVector);
-    return line.getPointByCoef(coef);
+    return line.pointByCoef(coef);
 }
 
 bool GeometryUtils::doesLineIntersectTriangle(ThreePoints &triangle,Line &line) {
@@ -117,9 +117,15 @@ Point GeometryUtils::getRandomPointFromSphere(Sphere s) {
     return s.center + Vector(POINT_OF_ORIGIN,randPoint);
 }
 
+Point GeometryUtils::getRandomPointFromSphere2(Sphere s) {
+    return s.center + Vector(POINT_OF_ORIGIN,
+                             Point(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5))
+            * sqrt(s.radius*getRandom(0,s.radius));
+}
+
 Point GeometryUtils::getRandomPointOnSphere(Sphere s) {
-    Vector offsetVector(s.center,getRandomPointFromSphere(s));
-    return s.center + offsetVector.normalize()*s.radius;
+    Vector offsetVector(s.center,getRandomPointFromSphere2(s));
+    return s.center + offsetVector.resized(s.radius);
 }
 
 Vector GeometryUtils::getRandomOrthogonalVector(Vector v) {
@@ -204,5 +210,15 @@ bool GeometryUtils::doesLineIntersectSphere(Line l,Sphere s) {
 
 Point GeometryUtils::getNearestObject3DAndParticleTrajectoryIntersection(Object3D&,Particle) {
     return Point();
+}
+
+// see explanation at pages 9-10 of draft
+Point GeometryUtils::rotatePointAroundLine(Point p,Line l,double angle) {
+    Point projection = getPointOnLineProjection(l,p);
+    Vector j(projection,p);
+    double length = j.length();
+    Vector i = j.vectorProduct(l.directionVector).resized(length);
+
+    return projection - i*length*sin(angle) + j*length*cos(angle);
 }
 

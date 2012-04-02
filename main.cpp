@@ -136,8 +136,23 @@ int processParticles(Object3D &satelliteObj) {
     return 0;
 }
 
+void processParticlesWhichIntersectObject(ParticlePolygon *particlesArray,int &count,double timeStep) {
+    for(int i = 0;i < count;++i) {
+        particlesArray[i].first = particlesArray[i].first + particlesArray[i].first.step*timeStep;
+        particlesArray[i].first.ttl -= timeStep;
+    }
+    /*for(int i = 0;i < count && count > 2;) {
+        if (particlesArray[i].first.ttl <= 0) {
+            memcpy(particlesArray + i,particlesArray + count - 1,sizeof(ParticlePolygon));
+            --count;
+        } else {
+            ++i;
+        }
+    }*/
+}
 
-void draw(Object3D &satelliteObj)
+
+void draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NULL,int particlesAmount = 0)
 {
     static float angle = 0.0f;
     static GLubyte purple[] = {255,   150, 255,   0 };
@@ -170,12 +185,14 @@ void draw(Object3D &satelliteObj)
     }
 
 
-    Vector tmpVector(Point(),viewerPosition);
+    //Vector tmpVector(Point(),viewerPosition);
 
+    // draw the object
+    glColor4ubv(purple);
     vector<PlaneType> *coords = satelliteObj.polygons;
     for(vector<PlaneType>::iterator it = coords->begin();it != coords->end();it++) {
         glBegin(GL_LINE_LOOP);
-        glColor4ubv(purple);//tmpVector.cos((*it).getNormal()) > 0? black: purple);
+        //tmpVector.cos((*it).getNormal()) > 0? black: purple);
         for(int i = 0;i < 3;i++)
             glVertex3d((*it).set[i].x,(*it).set[i].y,(*it).set[i].z);
         /*    if (tempVector->cos((*it).normal) < 0)
@@ -193,6 +210,15 @@ void draw(Object3D &satelliteObj)
         glEnd();
     }
 
+    // draw the particles
+    if (particlesArray != NULL) {
+        glBegin(GL_POINTS);
+        glColor4ubv(grey);
+        for(int i = 0;i < particlesAmount;++i) {
+            glVertex3f(particlesArray[i].first.x,particlesArray[i].first.y,particlesArray[i].first.z);
+        }
+        glEnd();
+    }
 
     /*glColor4ubv(blue);
     glBegin(GL_POINTS);
@@ -207,25 +233,51 @@ void draw(Object3D &satelliteObj)
     }
     glEnd();*/
 
-    glBegin(GL_LINES);
+    /*glBegin(GL_LINES);
     glColor4ubv(grey);
     tempLine = new Line(Point(),viewerPosition);
     glVertex3d(tempLine->a.x,tempLine->a.y,tempLine->a.z);
     glVertex3d(tempLine->b.x,tempLine->b.y,tempLine->b.z);
     glEnd();
+    */
 
     SDL_GL_SwapBuffers();
 }
 
 
-void setupOpenGL(int width, int height,Point &maxObjCoords) {
+void setupGraphics(int width, int height,Point &maxObjCoords) {
+    if(SDL_Init(SDL_INIT_VIDEO) < 0) {
+        cerr << "Video initialization failed: " << SDL_GetError() << endl;
+        quit(1);
+    }
+
+    const SDL_VideoInfo* info = NULL;
+    info = SDL_GetVideoInfo( );
+    if(!info) {
+        cerr << "Getting video info failed: " << SDL_GetError() << endl;
+        quit(1);
+    }
+
+   SDL_GL_SetAttribute(SDL_GL_RED_SIZE,5);
+   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,5);
+   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,5);
+   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,16);
+   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
+
+   int bitsPerPixel = info->vfmt->BitsPerPixel;
+   int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_ASYNCBLIT | SDL_RESIZABLE;
+   if(SDL_SetVideoMode(width,height,bitsPerPixel,flags) == 0) {
+       cerr << "Setting video mode failed: " << SDL_GetError() << endl;
+       quit(1);
+   }
+
     float ratio = (float)width/(float)height;
 
     glShadeModel(GL_SMOOTH);
 
-   /////// glCullFace(GL_BACK);
-   /////// glFrontFace(GL_CCW);
-   /////// glEnable(GL_CULL_FACE);
+   glCullFace(GL_BACK);
+   glFrontFace(GL_CCW);
+   glEnable(GL_CULL_FACE);
 
     glViewport(0, 0, width, height);
 
@@ -244,8 +296,8 @@ void setupOpenGL(int width, int height,Point &maxObjCoords) {
               maxObjCoords.y,
               3*maxObjCoords.z,
               1.0);*/
-    gluPerspective(35,ratio,/*1.0*/-10,3*maxObjCoords.z); /////////////// 40
-    viewerPosition.z = -5*maxObjCoords.z;
+    gluPerspective(45,ratio,1.0,30*maxObjCoords.z); /////////////// 40
+    viewerPosition.z = -20*maxObjCoords.z;
     ///cout << max(viewerPosition.z - maxObjCoords.z,1.0) << endl;
     ///cout << max(viewerPosition.z + maxObjCoords.z,2.0) << endl;
     //glOrtho(-objWidth/2,objWidth/2,-objHeight/2,objHeight/2,1.0,5000.0);
@@ -285,7 +337,8 @@ int main(int argc, char** argv) {
     char *filename = NULL;
     int testProbabilityCount = -1;
     int generativeSphereRadius = -1;
-    while ((c = getopt (argc, argv, ":mvdt:r:")) != -1) {
+    int testModeFlag = false;
+    while ((c = getopt (argc, argv, ":mvdxt:r:")) != -1) {
         switch(c) {
         case 't':
             testProbabilityCount = atoi(optarg);
@@ -301,6 +354,9 @@ int main(int argc, char** argv) {
             break;
         case 'm':
             modelingFlag = true;
+            break;
+        case 'x':
+            testModeFlag = true;
             break;
         case '?':
         default:
@@ -355,11 +411,14 @@ int main(int argc, char** argv) {
     }
 
 
+    ParticlePolygon *particlesArray = NULL;
+    int particlesAmount = 0;
+    double timeStep = 0;
     if (modelingFlag) {
         // for generating count of particles that intersects object
         // parameters for generator obtained using script test_intersections.sh
         // see also results of this script in freq.ods
-        double a = 0.0001608266666667; //0.0000874633333333;
+        double a = 0.00001;//0.0001608266666667; //0.0000874633333333;
         double sigma = 0.0000080581883820; //0.0000049781511517;
 
 
@@ -374,8 +433,8 @@ int main(int argc, char** argv) {
 
         verboseFlag && PRINT("particles array initialization; memory will be allocated (MB): ");
         verboseFlag && PRINTLN(maxParticlesAmount*sizeof(Particle)/pow(1024.,2));
-        int particlesAmount = min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));
-        ParticlePolygon *particlesArray = (ParticlePolygon*)malloc(maxParticlesAmount*sizeof(ParticlePolygon));
+        particlesAmount = min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));
+        particlesArray = (ParticlePolygon*)malloc(maxParticlesAmount*sizeof(ParticlePolygon));
         verboseFlag && PRINTLN(particlesAmount);
         assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere) == particlesAmount);
 
@@ -388,7 +447,7 @@ int main(int argc, char** argv) {
 
         double distanceStep = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
                                                                     satelliteObj.furthermostPoint)/2.;
-        double timeStep = distanceStep/ELECTRON_VELOCITY; // time to pass 1/10 of object for particle with average velocity
+        timeStep = distanceStep/ELECTRON_VELOCITY; // time to pass 1/10 of object for particle with average velocity
 
         verboseFlag && PRINTLN("decreasing distance to object for all particles");      
         // time during the fastest particle will reach object
@@ -401,20 +460,9 @@ int main(int argc, char** argv) {
                     [timeDelta](ParticlePolygon &pp) -> void {pp.first = pp.first + pp.first.step*timeDelta;},
                     particlesArray,particlesAmount);
 
-        cout << "distanceStep: " << distanceStep << endl;
-        cout << "timeStep: " << timeStep << endl;
+        verboseFlag && cout << "distanceStep: " << distanceStep << "; timeStep: " << timeStep << endl;
 
-      //static bool firstTime = true;
-
-      //static vector<Particle> particles(count);
-
-
-      /*cout << "fastest: " << fastestParticle << endl;
-        cout << "center: " << satelliteObj->center() << endl;
-        real time = Vector(fastestParticle,satelliteObj->center()).length() / fastestParticle.step.length();
-        cout << "time: " << time << endl;*/
-
-        free(particlesArray);
+        /// TODO ttl
 
       /*double tmp;
         for(int i = 0; i < 15;++i) {
@@ -425,37 +473,14 @@ int main(int argc, char** argv) {
     }
 
     if (drawFlag) {
-    cout << "polygons: " << satelliteObj.polygons->size() << endl;
-    cout << "center: " << satelliteObj.center << endl;
-    cout << "radius: " << satelliteObj.radius << endl;
-        if(SDL_Init(SDL_INIT_VIDEO) < 0) {
-            cerr << "Video initialization failed: " << SDL_GetError() << endl;
-            quit(1);
-        }
+        verboseFlag && cout << "polygons: " << satelliteObj.polygons->size() << endl;
+        verboseFlag && cout << "center: " << satelliteObj.center << endl;
+        verboseFlag && cout << "radius: " << satelliteObj.radius << endl;
 
-        const SDL_VideoInfo* info = NULL;
-        info = SDL_GetVideoInfo( );
-        if(!info) {
-            cerr << "Getting video info failed: " << SDL_GetError() << endl;
-            quit(1);
-        }
-
-       SDL_GL_SetAttribute(SDL_GL_RED_SIZE,5);
-       SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,5);
-       SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,5);
-       SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,16);
-       SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
-
+       // set appropriate OpenGL & properties SDL
        int width = 640;
        int height = 480;
-       int bitsPerPixel = info->vfmt->BitsPerPixel;
-       int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_ASYNCBLIT | SDL_RESIZABLE;
-       if(SDL_SetVideoMode(width,height,bitsPerPixel,flags) == 0) {
-           cerr << "Setting video mode failed: " << SDL_GetError() << endl;
-           quit(1);
-       }
-       // set appropriate OpenGL properties
-       setupOpenGL(width,height,satelliteObj.maxCoords);
+       setupGraphics(width,height,satelliteObj.maxCoords);
 
     /*   cout << "size of Particle: " << sizeof(Particle) << endl;
           cout << "size of Point: " << sizeof(Point) << endl;
@@ -466,21 +491,40 @@ int main(int argc, char** argv) {
     //processParticles(satelliteObj);
     //////////processParticles(satelliteObj);
 
-    /*Plane p(Point(0,0,0),Point(1,0,0),Point(0,1,0));
-          Line l(Point(2,2,2),Point(2,2,-2));
-          cout << "----------" << endl;
-          cout << GeometryUtils::getPlaneAndLineIntersection(p,l) << endl;
-          cout << GeometryUtils::getPlaneAndLineIntersection2(p,l) << endl;
-
-          cout << GeometryUtils::getPointOnLineProjection(l,Point()) << endl;*/
-
-
+    timespec start, stop, *delta;
+    int framesCount = 0;
+    double seconds = 0;
+    int frames = 0;
     // main program loop
         while(true) {
             processEvents();
-            draw(satelliteObj);
-            usleep(sleepTime);
+
+            clock_gettime(CLOCK_ID,&start);
+            draw(satelliteObj,particlesArray,particlesAmount);
+            clock_gettime(CLOCK_ID,&stop);
+
+            delta = getTimespecDelta(&start,&stop);
+            ++frames;
+            seconds += delta->tv_sec + delta->tv_nsec/pow(10,9);
+            if (seconds >= 1) {
+                framesCount += frames;
+                cout << frames/seconds << " fps; frames drawed: " << framesCount << endl;
+                seconds = frames = 0;
+            }
+
+            if (particlesArray != NULL) {
+                processParticlesWhichIntersectObject(particlesArray,particlesAmount,timeStep);
+                usleep(1*pow(10,6));
+            }
         }
+    }
+
+    if (particlesArray != NULL) {
+        free(particlesArray);
+    }
+
+    if (testModeFlag) {
+            cout << GU::rotatePointAroundLine(Point(0,0,1),Line(Point(0,0,0),Point(1,0,0)),M_PI/2.) << endl;
     }
 
 return 0;
