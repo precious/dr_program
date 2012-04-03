@@ -7,6 +7,7 @@
 #include <cmath>
 #include <vector>
 #include <cstring>
+#include <assert.h>
 
 typedef float real;
 
@@ -116,6 +117,7 @@ struct Vector: public Point {
     }
     Vector normalized() {
         double len = length();
+        //assert(len != 0);///////////////////////////////////////////////////////////////
         return Vector(x/len,y/len,z/len);
     }
     Vector resized(real _length) {
@@ -200,7 +202,7 @@ struct Plane: public ThreePoints {
     Plane(ThreePoints &tP): ThreePoints(tP) {}
     Plane(Point, Vector);
     bool doesPointBelongPlane(Point p) {
-        /// TODO possible error because of mashine precision
+        /// TODO fix possible error because of mashine precision
         return Vector(a,p)*getNormal() == 0;
     }
 };
@@ -234,6 +236,7 @@ private:
         if (pointsOrder == ORDER_CW) {
             normal = normal*(-1);
         }
+        //assert(!isnan(normal.normalized().x) && !isnan(normal.normalized().y) && !isnan(normal.normalized().z));//////////////////////////////
     }
 };
 

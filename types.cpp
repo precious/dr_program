@@ -46,7 +46,7 @@ Particle GenerativeSphere::generateRandomParticle(int type) {
     return Particle(initialPosition,step);
 }
 
-ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type,bool isParticleOnSphere = false) {
+ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type,bool isParticleOnSphere) {
     PlaneType *polygon = &object.polygons->at(RAND(object.polygons->size()));
     Vector n = polygon->getNormal().normalized();
     velocity particleSpeed;
@@ -70,36 +70,39 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
     double cos = getRandom(-1,object.speed*n.cos(objectStep)/particleSpeed);
     // see explanation at page 8 of draft
     Vector s(p,GU::rotatePointAroundLine(p + n,auxLine,acos(cos)));
+    // assert(!isnan(n.x) && !isnan(n.y) && !isnan(n.z));////////////////////////////
+    // assert(!isnan((p + n).x) && !isnan((p + n).y) && !isnan((p + n).z));////////////////////////////
+    //assert(!isnan(s.x) && !isnan(s.y) && !isnan(s.z));////////////////////////////
     s = s.resized(particleSpeed) - objectStep;
-/*
-    if (n.cos(s) >= 0) {
-        cout << n.cos(s) << endl;/////////////////////
+
+    if (isnan(n.cos(s))) {
+        cout << "NAN" << endl;////////////
     }
-*/
-    real ttl = 0;
+    if (n.cos(s) >= 0) {//////////////////////////////
+        cout << n.cos(s) << endl;
+    }
+
+    real distanceBetweenParticleAndPolygon;
     if (isParticleOnSphere) {
         // now we should calculate point on sphere were particle will be initially placed
         // see explanation at page 1 of draft
         real a = GeometryUtils::getDistanceBetweenPoints(center,p);
         cos = Vector(center,p).cos(s);
-        real step_length = sqrt(a*a*(cos*cos - 1) + radius*radius) + a*cos;
+        distanceBetweenParticleAndPolygon = sqrt(a*a*(cos*cos - 1) + radius*radius) + a*cos;
 
         // now p is point on sphere
-        p = p - s.resized(step_length);
+        p = p - s.resized(distanceBetweenParticleAndPolygon);
 
-        /*if (abs(radius- GU::getDistanceBetweenPoints(p,center)) > 0.00001) {
-            cout << "fail" << endl;
-        }*/////////////////////////////////
+        //assert (abs(radius - GU::getDistanceBetweenPoints(p,center)) <= 0.00001);
     } else {
         // see explanation at page 5 of draft
         real distanceBetweenParticleAndPolygon = sqrt(getRandom(object.radius,radius)*radius);
         p = p - s.resized(distanceBetweenParticleAndPolygon);
-        ttl = distanceBetweenParticleAndPolygon/particleSpeed;
         //Point p2 = GU::getRandomPointFromSphere2(*this);
         //p = p - s.resized(GU::getDistanceBetweenPoints(p,p2));
     }
 
-    return ParticlePolygon(Particle(p,s,ttl),polygon);
+    return ParticlePolygon(Particle(p,s,distanceBetweenParticleAndPolygon/particleSpeed),polygon);
 }
 
 void GenerativeSphere::init()

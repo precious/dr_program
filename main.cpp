@@ -254,11 +254,12 @@ int initRandomParticles(Particle *particlesArray,int count,GenerativeSphere gene
     return n;
 }
 
-int initParticlesWhichIntersectsObject(ParticlePolygon *particlesArray,int count,GenerativeSphere &generativeSphere) {
+int initParticlesWhichIntersectsObject(ParticlePolygon *particlesArray,int count,
+                                       GenerativeSphere &generativeSphere,bool isParticleOnSphere) {
     int n;
     ParticlePolygon tmp(Particle(),NULL);
     for(n = 0;n < count;++n) {
-        tmp = generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON,false);
+        tmp = generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON,isParticleOnSphere);
         memcpy(particlesArray + n,&tmp,sizeof(ParticlePolygon));
     }
     return n;
@@ -388,7 +389,7 @@ int main(int argc, char** argv) {
         particlesAmount = particlesAmountGenerator();
         particlesArray = (ParticlePolygon*)malloc(maxParticlesAmount*sizeof(ParticlePolygon));
         verboseFlag && PRINTLN(particlesAmount);
-        assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere) == particlesAmount);
+        assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere,false) == particlesAmount);
 
         verboseFlag && PRINTLN("searching for fastest particle...");
         ParticlePolygon fastestPP = DU::reduce<ParticlePolygon*,ParticlePolygon>(
@@ -409,10 +410,10 @@ int main(int argc, char** argv) {
         double timeDelta = (distanceDelta - 5*distanceStep)/fastestPP.first.step.length();
 
 /*        DU::map<ParticlePolygon*,ParticlePolygon>(
-                    [timeDelta](ParticlePolygon &pp) -> void {pp.first = pp.first + pp.first.step*timeDelta;},
-                    particlesArray,particlesAmount); /// TODO change ttl here
+                    [timeDelta](ParticlePolygon &pp) -> void {pp.first = pp.first + pp.first.step*timeDelta; pp.first.ttl -= timedelta;},
+                    particlesArray,particlesAmount); /// TODO check this
 */
-        verboseFlag && cout << "distanceStep: " << distanceStep << "; timeStep: " << timeStep << endl;
+        verboseFlag && COUT("distanceStep: " << distanceStep << "; timeStep: " << timeStep);
     }
 
     // video mode initialization
@@ -457,9 +458,8 @@ int main(int argc, char** argv) {
             if (modelingFlag) {
                 processParticlesWhichIntersectObject(particlesArray,particlesAmount,timeStep);
                 if (particlesAmount < newParticlesAmount) {
-                    /// TODO generate these points ON sphere, not inside it
                     initParticlesWhichIntersectsObject(particlesArray + particlesAmount,
-                                                       newParticlesAmount - particlesAmount,generativeSphere);
+                                                       newParticlesAmount - particlesAmount,generativeSphere,true);
                     particlesAmount = newParticlesAmount;
                     newParticlesAmount = particlesAmountGenerator();
                 }
