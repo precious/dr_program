@@ -26,9 +26,10 @@ static GLboolean should_rotate = GL_FALSE;
 //Vector *tempVector;
 //int step = 30;
 
-const char usage[] = "Usage:\n\tprogram [-t number][-r radius][-m][-v][-d][-l] <filename>\n\
+const char usage[] = "Usage:\n\tprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][-d][-l] <filename>\n\
         -t NUMBER - test probabilty with number of particles NUMBER\n\
         -r RADIUS - radius of generative sphere\n\
+        -s TIME - time to sleep in microseconds\n\
         -m - model particles\n\
         -v - verbose mode\n\
         -d - draw (requires also -d option)\n\
@@ -43,7 +44,6 @@ static void handleKeyDown(SDL_keysym* keysym)
     case SDLK_SPACE:
         should_rotate = !should_rotate;
         break;
-
     case SDLK_KP_PLUS:
     case SDLK_PLUS:
         //viewerPosition.z += 20;
@@ -279,15 +279,19 @@ int main(int argc, char** argv) {
     char *filename = NULL;
     int testProbabilityCount = -1;
     int generativeSphereRadius = -1;
+    int sleepTime = 0; //microsecond
 
 
-    while ((c = getopt (argc, argv, ":mvdlxt:r:")) != -1) {
+    while ((c = getopt (argc, argv, ":mvdlxt:r:s:")) != -1) {
         switch(c) {
         case 't':
             testProbabilityCount = atoi(optarg);
             break;
         case 'r':
             generativeSphereRadius = atoi(optarg);
+            break;
+        case 's':
+            sleepTime = atoi(optarg);
             break;
         case 'd':
             drawFlag = true;
@@ -317,7 +321,6 @@ int main(int argc, char** argv) {
 
 
     /*------------------------------------*/
-    int sleepTime = 10000; //microsecond
     // getting coordinatates from file
     vector<PlaneType> *coordinatesList = getCoordinatesFromFile(filename);
     assert(coordinatesList != NULL);
@@ -360,15 +363,14 @@ int main(int argc, char** argv) {
     ParticlePolygon *particlesArray = NULL;
     int particlesAmount = 0;
     double timeStep = 0;
-    GaussianDistributionGenerator *particlesAmountRateGenerator = NULL;
+    function<unsigned long long()> particlesAmountGenerator;
+    unsigned long long newParticlesAmount;
     if (modelingFlag) {
         // for generating count of particles that intersects object
         // parameters for generator obtained using script test_intersections.sh
         // see also results of this script in freq.ods
-        double a = 0.00001;//0.0001608266666667; //0.0000874633333333;
-        double sigma = 0.0000080581883820; //0.0000049781511517;
-
-        GaussianDistributionGenerator *particlesAmountRateGenerator = getGaussianDistributionGenerator(a,sigma);
+        double a = 0.000001;//0.0001608266666667; //0.0000874633333333;
+        double sigma = 0.00000008;//0.0000080581883820; //0.0000049781511517;
 
         // constants
         const int density = 200000; // density is 0.2 cm^-3
@@ -376,10 +378,14 @@ int main(int argc, char** argv) {
         const unsigned long long totalAmount = density*volume;
         // see explanation in draft, page 1
         const int maxParticlesAmount = (a + 4*sigma)*totalAmount;
+        GaussianDistributionGenerator *particlesAmountRateGenerator = getGaussianDistributionGenerator(a,sigma);
+        particlesAmountGenerator = [particlesAmountRateGenerator,totalAmount,maxParticlesAmount]() -> unsigned long long
+            {return min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));};
+        newParticlesAmount = particlesAmountGenerator();
 
         verboseFlag && PRINTLN("particles array initialization...");
         verboseFlag && COUT("(memory will be allocated: " << maxParticlesAmount*sizeof(Particle)/pow(1024.,2) << " MB)");
-        particlesAmount = min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));
+        particlesAmount = particlesAmountGenerator();
         particlesArray = (ParticlePolygon*)malloc(maxParticlesAmount*sizeof(ParticlePolygon));
         verboseFlag && PRINTLN(particlesAmount);
         assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere) == particlesAmount);
@@ -402,7 +408,7 @@ int main(int argc, char** argv) {
                                                                                             Line(fastestPP.first,fastestPP.first.step)));
         double timeDelta = (distanceDelta - 5*distanceStep)/fastestPP.first.step.length();
 
-        /*DU::map<ParticlePolygon*,ParticlePolygon>(
+/*        DU::map<ParticlePolygon*,ParticlePolygon>(
                     [timeDelta](ParticlePolygon &pp) -> void {pp.first = pp.first + pp.first.step*timeDelta;},
                     particlesArray,particlesAmount); /// TODO change ttl here
 */
@@ -425,8 +431,9 @@ int main(int argc, char** argv) {
     int framesCount = 0;
     double seconds = 0;
     int frames = 0;
+
     // -------- main program loop --------
-    if (mainloopFlag) {
+    if (mainloopFlag && (drawFlag || modelingFlag)) {
         while(true) {
 
             if (drawFlag) {
@@ -449,9 +456,16 @@ int main(int argc, char** argv) {
 
             if (modelingFlag) {
                 processParticlesWhichIntersectObject(particlesArray,particlesAmount,timeStep);
+                if (particlesAmount < newParticlesAmount) {
+                    /// TODO generate these points ON sphere, not inside it
+                    initParticlesWhichIntersectsObject(particlesArray + particlesAmount,
+                                                       newParticlesAmount - particlesAmount,generativeSphere);
+                    particlesAmount = newParticlesAmount;
+                    newParticlesAmount = particlesAmountGenerator();
+                }
             }
 
-            //usleep(/**pow(10,6)*/50000);
+            sleepTime && usleep(sleepTime);
             //cout << "count" << particlesAmount << endl;
         }
     }
