@@ -32,7 +32,7 @@ const char usage[] = "Usage:\n\tprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][
         -s TIME - time to sleep in microseconds\n\
         -m - model particles\n\
         -v - verbose mode\n\
-        -d - draw (requires also -d option)\n\
+        -d - draw (requires also -l option)\n\
         -l - run mainloop";
 
 static void handleKeyDown(SDL_keysym* keysym)

@@ -117,7 +117,7 @@ struct Vector: public Point {
     }
     Vector normalized() {
         double len = length();
-        //assert(len != 0);///////////////////////////////////////////////////////////////
+        assert(len != 0);///////////////////////////////////////////////////////////////
         return Vector(x/len,y/len,z/len);
     }
     Vector resized(real _length) {
@@ -236,7 +236,11 @@ private:
         if (pointsOrder == ORDER_CW) {
             normal = normal*(-1);
         }
-        //assert(!isnan(normal.normalized().x) && !isnan(normal.normalized().y) && !isnan(normal.normalized().z));//////////////////////////////
+        assert (!isnan(normal.normalized().x) && !isnan(normal.normalized().y) && !isnan(normal.normalized().z));
+        if (isnan(normal.normalized().x) || isnan(normal.normalized().y) || isnan(normal.normalized().z)) {
+            cout << ab << "  " << ac << endl;
+            assert(false);
+        }
     }
 };
 

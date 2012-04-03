@@ -215,9 +215,14 @@ Point GeometryUtils::getNearestObject3DAndParticleTrajectoryIntersection(Object3
 // see explanation at pages 9-10 of draft
 Point GeometryUtils::rotatePointAroundLine(Point p,Line l,double angle) {
     Point projection = getPointOnLineProjection(l,p);
+    //assert(!isnan(projection.x) && !isnan(projection.y) && !isnan(projection.z));//////////////////////////////////
     Vector j(projection,p);
     double length = j.length();
     Vector i = j.vectorProduct(l.directionVector).resized(length);
+
+    //assert(!isnan(i.x) && !isnan(i.y) && !isnan(i.z));//////////////////////////////////
+    //assert(!isnan(j.x) && !isnan(j.y) && !isnan(j.z));//////////////////////////////////
+    assert(!isnan(float(angle)));/////////////////////////////////
 
     return projection - i*length*sin(angle) + j*length*cos(angle);
 }

@@ -67,16 +67,24 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
     if (particleSpeed < object.speed*n.cos(objectStep)) {
         particleSpeed = getRandom(object.speed*n.cos(objectStep),2.*ELECTRON_VELOCITY); /// TODO fix me
     }
+    //assert(particleSpeed >= object.speed*n.cos(objectStep) && ); ////////////////////////
+    assert(object.speed*n.cos(objectStep)/particleSpeed >= -1);////////////////////////
+    assert(object.speed*n.cos(objectStep)/particleSpeed <= 1); ////////////////
     double cos = getRandom(-1,object.speed*n.cos(objectStep)/particleSpeed);
     // see explanation at page 8 of draft
+    if (cos > 1 || cos < -1) {/////////////////////////////////////////////
+        cout << cos << endl;
+        cout << acos(cos) << endl;
+        assert(false);
+    }
     Vector s(p,GU::rotatePointAroundLine(p + n,auxLine,acos(cos)));
-    // assert(!isnan(n.x) && !isnan(n.y) && !isnan(n.z));////////////////////////////
-    // assert(!isnan((p + n).x) && !isnan((p + n).y) && !isnan((p + n).z));////////////////////////////
-    //assert(!isnan(s.x) && !isnan(s.y) && !isnan(s.z));////////////////////////////
+    assert(!isnan(n.x) && !isnan(n.y) && !isnan(n.z));////////////////////////////
+    assert(!isnan(p.x) && !isnan(p.y) && !isnan(p.z));////////////////////////////
+    assert(!isnan(s.x) && !isnan(s.y) && !isnan(s.z));////////////////////////////
     s = s.resized(particleSpeed) - objectStep;
 
     if (isnan(n.cos(s))) {
-        cout << "NAN" << endl;////////////
+        cout << "NAN2" << endl;////////////
     }
     if (n.cos(s) >= 0) {//////////////////////////////
         cout << n.cos(s) << endl;
