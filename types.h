@@ -108,7 +108,7 @@ struct Vector: public Point {
     real length() {
         return sqrt(x*x + y*y + z*z);
     }
-    real cos(Vector right) {
+    double cos(Vector right) {
         return ((*this)*right)/(this->length()*right.length());
     }
     Vector vectorProduct(Vector left) {
@@ -117,7 +117,7 @@ struct Vector: public Point {
     }
     Vector normalized() {
         double len = length();
-        assert(len != 0);///////////////////////////////////////////////////////////////
+        assert(len != 0);
         return Vector(x/len,y/len,z/len);
     }
     Vector resized(real _length) {
@@ -291,8 +291,18 @@ struct Object3D: public Sphere {
 
 struct GenerativeSphere: public Sphere {
 private:
-    GaussianDistributionGenerator *electronVelocityGenerator;
-    GaussianDistributionGenerator *ionVelocityGenerator;
+    // expectation and standart deviation are calculated due the 4-sigma rule
+    // max and min possible velocities are 2*ELECTRON_VELOCITY and 0 respectively
+    double electronVelocityGenerator() {
+        static GaussianDistributionGenerator *generator =
+                getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/4.0);
+        return max(0.5,(*generator)());
+    }
+    double ionVelocityGenerator() {
+        static GaussianDistributionGenerator *generator =
+                getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/4.0);
+        return max(0.5,(*generator)());
+    }
     Object3D &object;
     Vector objectStep;
     // Sphere sphereAroundObject;
@@ -300,13 +310,9 @@ private:
 
 public:
     GenerativeSphere(Point _p, real _r,Object3D _object):
-        Sphere(_p, _r), object(_object) {
-        init();
-    }
+        Sphere(_p, _r), object(_object), objectStep(object.step()) {}
     GenerativeSphere(const Sphere &_s,Object3D _object):
-        Sphere(_s), object(_object) {
-        init();
-    }
+        Sphere(_s), object(_object), objectStep(object.step()) {}
 
     Particle generateRandomParticle(int);
     //Particle generateParticleWhichIntersectsObject(int);

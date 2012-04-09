@@ -7,9 +7,11 @@
 #include <cstdlib>
 #include "types.h"
 
+extern GLboolean shouldRotate;
 extern Point viewerPosition;
 
-void setupGraphics(int,int,Point&);
-void quit(int);
+void initGraphics(int,int,Point&);
+void draw(Object3D&,ParticlePolygon*,int);
+void quitGraphics(int);
 
 #endif // GRAPHICS_UTILS_H

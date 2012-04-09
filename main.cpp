@@ -14,14 +14,12 @@
 #include "data_utils.h"
 #include "graphics_utils.h"
 
-#define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; quit(1); }
+#define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; quitGraphics(1); }
 #define rand(max) rand()%max
 #define PRINTLN(arg) cout << arg << endl;
 #define PRINT(arg) cout << arg && cout.flush();
 #define COUT(args) cout << args << endl;
 
-
-static GLboolean should_rotate = GL_FALSE;
 //Line *tempLine;
 //Vector *tempVector;
 //int step = 30;
@@ -39,10 +37,10 @@ static void handleKeyDown(SDL_keysym* keysym)
 {
     switch(keysym->sym) {
     case SDLK_ESCAPE:
-        quit(0);
+        quitGraphics(0);
         break;
     case SDLK_SPACE:
-        should_rotate = !should_rotate;
+        shouldRotate = !shouldRotate;
         break;
     case SDLK_KP_PLUS:
     case SDLK_PLUS:
@@ -96,7 +94,7 @@ void processEvents(void)
             break;
         case SDL_QUIT:
             /* Handle quit requests (like Ctrl-c). */
-            quit(0);
+            quitGraphics(0);
             break;
         }
     }
@@ -151,99 +149,6 @@ void processParticlesWhichIntersectObject(ParticlePolygon *particlesArray,int &c
     // checking the last particle
     if (count > 0 && particlesArray[count - 1].first.ttl <= 0)
         --count;
-}
-
-
-void draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NULL,int particlesAmount = 0)
-{
-    static float angle = 0.0f;
-    static GLubyte purple[] = {255,   150, 255,   0 };
-    static GLubyte grey[] = {200,200,200,0};
-    static GLubyte black[] = {0,0,0,0};
-    static GLubyte blue[] = {0,0,255,0};
-
-    /*
-    lengthGL lengthReal
-            x = stepGL
-*/
-
-
-    glClearColor(255,255,255,0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    /* Move down the z-axis. */
-    glTranslatef(viewerPosition.x, viewerPosition.y, viewerPosition.z);
-
-    /* Rotate. */
-    glRotatef(angle, 0.0, 1.0, 0.0);
-
-    if (should_rotate) {
-        if (++angle > 360.0f) {
-            angle = 0.0f;
-        }
-    }
-
-
-    //Vector tmpVector(Point(),viewerPosition);
-
-    // draw the object
-    glColor4ubv(purple);
-    vector<PlaneType> *coords = satelliteObj.polygons;
-    for(vector<PlaneType>::iterator it = coords->begin();it != coords->end();it++) {
-        glBegin(GL_LINE_LOOP);
-        //tmpVector.cos((*it).getNormal()) > 0? black: purple);
-        for(int i = 0;i < 3;i++)
-            glVertex3d((*it).set[i].x,(*it).set[i].y,(*it).set[i].z);
-        /*    if (tempVector->cos((*it).normal) < 0)
-            continue;
-        if (GeometryUtils::doesLineIntersectTriangle(*it,*tempLine)) {
-            glBegin(GL_TRIANGLES);
-            glColor4ubv(blue);
-        } else {
-            glBegin(GL_LINE_LOOP);
-            glColor4ubv(purple);
-        }
-        for(int i = 0;i < 3;i++)
-            glVertex3d((*it).set[i].x,(*it).set[i].y,(*it).set[i].z);
-    */
-        glEnd();
-    }
-
-    // draw the particles
-    if (particlesArray != NULL) {
-        glBegin(GL_POINTS);
-        glColor4ubv(grey);
-        for(int i = 0;i < particlesAmount;++i) {
-            glVertex3f(particlesArray[i].first.x,particlesArray[i].first.y,particlesArray[i].first.z);
-        }
-        glEnd();
-    }
-
-    /*glColor4ubv(blue);
-    glBegin(GL_POINTS);
-    glVertex3f(satelliteObj->furthermostPoint.x,
-               satelliteObj->furthermostPoint.y,
-               satelliteObj->furthermostPoint.z);
-    glVertex3f(satelliteObj->nearestPoint.x,
-               satelliteObj->nearestPoint.y,
-               satelliteObj->nearestPoint.z);
-    for(int i = 0;i < count;i++) {
-        glVertex3f(particles[i].x,particles[i].y,particles[i].z);
-    }
-    glEnd();*/
-
-    /*glBegin(GL_LINES);
-    glColor4ubv(grey);
-    tempLine = new Line(Point(),viewerPosition);
-    glVertex3d(tempLine->a.x,tempLine->a.y,tempLine->a.z);
-    glVertex3d(tempLine->b.x,tempLine->b.y,tempLine->b.z);
-    glEnd();
-    */
-
-    SDL_GL_SwapBuffers();
 }
 
 int initRandomParticles(Particle *particlesArray,int count,GenerativeSphere generativeSphere) {
@@ -425,7 +330,7 @@ int main(int argc, char** argv) {
         // set appropriate OpenGL & properties SDL
         int width = 640;
         int height = 480;
-        setupGraphics(width,height,satelliteObj.maxCoords);
+        initGraphics(width,height,satelliteObj.maxCoords);
     }
 
     timespec start, stop, *delta;
@@ -478,7 +383,7 @@ int main(int argc, char** argv) {
         free(particlesArray);
     }
 
-    quit(0);
+    quitGraphics(0);
 
     return 0;
 }

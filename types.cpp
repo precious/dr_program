@@ -37,10 +37,10 @@ Particle GenerativeSphere::generateRandomParticle(int type) {
     Vector step(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
     switch(type) {
     case PTYPE_ELECTRON:
-        step = step.resized((*electronVelocityGenerator)()) - objectStep;
+        step = step.resized(electronVelocityGenerator()) - objectStep;
         break;
     case PTYPE_ION:
-        step = step.resized((*ionVelocityGenerator)()) - objectStep;
+        step = step.resized(ionVelocityGenerator()) - objectStep;
         break;
     }
     return Particle(initialPosition,step);
@@ -53,10 +53,10 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
 
     switch(type) {
     case PTYPE_ELECTRON:
-        particleSpeed = ( (*electronVelocityGenerator)() );
+        particleSpeed = electronVelocityGenerator();
         break;
     case PTYPE_ION:
-        particleSpeed = ( (*ionVelocityGenerator)() );
+        particleSpeed = ionVelocityGenerator();
         break;
     }
 
@@ -64,28 +64,16 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
     Line auxLine(p,(polygon->a != p)? polygon->a: polygon->b);
 
     // see explanation at page 2 of draft
-    if (particleSpeed < object.speed*n.cos(objectStep)) {
-        particleSpeed = getRandom(object.speed*n.cos(objectStep),2.*ELECTRON_VELOCITY); /// TODO fix me
+    if (particleSpeed <= -object.speed*n.cos(objectStep)) {
+        particleSpeed = getRandom(max<velocity>(0.1,-object.speed*n.cos(objectStep)),2.*ELECTRON_VELOCITY); /// TODO fix me
     }
-    //assert(particleSpeed >= object.speed*n.cos(objectStep) && ); ////////////////////////
-    assert(object.speed*n.cos(objectStep)/particleSpeed >= -1);////////////////////////
-    assert(object.speed*n.cos(objectStep)/particleSpeed <= 1); ////////////////
-    double cos = getRandom(-1,object.speed*n.cos(objectStep)/particleSpeed);
+
+    double cos = getRandom(-1,min<velocity>(1,object.speed*n.cos(objectStep)/particleSpeed));
+    //assert(!(cos > 1 || cos < -1));/////////
     // see explanation at page 8 of draft
-    if (cos > 1 || cos < -1) {/////////////////////////////////////////////
-        cout << cos << endl;
-        cout << acos(cos) << endl;
-        assert(false);
-    }
     Vector s(p,GU::rotatePointAroundLine(p + n,auxLine,acos(cos)));
-    assert(!isnan(n.x) && !isnan(n.y) && !isnan(n.z));////////////////////////////
-    assert(!isnan(p.x) && !isnan(p.y) && !isnan(p.z));////////////////////////////
-    assert(!isnan(s.x) && !isnan(s.y) && !isnan(s.z));////////////////////////////
     s = s.resized(particleSpeed) - objectStep;
 
-    if (isnan(n.cos(s))) {
-        cout << "NAN2" << endl;////////////
-    }
     if (n.cos(s) >= 0) {//////////////////////////////
         cout << n.cos(s) << endl;
     }
@@ -106,23 +94,9 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
         // see explanation at page 5 of draft
         real distanceBetweenParticleAndPolygon = sqrt(getRandom(object.radius,radius)*radius);
         p = p - s.resized(distanceBetweenParticleAndPolygon);
-        //Point p2 = GU::getRandomPointFromSphere2(*this);
-        //p = p - s.resized(GU::getDistanceBetweenPoints(p,p2));
     }
 
     return ParticlePolygon(Particle(p,s,distanceBetweenParticleAndPolygon/particleSpeed),polygon);
-}
-
-void GenerativeSphere::init()
-{
-    objectStep = object.step();
-    /*sphereAroundObject = Sphere(object.center(),
-                                GeometryUtils::getDistanceBetweenPoints(object.center(),object.maxCoords));
-    */
-    // expectation and standart deviation are calculated due the 4-sigma rule
-    // max and min possible velocities are 2*ELECTRON_VELOCITY and 0 respectively
-    electronVelocityGenerator = getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/4.0);
-    ionVelocityGenerator = getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/4.0);
 }
 
 void Object3D::init() {

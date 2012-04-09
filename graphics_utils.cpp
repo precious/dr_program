@@ -1,40 +1,41 @@
 #include "graphics_utils.h"
 
+GLboolean shouldRotate = GL_FALSE;
 Point viewerPosition(0,0,0);
 
-void setupGraphics(int width, int height,Point &maxObjCoords) {
+void initGraphics(int width, int height,Point &maxObjCoords) {
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         cerr << "Video initialization failed: " << SDL_GetError() << endl;
-        quit(1);
+        quitGraphics(1);
     }
 
     const SDL_VideoInfo* info = NULL;
-    info = SDL_GetVideoInfo( );
+    info = SDL_GetVideoInfo();
     if(!info) {
-        cerr << "Getting video info failed: " << SDL_GetError() << endl;
-        quit(1);
+        cerr << "getting video info failed: " << SDL_GetError() << endl;
+        quitGraphics(1);
     }
 
-   SDL_GL_SetAttribute(SDL_GL_RED_SIZE,5);
-   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,5);
-   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,5);
-   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,16);
-   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE,5);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,5);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,5);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,16);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
 
-   int bitsPerPixel = info->vfmt->BitsPerPixel;
-   int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_ASYNCBLIT | SDL_RESIZABLE;
-   if(SDL_SetVideoMode(width,height,bitsPerPixel,flags) == 0) {
-       cerr << "Setting video mode failed: " << SDL_GetError() << endl;
-       quit(1);
-   }
+    int bitsPerPixel = info->vfmt->BitsPerPixel;
+    int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_ASYNCBLIT | SDL_RESIZABLE;
+    if(SDL_SetVideoMode(width,height,bitsPerPixel,flags) == 0) {
+        cerr << "setting video mode failed: " << SDL_GetError() << endl;
+        quitGraphics(1);
+    }
 
     float ratio = (float)width/(float)height;
 
     glShadeModel(GL_SMOOTH);
 
-   glCullFace(GL_BACK);
-   glFrontFace(GL_CCW);
-   glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+    glEnable(GL_CULL_FACE);
 
     glViewport(0, 0, width, height);
 
@@ -47,13 +48,11 @@ void setupGraphics(int width, int height,Point &maxObjCoords) {
     /*double maxObjSize = 3000.0;
     double objHeight = (height > width)? maxObjSize : maxObjSize*height/width;
     double objWidth = (width > height)? maxObjSize : maxObjSize*width/height;*/
-    /*glFrustum(-maxObjCoords.x,
-              maxObjCoords.x,
-              -maxObjCoords.y,
-              maxObjCoords.y,
-              3*maxObjCoords.z,
-              1.0);*/
-    gluPerspective(45,ratio,1.0,30*maxObjCoords.z); /////////////// 40
+    double maxCoordinate = 2*max(maxObjCoords.x,max(maxObjCoords.y,maxObjCoords.z));
+    glFrustum(-maxCoordinate,maxCoordinate,
+              -maxCoordinate/ratio,maxCoordinate/ratio,
+              10,20);
+    //gluPerspective(45,ratio,1.0,30*maxObjCoords.z); /////////////// 40
     viewerPosition.z = -20*maxObjCoords.z;
     ///cout << max(viewerPosition.z - maxObjCoords.z,1.0) << endl;
     ///cout << max(viewerPosition.z + maxObjCoords.z,2.0) << endl;
@@ -64,7 +63,99 @@ void setupGraphics(int width, int height,Point &maxObjCoords) {
     //tempVector = new Vector(tempLine->b,tempLine->a);
 }
 
-void quit(int code) {
+void quitGraphics(int code) {
     SDL_Quit();
     exit(code);
+}
+
+void draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NULL,int particlesAmount = 0)
+{
+    static float angle = 0.0f;
+    static GLubyte purple[] = {255,   150, 255,   0 };
+    static GLubyte grey[] = {100,100,100,0};
+    static GLubyte black[] = {0,0,0,0};
+    static GLubyte blue[] = {0,0,255,0};
+
+    /*
+    lengthGL lengthReal
+            x = stepGL
+*/
+
+
+    glClearColor(255,255,255,0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    /* Move down the z-axis. */
+    glTranslatef(viewerPosition.x, viewerPosition.y, viewerPosition.z);
+
+    /* Rotate. */
+    glRotatef(angle, 0.0, 1.0, 0.0);
+
+    if (shouldRotate) {
+        if (++angle > 360.0f) {
+            angle = 0.0f;
+        }
+    }
+
+
+    //Vector tmpVector(Point(),viewerPosition);
+
+    // draw the object
+    glColor4ubv(purple);
+    vector<PlaneType> *coords = satelliteObj.polygons;
+    for(vector<PlaneType>::iterator it = coords->begin();it != coords->end();it++) {
+        glBegin(GL_LINE_LOOP);
+        //tmpVector.cos((*it).getNormal()) > 0? black: purple);
+        for(int i = 0;i < 3;i++)
+            glVertex3d((*it).set[i].x,(*it).set[i].y,(*it).set[i].z);
+        /*    if (tempVector->cos((*it).normal) < 0)
+            continue;
+        if (GeometryUtils::doesLineIntersectTriangle(*it,*tempLine)) {
+            glBegin(GL_TRIANGLES);
+            glColor4ubv(blue);
+        } else {
+            glBegin(GL_LINE_LOOP);
+            glColor4ubv(purple);
+        }
+        for(int i = 0;i < 3;i++)
+            glVertex3d((*it).set[i].x,(*it).set[i].y,(*it).set[i].z);
+    */
+        glEnd();
+    }
+
+    // draw the particles
+    if (particlesArray != NULL) {
+        glBegin(GL_POINTS);
+        glColor4ubv(grey);
+        for(int i = 0;i < particlesAmount;++i) {
+            glVertex3f(particlesArray[i].first.x,particlesArray[i].first.y,particlesArray[i].first.z);
+        }
+        glEnd();
+    }
+
+    /*glColor4ubv(blue);
+    glBegin(GL_POINTS);
+    glVertex3f(satelliteObj->furthermostPoint.x,
+               satelliteObj->furthermostPoint.y,
+               satelliteObj->furthermostPoint.z);
+    glVertex3f(satelliteObj->nearestPoint.x,
+               satelliteObj->nearestPoint.y,
+               satelliteObj->nearestPoint.z);
+    for(int i = 0;i < count;i++) {
+        glVertex3f(particles[i].x,particles[i].y,particles[i].z);
+    }
+    glEnd();*/
+
+    /*glBegin(GL_LINES);
+    glColor4ubv(grey);
+    tempLine = new Line(Point(),viewerPosition);
+    glVertex3d(tempLine->a.x,tempLine->a.y,tempLine->a.z);
+    glVertex3d(tempLine->b.x,tempLine->b.y,tempLine->b.z);
+    glEnd();
+    */
+
+    SDL_GL_SwapBuffers();
 }
