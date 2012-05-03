@@ -49,10 +49,10 @@ void initGraphics(int width, int height,Point &maxObjCoords) {
     double objHeight = (height > width)? maxObjSize : maxObjSize*height/width;
     double objWidth = (width > height)? maxObjSize : maxObjSize*width/height;*/
     double maxCoordinate = 2*max(maxObjCoords.x,max(maxObjCoords.y,maxObjCoords.z));
-    glFrustum(-maxCoordinate,maxCoordinate,
+    /*glFrustum(-maxCoordinate,maxCoordinate,
               -maxCoordinate/ratio,maxCoordinate/ratio,
               10,20);
-    //gluPerspective(45,ratio,1.0,30*maxObjCoords.z); /////////////// 40
+    */gluPerspective(45,ratio,1.0,15*maxObjCoords.z); /////////////// 45 30
     viewerPosition.z = -20*maxObjCoords.z;
     ///cout << max(viewerPosition.z - maxObjCoords.z,1.0) << endl;
     ///cout << max(viewerPosition.z + maxObjCoords.z,2.0) << endl;

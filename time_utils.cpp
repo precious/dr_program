@@ -37,3 +37,10 @@ GaussianDistributionGenerator* getGaussianDistributionGenerator(double M,double 
     return new GaussianDistributionGenerator(Engine(seed()),GaussianDistribution(M,D));
 }
 
+MaxwellDistributionSpeedGenerator getMaxwellDistributionSpeedGenerator(double M,double D) {
+    return  [M,D]() -> velocity {
+            static GaussianDistributionGenerator *gdg = getGaussianDistributionGenerator(M,D);
+            return sqrt(pow((*gdg)(),2) + pow((*gdg)(),2) + pow((*gdg)(),2));
+    };
+}
+

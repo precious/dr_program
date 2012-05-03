@@ -7,9 +7,9 @@
 #include <iostream>
 #include <random>
 #include <functional>
-using namespace std;
+#include "constants.h"
 
-typedef float real;
+using namespace std;
 
 #define RAND(n) rand()%n
 
@@ -35,19 +35,19 @@ public:
 
 typedef Generator<Engine,UniformDistribution> UniformDistributionGenerator;
 typedef Generator<Engine,GaussianDistribution> GaussianDistributionGenerator;
+typedef function<velocity ()> MaxwellDistributionSpeedGenerator;
 
 void printTimespec(timespec*);
 
 UniformDistributionGenerator* getUniformDistributionGenerator(double,double);
 GaussianDistributionGenerator* getGaussianDistributionGenerator(double,double);
+MaxwellDistributionSpeedGenerator getMaxwellDistributionSpeedGenerator(double,double);
 
 timespec* getTimespecDelta(timespec*,timespec*);
 
 double getRandom();
 
 double getRandom(double,double);
-
-
 
 #endif // TIME_UTILS_H
 

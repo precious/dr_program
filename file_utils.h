@@ -5,6 +5,7 @@
 #include <fstream>
 #include <vector>
 #include "types.h"
+
 using namespace std;
 
 typedef OrientedPlane PlaneType;

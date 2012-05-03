@@ -9,8 +9,7 @@
 #include <cstring>
 #include <assert.h>
 
-typedef float real;
-
+#include "types.h"
 #include "constants.h"
 #include "geometry_utils.h"
 #include "time_utils.h"
@@ -117,7 +116,7 @@ struct Vector: public Point {
     }
     Vector normalized() {
         double len = length();
-        assert(len != 0);
+       ////// assert(len != 0);
         return Vector(x/len,y/len,z/len);
     }
     Vector resized(real _length) {
@@ -163,7 +162,7 @@ struct Line: public Locus<2> {
     }
 };
 
-struct ThreePoints: public Locus<3> {
+struct ThreePoints : public Locus<3> {
     ThreePoints(): a(set[0]), b(set[1]), c(set[2]) {}
     ThreePoints(const ThreePoints &tP): a(set[0]), b(set[1]), c(set[2]) {
         set[0] = tP.set[0]; set[1] = tP.set[1]; set[2] = tP.set[2];
@@ -236,9 +235,9 @@ private:
         if (pointsOrder == ORDER_CW) {
             normal = normal*(-1);
         }
-        assert (!isnan(normal.normalized().x) && !isnan(normal.normalized().y) && !isnan(normal.normalized().z));
+        ///////// assert (!isnan(normal.normalized().x) && !isnan(normal.normalized().y) && !isnan(normal.normalized().z));
         if (isnan(normal.normalized().x) || isnan(normal.normalized().y) || isnan(normal.normalized().z)) {
-            cout << ab << "  " << ac << endl;
+            cout << a << "  " << b << "  " << c << endl;
             assert(false);
         }
     }
@@ -291,17 +290,17 @@ struct Object3D: public Sphere {
 
 struct GenerativeSphere: public Sphere {
 private:
-    // expectation and standart deviation are calculated due the 4-sigma rule
-    // max and min possible velocities are 2*ELECTRON_VELOCITY and 0 respectively
-    double electronVelocityGenerator() {
-        static GaussianDistributionGenerator *generator =
-                getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/4.0);
-        return max(0.5,(*generator)());
+    velocity electronVelocityGenerator() {
+        static MaxwellDistributionSpeedGenerator generator =
+                // getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/4.0);
+                getMaxwellDistributionSpeedGenerator(ELECTRON_VELOCITY_M,ELECTRON_VELOCITY_D);
+        return generator();
     }
-    double ionVelocityGenerator() {
-        static GaussianDistributionGenerator *generator =
-                getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/4.0);
-        return max(0.5,(*generator)());
+    velocity ionVelocityGenerator() {
+        static MaxwellDistributionSpeedGenerator generator =
+                // getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/4.0);
+                getMaxwellDistributionSpeedGenerator(ION_VELOCITY_M,ION_VELOCITY_D);
+        return generator();
     }
     Object3D &object;
     Vector objectStep;
