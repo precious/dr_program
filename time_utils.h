@@ -39,8 +39,8 @@ typedef function<velocity ()> MaxwellDistributionSpeedGenerator;
 
 void printTimespec(timespec*);
 
-UniformDistributionGenerator* getUniformDistributionGenerator(double,double);
-GaussianDistributionGenerator* getGaussianDistributionGenerator(double,double);
+UniformDistributionGenerator getUniformDistributionGenerator(double,double);
+GaussianDistributionGenerator getGaussianDistributionGenerator(double,double);
 MaxwellDistributionSpeedGenerator getMaxwellDistributionSpeedGenerator(double,double);
 
 timespec* getTimespecDelta(timespec*,timespec*);

@@ -27,20 +27,20 @@ double getRandom(double left,double right) {
     return getRandom()*(right - left) + left;
 }
 
-UniformDistributionGenerator* getUniformDistributionGenerator(double min,double max) {
+UniformDistributionGenerator getUniformDistributionGenerator(double min,double max) {
     static random_device seed;
-    return new UniformDistributionGenerator(Engine(seed()),UniformDistribution(min,max));
+    return UniformDistributionGenerator(Engine(seed()),UniformDistribution(min,max));
 }
 
-GaussianDistributionGenerator* getGaussianDistributionGenerator(double M,double D) {
+GaussianDistributionGenerator getGaussianDistributionGenerator(double M,double D) {
     static random_device seed;
-    return new GaussianDistributionGenerator(Engine(seed()),GaussianDistribution(M,D));
+    return GaussianDistributionGenerator(Engine(seed()),GaussianDistribution(M,D));
 }
 
 MaxwellDistributionSpeedGenerator getMaxwellDistributionSpeedGenerator(double M,double D) {
     return  [M,D]() -> velocity {
-            static GaussianDistributionGenerator *gdg = getGaussianDistributionGenerator(M,D);
-            return sqrt(pow((*gdg)(),2) + pow((*gdg)(),2) + pow((*gdg)(),2));
+            static GaussianDistributionGenerator gdg = getGaussianDistributionGenerator(M,D);
+            return sqrt(pow(gdg(),2) + pow(gdg(),2) + pow(gdg(),2));
     };
 }
 

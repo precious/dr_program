@@ -29,11 +29,11 @@ Particle Particle::operator-(Vector v) {
 }
 
 Plane::Plane(Point p, Vector v):
-    ThreePoints(p,p + GeometryUtils::getRandomOrthogonalVector(v),
-                p + GeometryUtils::getRandomOrthogonalVector(v)) {}
+    ThreePoints(p,p + Geometry::getRandomOrthogonalVector(v),
+                p + Geometry::getRandomOrthogonalVector(v)) {}
 
 Particle GenerativeSphere::generateRandomParticle(int type) {
-    Point initialPosition = GeometryUtils::getRandomPointFromSphere2(*this);
+    Point initialPosition = Geometry::getRandomPointFromSphere2(*this);
     Vector step(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
     switch(type) {
     case PTYPE_ELECTRON:
@@ -60,7 +60,7 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
         break;
     }
 
-    Point p = GeometryUtils::getRandomPointFromTriangle(*polygon);
+    Point p = Geometry::getRandomPointFromTriangle(*polygon);
     Line auxLine(p,(polygon->a != p)? polygon->a: polygon->b);
 
     // see explanation at page 2 of draft
@@ -71,7 +71,7 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
     double cos = getRandom(-1,min<velocity>(1,object.speed*n.cos(objectStep)/particleSpeed));
     //assert(!(cos > 1 || cos < -1));/////////
     // see explanation at page 8 of draft
-    Vector s(p,GU::rotatePointAroundLine(p + n,auxLine,acos(cos)));
+    Vector s(p,Geometry::rotatePointAroundLine(p + n,auxLine,acos(cos)));
     s = s.resized(particleSpeed) - objectStep;
 
     if (n.cos(s) >= 0) {//////////////////////////////
@@ -82,7 +82,7 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
     if (isParticleOnSphere) {
         // now we should calculate point on sphere were particle will be initially placed
         // see explanation at page 1 of draft
-        real a = GeometryUtils::getDistanceBetweenPoints(center,p);
+        real a = Geometry::getDistanceBetweenPoints(center,p);
         cos = Vector(center,p).cos(s);
         distanceBetweenParticleAndPolygon = sqrt(a*a*(cos*cos - 1) + radius*radius) + a*cos;
 
@@ -119,5 +119,5 @@ void Object3D::init() {
     center = Point((maxCoords.x + minCoords.x)/2,
                    (maxCoords.y + minCoords.y)/2,
                    (maxCoords.z + minCoords.z)/2);
-    radius = GeometryUtils::getDistanceBetweenPoints(center,maxCoords);
+    radius = Geometry::getDistanceBetweenPoints(center,maxCoords);
 }

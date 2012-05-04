@@ -113,7 +113,7 @@ void processEvents(void)
 
 
 int processParticles(Object3D &satelliteObj) {
-    real stepLength = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
+    real stepLength = Geometry::getDistanceBetweenPoints(satelliteObj.nearestPoint,
                                                               satelliteObj.furthermostPoint)/10.0;
     real timeInterval = stepLength/(ELECTRON_VELOCITY); // average velocity
     cout << "stepLength: " << stepLength << endl;
@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
         int intersectionsCounter = 0;
         verboseFlag && PRINTLN("checking for intersections");
         for(int j = 0;j < n;++j) {
-            if (GeometryUtils::doesParticlesTrajectoryIntersectObject(particlesArray[j],satelliteObj))
+            if (Geometry::doesParticlesTrajectoryIntersectObject(particlesArray[j],satelliteObj))
                 ++intersectionsCounter;
             verboseFlag && (!(j%(n/20 + 1))) && PRINT('.');
         }
@@ -295,9 +295,12 @@ int main(int argc, char** argv) {
         const unsigned long long totalAmount = density*volume;
         // see explanation in draft, page 1
         const int maxParticlesAmount = (a + 4*sigma)*totalAmount;
-        GaussianDistributionGenerator *particlesAmountRateGenerator = getGaussianDistributionGenerator(a,sigma);
-        particlesAmountGenerator = [particlesAmountRateGenerator,totalAmount,maxParticlesAmount]() -> unsigned long long
-            {return min((*particlesAmountRateGenerator)()*totalAmount,double(maxParticlesAmount));};
+        //cout << min(particlesAmountRateGenerator()*totalAmount,double(maxParticlesAmount)) << endl;/////////////////////////////////////////
+
+        particlesAmountGenerator = [a,sigma,totalAmount,maxParticlesAmount]() -> unsigned long long {
+            static GaussianDistributionGenerator particlesAmountRateGenerator = getGaussianDistributionGenerator(a,sigma);
+            return min(particlesAmountRateGenerator()*totalAmount,double(maxParticlesAmount));
+        };
         newParticlesAmount = particlesAmountGenerator();
 
         verboseFlag && PRINTLN("particles array initialization...");
@@ -308,20 +311,20 @@ int main(int argc, char** argv) {
         assert(initParticlesWhichIntersectsObject(particlesArray,particlesAmount,generativeSphere,false) == particlesAmount);
 
         verboseFlag && PRINTLN("searching for fastest particle...");
-        ParticlePolygon fastestPP = DU::reduce<ParticlePolygon*,ParticlePolygon>(
+        ParticlePolygon fastestPP = Data::reduce<ParticlePolygon*,ParticlePolygon>(
                     [](ParticlePolygon &p1,ParticlePolygon &p2) -> ParticlePolygon&
         {return (p2.first.step.length() > p1.first.step.length())? p2: p1;},
         particlesArray,particlesAmount);
         verboseFlag && COUT("fastest particle speed: " << fastestPP.first.step.length());
 
-        double distanceStep = GeometryUtils::getDistanceBetweenPoints(satelliteObj.nearestPoint,
+        double distanceStep = Geometry::getDistanceBetweenPoints(satelliteObj.nearestPoint,
                                                                     satelliteObj.furthermostPoint)/2.;
         timeStep = distanceStep/ELECTRON_VELOCITY; // time to pass 1/10 of object for particle with average velocity
 
         verboseFlag && PRINTLN("decreasing distance to object for all particles");      
         // time during the fastest particle will reach object
-        double distanceDelta = GU::getDistanceBetweenPoints(fastestPP.first,
-                                                            GU::getPlaneAndLineIntersection(*fastestPP.second,
+        double distanceDelta = Geometry::getDistanceBetweenPoints(fastestPP.first,
+                                                            Geometry::getPlaneAndLineIntersection(*fastestPP.second,
                                                                                             Line(fastestPP.first,fastestPP.first.step)));
         double timeDelta = (distanceDelta - 5*distanceStep)/fastestPP.first.step.length();
 
@@ -387,7 +390,7 @@ int main(int argc, char** argv) {
     }
 
     if (testModeFlag) {
-            cout << GU::rotatePointAroundLine(Point(0,0,1),Line(Point(0,0,0),Point(1,0,0)),M_PI/2.) << endl;
+            cout << Geometry::rotatePointAroundLine(Point(0,0,1),Line(Point(0,0,0),Point(1,0,0)),M_PI/2.) << endl;
     }
 
     if (particlesArray != NULL) {

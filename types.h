@@ -44,8 +44,6 @@ static bool ORIENTATION = ORIENT_RIGHT_HANDED;
 void setOrientation(bool);
 bool getOrientation();
 
-class GeometryUtils;
-
 class InvalidPrimitiveException: public runtime_error {
 public:
     InvalidPrimitiveException(string *msg): runtime_error(*msg) {}

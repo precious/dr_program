@@ -8,7 +8,7 @@
 #include "types.h"
 #include <utility>
 
-namespace GraphicsUtils {
+namespace Graphics {
     extern GLboolean shouldRotate;
     extern Point viewerPosition;
 
@@ -22,7 +22,5 @@ namespace GraphicsUtils {
     void draw(Object3D&,ParticlePolygon*,int);
     void quitGraphics(int);
 }
-
-namespace Graphics = GraphicsUtils;
 
 #endif // GRAPHICS_UTILS_H
