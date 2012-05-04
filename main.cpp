@@ -102,7 +102,6 @@ void processEvents(void)
             break;
         case SDL_MOUSEMOTION:
             if (Graphics::isLMousePressed) {
-                //Vector motion(event.motion.xrel,-event.motion.yrel,0);
                 Vector motion(Point(event.motion.x - event.motion.xrel, - event.motion.y + event.motion.yrel,0),
                               Point(event.motion.x,-event.motion.y,0));
                 Graphics::rotationParams.second = motion.vectorProduct(zAxis).resized(10);
