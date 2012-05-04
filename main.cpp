@@ -102,10 +102,19 @@ void processEvents(void)
             break;
         case SDL_MOUSEMOTION:
             if (Graphics::isLMousePressed) {
-                Vector motion(event.motion.xrel,-event.motion.yrel,0);
-                Graphics::rotationParams.second = motion.vectorProduct(zAxis).resized(10);
-                Graphics::rotationParams.first = motion.length();
-                cout << motion.resized(10) << "   " << motion.vectorProduct(zAxis).resized(10) << endl;///////////////////////
+                Vector finish(event.motion.x,-event.motion.y,0);
+                Vector start(finish.x - event.motion.xrel,finish.y + event.motion.yrel,0);
+                double R = max(start.length(),finish.length()) + 2;
+                finish.z = -sqrt(R*R - pow(finish.length(),2));
+
+                ///cout << start.length() << ", " << R << ", " << finish.length() << endl;//////////////////////
+                //cout << event.motion.x << "  " << event.motion.y << endl;
+
+                start.z = -sqrt(R*R - pow(start.length(),2));
+
+                Graphics::rotationParams.second = OrientedPlane(start,finish,POINT_OF_ORIGIN).getNormal();
+                Graphics::rotationParams.first = GU::getDistanceBetweenPoints(start,finish)*0.25;
+                // cout << motion.resized(10) << "   " << motion.vectorProduct(zAxis).resized(10) << endl;///////////////////////
             }
         }
     }

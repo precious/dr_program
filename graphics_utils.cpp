@@ -81,8 +81,12 @@ void Graphics::draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NUL
     static float angle = 0.0f;
     static GLubyte purple[] = {255,   150, 255,   0 };
     static GLubyte grey[] = {100,100,100,0};
-    static GLubyte black[] = {0,0,0,0};
+
+    static GLubyte red[] = {255,0,0,0};
+    static GLubyte green[] = {0,255,0,0};
     static GLubyte blue[] = {0,0,255,0};
+
+
 
     /*
     lengthGL lengthReal
@@ -131,6 +135,24 @@ void Graphics::draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NUL
 
     //Vector tmpVector(Point(),viewerPosition);
 
+    // draw axes:
+    glBegin(GL_LINES);
+    glColor4ubv(red); glVertex3d(0,0,0); glVertex3d(4,0,0);
+    glColor4ubv(green); glVertex3d(0,0,0); glVertex3d(0,4,0);
+    glColor4ubv(blue); glVertex3d(0,0,0); glVertex3d(0,0,4);
+    glEnd();
+
+    // draw the particles
+    if (particlesArray != NULL) {
+        glBegin(GL_POINTS);
+        glColor4ubv(grey);
+        for(int i = 0;i < particlesAmount;++i) {
+            glVertex3f(particlesArray[i].first.x,particlesArray[i].first.y,particlesArray[i].first.z);
+        }
+        glEnd();
+    }
+
+
     // draw the object
     glColor4ubv(purple);
     vector<PlaneType> *coords = satelliteObj.polygons;
@@ -151,16 +173,6 @@ void Graphics::draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NUL
         for(int i = 0;i < 3;i++)
             glVertex3d((*it).set[i].x,(*it).set[i].y,(*it).set[i].z);
     */
-        glEnd();
-    }
-
-    // draw the particles
-    if (particlesArray != NULL) {
-        glBegin(GL_POINTS);
-        glColor4ubv(grey);
-        for(int i = 0;i < particlesAmount;++i) {
-            glVertex3f(particlesArray[i].first.x,particlesArray[i].first.y,particlesArray[i].first.z);
-        }
         glEnd();
     }
 
