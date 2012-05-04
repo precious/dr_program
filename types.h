@@ -81,6 +81,13 @@ struct Point {
     Point rotateAroundY(double cos,double sin) {
         return Point(x*cos + z*sin,y,-x*sin + z*cos);
     }
+    real& operator[](int i) {
+        switch(i % 3) {
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
+        }
+    }
 };
 
 struct Vector: public Point {
@@ -121,13 +128,17 @@ struct Vector: public Point {
     }
     Vector resized(real _length) {
         double coef = _length/length();
+        if (std::isnan(coef))
+            return Vector(x,y,z);
         return Vector(x*coef,y*coef,z*coef);
     }
     void resize(real _length) {
         double coef = _length/length();
-        x *= coef;
-        y *= coef;
-        z *= coef;
+        if (!std::isnan(coef)) {
+            x *= coef;
+            y *= coef;
+            z *= coef;
+        }
     }
 };
 

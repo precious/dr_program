@@ -1,9 +1,17 @@
 #include "graphics_utils.h"
 
-GLboolean shouldRotate = GL_FALSE;
-Point viewerPosition(0,0,0);
+GLboolean Graphics::shouldRotate = GL_FALSE;
+Point Graphics::viewerPosition(0,0,0);
 
-void initGraphics(int width, int height,Point &maxObjCoords) {
+extern int Graphics::width = 0;
+extern int Graphics::height = 0;
+
+bool Graphics::isLMousePressed = false;
+pair<double,Vector> Graphics::rotationParams(0,Vector());
+
+void Graphics::initGraphics(int _width, int _height,Point &maxObjCoords) {
+    height = _height;
+    width = _width;
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         cerr << "Video initialization failed: " << SDL_GetError() << endl;
         quitGraphics(1);
@@ -49,10 +57,10 @@ void initGraphics(int width, int height,Point &maxObjCoords) {
     double objHeight = (height > width)? maxObjSize : maxObjSize*height/width;
     double objWidth = (width > height)? maxObjSize : maxObjSize*width/height;*/
     double maxCoordinate = 2*max(maxObjCoords.x,max(maxObjCoords.y,maxObjCoords.z));
-    /*glFrustum(-maxCoordinate,maxCoordinate,
+    glFrustum(-maxCoordinate,maxCoordinate,
               -maxCoordinate/ratio,maxCoordinate/ratio,
               10,20);
-    */gluPerspective(45,ratio,1.0,15*maxObjCoords.z); /////////////// 45 30
+    ///gluPerspective(45,ratio,1.0,15*maxObjCoords.z); /////////////// 45 30
     viewerPosition.z = -20*maxObjCoords.z;
     ///cout << max(viewerPosition.z - maxObjCoords.z,1.0) << endl;
     ///cout << max(viewerPosition.z + maxObjCoords.z,2.0) << endl;
@@ -63,12 +71,12 @@ void initGraphics(int width, int height,Point &maxObjCoords) {
     //tempVector = new Vector(tempLine->b,tempLine->a);
 }
 
-void quitGraphics(int code) {
+void Graphics::quitGraphics(int code) {
     SDL_Quit();
     exit(code);
 }
 
-void draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NULL,int particlesAmount = 0)
+void Graphics::draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NULL,int particlesAmount = 0)
 {
     static float angle = 0.0f;
     static GLubyte purple[] = {255,   150, 255,   0 };
@@ -85,21 +93,41 @@ void draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NULL,int part
     glClearColor(255,255,255,0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 
-    /* Move down the z-axis. */
-    glTranslatef(viewerPosition.x, viewerPosition.y, viewerPosition.z);
+    glMatrixMode(GL_MODELVIEW);
+    static bool firstTime = true;
+    if (firstTime) {
+        firstTime = false;
+        glLoadIdentity();
+        /* Move down the z-axis. */
+        glTranslatef(viewerPosition.x, viewerPosition.y, viewerPosition.z);
+    }
+
+
+    /* Rotation by mouse */
+    if (rotationParams.first) {
+        Vector result(0,0,0);
+        GLdouble modelMatrix[16];
+        glGetDoublev(GL_MODELVIEW, modelMatrix);
+        //////////for(int k = 0;k< 16;++k,cout << modelMatrix[k] << ", ");cout << endl;////////////////////
+        for(int i = 0;i < 3;++i)
+            for(int j = 0;j < 3;++j)
+                result[j] += rotationParams.second[i]*(/*modelMatrix[i*4 + j] + */(i == j)? 1: 0);
+        glRotated(rotationParams.first,rotationParams.second.x,
+                  rotationParams.second.y,rotationParams.second.z);
+        ////////////////cout << result << endl;//////////////////////////////////////////
+        //glRotated(rotationParams.first,result.x,result.y,result.z);
+        rotationParams.first = 0;
+    }
+    //
 
     /* Rotate. */
-    glRotatef(angle, 0.0, 1.0, 0.0);
-
+    /////////////////glRotatef(angle, 0.0, 1.0, 0.0);
     if (shouldRotate) {
         if (++angle > 360.0f) {
             angle = 0.0f;
         }
     }
-
 
     //Vector tmpVector(Point(),viewerPosition);
 

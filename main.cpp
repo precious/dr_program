@@ -14,7 +14,7 @@
 #include "data_utils.h"
 #include "graphics_utils.h"
 
-#define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; quitGraphics(1); }
+#define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; Graphics::quitGraphics(1); }
 #define rand(max) rand()%max
 #define PRINTLN(arg) cout << arg << endl;
 #define PRINT(arg) cout << arg && cout.flush();
@@ -37,10 +37,10 @@ static void handleKeyDown(SDL_keysym* keysym)
 {
     switch(keysym->sym) {
     case SDLK_ESCAPE:
-        quitGraphics(0);
+        Graphics::quitGraphics(0);
         break;
     case SDLK_SPACE:
-        shouldRotate = !shouldRotate;
+        Graphics::shouldRotate = !Graphics::shouldRotate;
         break;
     case SDLK_KP_PLUS:
     case SDLK_PLUS:
@@ -84,18 +84,29 @@ void processEvents(void)
 {
     /* Our SDL event placeholder. */
     SDL_Event event;
+    static Vector zAxis(0,0,10);
 
     /* Grab all the events off the queue. */
     while(SDL_PollEvent(&event)) {
-
         switch (event.type) {
         case SDL_KEYDOWN:
             handleKeyDown( &event.key.keysym );
             break;
         case SDL_QUIT:
             /* Handle quit requests (like Ctrl-c). */
-            quitGraphics(0);
+            Graphics::quitGraphics(0);
             break;
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+            Graphics::isLMousePressed = !Graphics::isLMousePressed;
+            break;
+        case SDL_MOUSEMOTION:
+            if (Graphics::isLMousePressed) {
+                Vector motion(event.motion.xrel,-event.motion.yrel,0);
+                Graphics::rotationParams.second = motion.vectorProduct(zAxis).resized(10);
+                Graphics::rotationParams.first = motion.length();
+                cout << motion.resized(10) << "   " << motion.vectorProduct(zAxis).resized(10) << endl;///////////////////////
+            }
         }
     }
 }
@@ -330,7 +341,7 @@ int main(int argc, char** argv) {
         // set appropriate OpenGL & properties SDL
         int width = 640;
         int height = 480;
-        initGraphics(width,height,satelliteObj.maxCoords);
+        Graphics::initGraphics(width,height,satelliteObj.maxCoords);
     }
 
     timespec start, stop, *delta;
@@ -346,7 +357,7 @@ int main(int argc, char** argv) {
                 processEvents();
 
                 clock_gettime(CLOCK_ID,&start);
-                draw(satelliteObj,particlesArray,particlesAmount);
+                Graphics::draw(satelliteObj,particlesArray,particlesAmount);
                 clock_gettime(CLOCK_ID,&stop);
 
                 delta = getTimespecDelta(&start,&stop);
@@ -383,7 +394,7 @@ int main(int argc, char** argv) {
         free(particlesArray);
     }
 
-    quitGraphics(0);
+    Graphics::quitGraphics(0);
 
     return 0;
 }

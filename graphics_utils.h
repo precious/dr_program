@@ -6,12 +6,23 @@
 #include <GL/glu.h>
 #include <cstdlib>
 #include "types.h"
+#include <utility>
 
-extern GLboolean shouldRotate;
-extern Point viewerPosition;
+namespace GraphicsUtils {
+    extern GLboolean shouldRotate;
+    extern Point viewerPosition;
 
-void initGraphics(int,int,Point&);
-void draw(Object3D&,ParticlePolygon*,int);
-void quitGraphics(int);
+    extern int width;
+    extern int height;
+
+    extern bool isLMousePressed;
+    extern pair<double,Vector> rotationParams;
+
+    void initGraphics(int,int,Point&);
+    void draw(Object3D&,ParticlePolygon*,int);
+    void quitGraphics(int);
+}
+
+namespace Graphics = GraphicsUtils;
 
 #endif // GRAPHICS_UTILS_H
