@@ -64,7 +64,7 @@ void Graphics::draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NUL
     // Projections matrix processing
     static float ratio = (float)width/(float)height;
     static double diameter = satelliteObj.radius*2;
-    static GLdouble zNear = 1.0;
+    static GLdouble zNear = 0.0;
     static GLdouble zFar = zNear + 2*diameter;
     static GLdouble left = satelliteObj.center.x - diameter;
     static GLdouble right = satelliteObj.center.x + diameter;
@@ -74,7 +74,7 @@ void Graphics::draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NUL
 
     if (firstTimeCall) {
         firstTimeCall = false;
-        viewerPosition.z = 1.8*diameter;
+        viewerPosition.z = 1.5*diameter;
         if (ratio < 1.0) { // width < height
             bottom /= ratio;
             top /= ratio;
@@ -106,9 +106,9 @@ void Graphics::draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NUL
 
     // draw axes:
     glBegin(GL_LINES);
-    glColor4ubv(red); glVertex3d(0,0,0); glVertex3d(4,0,0);
-    glColor4ubv(green); glVertex3d(0,0,0); glVertex3d(0,4,0);
-    glColor4ubv(blue); glVertex3d(0,0,0); glVertex3d(0,0,4);
+    glColor4ubv(red); glVertex3d(0,0,0); glVertex3d(1.5*diameter,0,0);
+    glColor4ubv(green); glVertex3d(0,0,0); glVertex3d(0,1.5*diameter,0);
+    glColor4ubv(blue); glVertex3d(0,0,0); glVertex3d(0,0,1.5*diameter);
     glEnd();
 
     // draw the particles

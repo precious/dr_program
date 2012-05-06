@@ -1,6 +1,8 @@
 #include "file_utils.h"
 
-vector<PlaneType>* getCoordinatesFromFile(char *filename) {
+float File::scaleFactor = 0.001; // by default coordinates are given in millimeters
+
+vector<PlaneType>* File::getCoordinatesFromFile(char *filename) {
     filebuf fb;
     if (!fb.open(filename,ios::in)) {
         cerr << "An error occurred while opening file" << endl;
@@ -34,9 +36,9 @@ vector<PlaneType>* getCoordinatesFromFile(char *filename) {
         if (i == 3) {
             coordinatesList->push_back(PlaneType(*tempThreePoints));
             for (i = 0;i < 3;i++) {
-                coordinatesList->back().set[i].x *= SCALE;
-                coordinatesList->back().set[i].y *= SCALE;
-                coordinatesList->back().set[i].z *= SCALE;
+                coordinatesList->back().set[i].x *= scaleFactor;
+                coordinatesList->back().set[i].y *= scaleFactor;
+                coordinatesList->back().set[i].z *= scaleFactor;
             }
         }
         // then delete it

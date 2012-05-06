@@ -21,13 +21,15 @@
 #define COUT(args) cout << args << endl;
 
 const char usage[] = "Usage:\n\tprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][-d][-l] <filename>\n\
-        -t NUMBER - test probabilty with number of particles NUMBER\n\
-        -r RADIUS - radius of generative sphere\n\
-        -s TIME - time to sleep in microseconds\n\
-        -m - model particles\n\
-        -v - verbose mode\n\
-        -d - draw (requires also -l option)\n\
-        -l - run mainloop";
+    -t NUMBER - test probabilty with number of particles NUMBER\n\
+    -r RADIUS - radius of generative sphere\n\
+    -s TIME - time to sleep in microseconds\n\
+    -m - model particles\n\
+    -v - verbose mode\n\
+    -d - draw (requires also -l option)\n\
+    -l - run mainloop\n\
+    -f SF - scale factor for coordinates in file to reduce them to SI\n\
+        (default 0.001)\n";
 
 static void handleKeyDown(SDL_keysym* keysym)
 {
@@ -177,13 +179,16 @@ int main(int argc, char** argv) {
     int sleepTime = 0; //microsecond
 
 
-    while ((c = getopt (argc, argv, ":mvdlxt:r:s:")) != -1) {
+    while ((c = getopt (argc, argv, ":mvdlxt:r:s:f:")) != -1) {
         switch(c) {
         case 't':
             testProbabilityCount = atoi(optarg);
             break;
         case 'r':
             generativeSphereRadius = atoi(optarg);
+            break;
+        case 'f':
+            File::scaleFactor = atof(optarg);
             break;
         case 's':
             sleepTime = atoi(optarg);
@@ -217,7 +222,7 @@ int main(int argc, char** argv) {
 
     /*------------------------------------*/
     // getting coordinatates from file
-    vector<PlaneType> *coordinatesList = getCoordinatesFromFile(filename);
+    vector<PlaneType> *coordinatesList = File::getCoordinatesFromFile(filename);
     assert(coordinatesList != NULL);
 
     // creating object using coordinates
@@ -274,7 +279,7 @@ int main(int argc, char** argv) {
         const int maxParticlesAmount = (a + 4*sigma)*totalAmount;
 
         particlesAmountGenerator = [a,sigma,totalAmount,maxParticlesAmount]() -> unsigned long long {
-            static GaussianDistributionGenerator particlesAmountRateGenerator = getGaussianDistributionGenerator(a,sigma);
+            static GaussianDistributionGenerator particlesAmountRateGenerator = Time::getGaussianDistributionGenerator(a,sigma);
             return min(particlesAmountRateGenerator()*totalAmount,double(maxParticlesAmount));
         };
         newParticlesAmount = particlesAmountGenerator();
@@ -339,7 +344,7 @@ int main(int argc, char** argv) {
                 Graphics::draw(satelliteObj,particlesArray,particlesAmount);
                 clock_gettime(CLOCK_ID,&stop);
 
-                delta = getTimespecDelta(&start,&stop);
+                delta = Time::getTimespecDelta(&start,&stop);
                 ++frames;
                 seconds += delta->tv_sec + delta->tv_nsec/pow(10,9);
                 if (seconds >= 1) {

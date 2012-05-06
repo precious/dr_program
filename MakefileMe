@@ -1,0 +1,33 @@
+CXX = g++
+LIBS = -Wall -lGL -lGLU `sdl-config --cflags --libs` -lrt
+CXXFLAGS += -std=c++0x -Wno-write-strings
+INCLUDE = -I/usr/share/qt4/mkspecs/linux-g++-64 -I.
+
+constants.o: constants.cpp constants.h 
+	$(CXX) $(INCLUDE) $(LIBS) $(CXXFLAGS) constants.cpp
+
+types.o: types.cpp types.h
+	$(CXX) $(LIBS) $(CXXFLAGS) types.cpp
+
+geometry_utils.o: geometry_utils.cpp geometry_utils.h
+	$(CXX) $(INCLUDE) $(LIBS) $(CXXFLAGS) geometry_utils.cpp
+
+time_utils.o:  time_utils.cpp  time_utils.h
+	$(CXX) $(INCLUDE) $(LIBS) $(CXXFLAGS)  time_utils.cpp
+	
+file_utils.o: file_utils.cpp file_utils.h
+	$(CXX) $(INCLUDE) $(LIBS) $(CXXFLAGS) file_utils.cpp
+	
+graphics_utils.o: graphics_utils.cpp graphics_utils.h
+	$(CXX) $(INCLUDE) $(LIBS) $(CXXFLAGS) graphics_utils.cpp
+	
+main.o: main.cpp
+	$(CXX) $(INCLUDE) $(LIBS) $(CXXFLAGS) main.cpp
+	
+program: constants.o types.o geometry_utils.o time_utils.o file_utils.o\
+		 graphics_utils.o main.o data_utils.h
+	$(CXX) $(INCLUDE) $(LIBS) $(CXXFLAGS) constants.o types.o\
+	geometry_utils.o time_utils.o file_utils.o graphics_utils.o main.o\
+	data_utils.h -o program
+	
+clean: rm -rf *.o program

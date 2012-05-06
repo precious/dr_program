@@ -10,8 +10,10 @@ using namespace std;
 
 typedef OrientedPlane PlaneType;
 
-const float SCALE = 0.001; // coordinates are given in millimeters
+namespace File {
+    extern float scaleFactor;
 
-vector<PlaneType>* getCoordinatesFromFile(char*);
+    vector<PlaneType>* getCoordinatesFromFile(char*);
+}
 
 #endif // READ_FILE_H

@@ -192,16 +192,23 @@ struct ThreePoints : public Locus<3> {
     virtual Vector getNormal() {
         return Vector(a,b).vectorProduct(Vector(a,c) );
     }
-};
 
-struct Triangle: public ThreePoints {
-    Triangle(Point _a,Point _b,Point _c): ThreePoints(_a,_b,_c) {}
-    Triangle(ThreePoints &tP): ThreePoints(tP) {}
     Point centerOfMass() {
         return Point( (a.x + b.x + c.x) / 3.0,
                       (a.y + b.y + c.y) / 3.0,
                       (a.z + b.z + c.z) / 3.0);
     }
+
+    double area() {
+        Vector ab(a,b), ac(a,c);
+        return 0.5*sqrt(1 - pow(ab.cos(ac),2))*ab.length()*ac.length();
+    }
+};
+
+struct Triangle: public ThreePoints {
+    Triangle(Point _a,Point _b,Point _c): ThreePoints(_a,_b,_c) {}
+    Triangle(ThreePoints &tP): ThreePoints(tP) {}
+
 };
 
 struct Plane: public ThreePoints {
@@ -295,6 +302,14 @@ struct Object3D: public Sphere {
     Vector step() {
         return front.normalized()*speed;
     }
+
+    double surfaceArea() {
+        double sA = 0.0;
+        for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();++it) {
+            sA += (*it).area();
+        }
+        return sA;
+    }
 };
 
 struct GenerativeSphere: public Sphere {
@@ -302,19 +317,19 @@ private:
     velocity electronVelocityGenerator() {
         static MaxwellDistributionSpeedGenerator generator =
                 // getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/4.0);
-                getMaxwellDistributionSpeedGenerator(ELECTRON_VELOCITY_M,ELECTRON_VELOCITY_D);
+                Time::getMaxwellDistributionSpeedGenerator(ELECTRON_VELOCITY_M,ELECTRON_VELOCITY_D);
         return generator();
     }
     velocity ionVelocityGenerator() {
         static MaxwellDistributionSpeedGenerator generator =
                 // getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/4.0);
-                getMaxwellDistributionSpeedGenerator(ION_VELOCITY_M,ION_VELOCITY_D);
+                Time::getMaxwellDistributionSpeedGenerator(ION_VELOCITY_M,ION_VELOCITY_D);
         return generator();
     }
     Object3D &object;
     Vector objectStep;
     // Sphere sphereAroundObject;
-    void init();
+    //void init();
 
 public:
     GenerativeSphere(Point _p, real _r,Object3D _object):

@@ -20,7 +20,6 @@ typedef normal_distribution<double> GaussianDistribution;
 
 typedef mt19937 Engine;
 
-
 template <typename Eng,typename Distrib>
 class Generator {
 private:
@@ -37,17 +36,19 @@ typedef Generator<Engine,UniformDistribution> UniformDistributionGenerator;
 typedef Generator<Engine,GaussianDistribution> GaussianDistributionGenerator;
 typedef function<velocity ()> MaxwellDistributionSpeedGenerator;
 
-void printTimespec(timespec*);
+namespace Time {
+    void printTimespec(timespec*);
 
-UniformDistributionGenerator getUniformDistributionGenerator(double,double);
-GaussianDistributionGenerator getGaussianDistributionGenerator(double,double);
-MaxwellDistributionSpeedGenerator getMaxwellDistributionSpeedGenerator(double,double);
+    UniformDistributionGenerator getUniformDistributionGenerator(double,double);
+    GaussianDistributionGenerator getGaussianDistributionGenerator(double,double);
+    MaxwellDistributionSpeedGenerator getMaxwellDistributionSpeedGenerator(double,double);
 
-timespec* getTimespecDelta(timespec*,timespec*);
+    timespec* getTimespecDelta(timespec*,timespec*);
 
-double getRandom();
+    double getRandom();
 
-double getRandom(double,double);
+    double getRandom(double,double);
+}
 
 #endif // TIME_UTILS_H
 

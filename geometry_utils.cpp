@@ -110,17 +110,17 @@ bool Geometry::doesLineIntersectTriangle(ThreePoints &triangle,Line &line) {
 Point Geometry::getRandomPointFromSphere(Sphere s) {
     Point randPoint;
     do {
-        randPoint.x = (getRandom()*2 - 1)*s.radius;
-        randPoint.y = (getRandom()*2 - 1)*s.radius;
-        randPoint.z = (getRandom()*2 - 1)*s.radius;
+        randPoint.x = (Time::getRandom()*2 - 1)*s.radius;
+        randPoint.y = (Time::getRandom()*2 - 1)*s.radius;
+        randPoint.z = (Time::getRandom()*2 - 1)*s.radius;
     } while(Geometry::getDistanceBetweenPoints(randPoint,POINT_OF_ORIGIN) > s.radius);
     return s.center + Vector(POINT_OF_ORIGIN,randPoint);
 }
 
 Point Geometry::getRandomPointFromSphere2(Sphere s) {
     return s.center + Vector(POINT_OF_ORIGIN,
-                             Point(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5))
-            * sqrt(s.radius*getRandom(0,s.radius));
+                             Point(Time::getRandom() - 0.5,Time::getRandom() - 0.5,Time::getRandom() - 0.5))
+            * sqrt(s.radius*Time::getRandom(0,s.radius));
 }
 
 Point Geometry::getRandomPointOnSphere(Sphere s) {
@@ -130,16 +130,16 @@ Point Geometry::getRandomPointOnSphere(Sphere s) {
 Vector Geometry::getRandomOrthogonalVector(Vector v) {
     Vector a;
     if (v.x != 0) {
-        a.y = getRandom();
-        a.z = getRandom();
+        a.y = Time::getRandom();
+        a.z = Time::getRandom();
         a.x = (-v.y*a.y - v.z*a.z)/v.x;
     } else if (v.y != 0) {
-        a.x = getRandom();
-        a.z = getRandom();
+        a.x = Time::getRandom();
+        a.z = Time::getRandom();
         a.y = (-v.x*a.x - v.z*a.z)/v.y;
     } else if (v.z != 0) {
-        a.y = getRandom();
-        a.x = getRandom();
+        a.y = Time::getRandom();
+        a.x = Time::getRandom();
         a.z = (-v.y*a.y - v.x*a.x)/v.z;
     }
     return a;
@@ -200,7 +200,7 @@ real Geometry::getChordLength(Sphere sphere,Line line) {
 }
 
 Point Geometry::getRandomPointFromTriangle(ThreePoints& tp) {
-    return tp.a + ( Vector(tp.a,tp.b)*getRandom() + Vector(tp.a,tp.c)*getRandom() )*0.5;
+    return tp.a + ( Vector(tp.a,tp.b)*Time::getRandom() + Vector(tp.a,tp.c)*Time::getRandom() )*0.5;
 }
 
 bool Geometry::doesLineIntersectSphere(Line l,Sphere s) {

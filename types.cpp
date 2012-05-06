@@ -34,7 +34,7 @@ Plane::Plane(Point p, Vector v):
 
 Particle GenerativeSphere::generateParticleInSphere(int type) {
     Point initialPosition = Geometry::getRandomPointFromSphere2(*this);
-    Vector step(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
+    Vector step(Time::getRandom() - 0.5,Time::getRandom() - 0.5,Time::getRandom() - 0.5);
     switch(type) {
     case PTYPE_ELECTRON:
         step = step.resized(electronVelocityGenerator()) - objectStep;
@@ -65,10 +65,10 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
 
     // see explanation at page 2 of draft
     if (particleSpeed <= -object.speed*n.cos(objectStep)) {
-        particleSpeed = getRandom(max<velocity>(0.1,-object.speed*n.cos(objectStep)),2.*ELECTRON_VELOCITY); /// TODO fix me
+        particleSpeed = Time::getRandom(max<velocity>(0.1,-object.speed*n.cos(objectStep)),2.*ELECTRON_VELOCITY); /// TODO fix me
     }
 
-    double cos = getRandom(-1,min<velocity>(1,object.speed*n.cos(objectStep)/particleSpeed));
+    double cos = Time::getRandom(-1,min<velocity>(1,object.speed*n.cos(objectStep)/particleSpeed));
     //assert(!(cos > 1 || cos < -1));/////////
     // see explanation at page 8 of draft
     Vector s(p,Geometry::rotatePointAroundLine(p + n,auxLine,acos(cos)));
@@ -88,7 +88,7 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
         //assert (abs(radius - GU::getDistanceBetweenPoints(p,center)) <= 0.00001);
     } else {
         // see explanation at page 5 of draft
-        real distanceBetweenParticleAndPolygon = sqrt(getRandom(object.radius,radius)*radius);
+        real distanceBetweenParticleAndPolygon = sqrt(Time::getRandom(object.radius,radius)*radius);
         p = p - s.resized(distanceBetweenParticleAndPolygon);
     }
 
