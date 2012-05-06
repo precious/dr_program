@@ -20,6 +20,7 @@ using namespace std;
 struct ThreePoints;
 struct Line;
 struct Point;
+struct Particle;
 struct Plane;
 struct Sphere;
 struct Vector;

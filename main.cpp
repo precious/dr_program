@@ -20,10 +20,6 @@
 #define PRINT(arg) cout << arg && cout.flush();
 #define COUT(args) cout << args << endl;
 
-//Line *tempLine;
-//Vector *tempVector;
-//int step = 30;
-
 const char usage[] = "Usage:\n\tprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][-d][-l] <filename>\n\
         -t NUMBER - test probabilty with number of particles NUMBER\n\
         -r RADIUS - radius of generative sphere\n\
@@ -39,52 +35,17 @@ static void handleKeyDown(SDL_keysym* keysym)
     case SDLK_ESCAPE:
         Graphics::quitGraphics(0);
         break;
-    case SDLK_SPACE:
-        Graphics::shouldRotate = !Graphics::shouldRotate;
-        break;
-    case SDLK_KP_PLUS:
-    case SDLK_PLUS:
-        //viewerPosition.z += 20;
-        //tempLine->a.z += step;
-        //tempLine->b.z += step;
-        break;
-    case SDLK_KP_MINUS:
-    case SDLK_MINUS:
-        //viewerPosition.z -= 20;
-        //tempLine->a.z -= step;
-        //tempLine->b.z -= step;
-        break;
-    case SDLK_UP:
-        cout << "up" << endl;
-        //tempLine->a.y += step;
-        //tempLine->b.y += step;
-        break;
-    case SDLK_DOWN:
-        cout << "down" << endl;
-        //tempLine->a.y -= step;
-        //tempLine->b.y -= step;
-        break;
-    case SDLK_LEFT:
-        cout << "left" << endl;
-        //tempLine->a.x -= step;
-        //tempLine->b.x -= step;
-        break;
-    case SDLK_RIGHT:
-        cout << "right" << endl;
-        //tempLine->a.x += step;
-        //tempLine->b.x += step;
-        break;
     default:
         break;
     }
 }
 
-
 void processEvents(void)
 {
     /* Our SDL event placeholder. */
     SDL_Event event;
-    static Vector zAxis(0,0,10);
+    float zoomDelta = 0.01;
+    float zoomDelta2 = 0.1;
 
     /* Grab all the events off the queue. */
     while(SDL_PollEvent(&event)) {
@@ -97,15 +58,30 @@ void processEvents(void)
             Graphics::quitGraphics(0);
             break;
         case SDL_MOUSEBUTTONDOWN:
+            switch(event.button.button) {
+            case SDL_BUTTON_LEFT:
+                Graphics::isLMousePressed = true;
+                break;
+            case SDL_BUTTON_WHEELDOWN:
+                if (Graphics::zoomFactor > 2*zoomDelta)
+                    Graphics::zoomFactor -= (Graphics::zoomFactor > 2)? zoomDelta2: zoomDelta;
+                break;
+            case SDL_BUTTON_WHEELUP:
+               Graphics::zoomFactor += (Graphics::zoomFactor > 2)? zoomDelta2: zoomDelta;
+               break;
+            }
+            break;
         case SDL_MOUSEBUTTONUP:
-            Graphics::isLMousePressed = !Graphics::isLMousePressed;
+            if (event.button.button == SDL_BUTTON_LEFT)
+                Graphics::isLMousePressed = false;
             break;
         case SDL_MOUSEMOTION:
             if (Graphics::isLMousePressed) {
-                Vector motion(Point(event.motion.x - event.motion.xrel, - event.motion.y + event.motion.yrel,0),
-                              Point(event.motion.x,-event.motion.y,0));
-                Graphics::rotationParams.second = motion.vectorProduct(zAxis).resized(10);
-                Graphics::rotationParams.first = motion.length();
+                double coef = 0.5;
+                Graphics::rotationAngles[0] += -event.motion.xrel*coef;
+                Graphics::rotationAngles[0] -= 360*int(Graphics::rotationAngles[0]/360);
+                Graphics::rotationAngles[1] += -event.motion.yrel*coef;
+                Graphics::rotationAngles[1] -= 360*int(Graphics::rotationAngles[1]/360);
             }
         }
     }
@@ -165,7 +141,7 @@ void processParticlesWhichIntersectObject(ParticlePolygon *particlesArray,int &c
 int initRandomParticles(Particle *particlesArray,int count,GenerativeSphere generativeSphere) {
     int n;
     for(n = 0;n < count;++n) {
-        particlesArray[n] = generativeSphere.generateRandomParticle(PTYPE_ELECTRON);
+        particlesArray[n] = generativeSphere.generateParticleInSphere(PTYPE_ELECTRON);
     }
     return n;
 }
@@ -180,6 +156,8 @@ int initParticlesWhichIntersectsObject(ParticlePolygon *particlesArray,int count
     }
     return n;
 }
+
+
 
 int main(int argc, char** argv) {
     srand(time(NULL));
@@ -276,7 +254,6 @@ int main(int argc, char** argv) {
         free(particlesArray);
     }
 
-
     ParticlePolygon *particlesArray = NULL;
     int particlesAmount = 0;
     double timeStep = 0;
@@ -295,7 +272,6 @@ int main(int argc, char** argv) {
         const unsigned long long totalAmount = density*volume;
         // see explanation in draft, page 1
         const int maxParticlesAmount = (a + 4*sigma)*totalAmount;
-        //cout << min(particlesAmountRateGenerator()*totalAmount,double(maxParticlesAmount)) << endl;/////////////////////////////////////////
 
         particlesAmountGenerator = [a,sigma,totalAmount,maxParticlesAmount]() -> unsigned long long {
             static GaussianDistributionGenerator particlesAmountRateGenerator = getGaussianDistributionGenerator(a,sigma);
@@ -344,7 +320,7 @@ int main(int argc, char** argv) {
         // set appropriate OpenGL & properties SDL
         int width = 640;
         int height = 480;
-        Graphics::initGraphics(width,height,satelliteObj.maxCoords);
+        Graphics::initGraphics(width,height,satelliteObj);
     }
 
     timespec start, stop, *delta;

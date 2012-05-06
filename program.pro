@@ -26,6 +26,7 @@ HEADERS += \
 
 LIBS += -Wall -lGL -lGLU `sdl-config --cflags --libs` -lrt
 QMAKE_CXXFLAGS += -std=c++0x -Wno-write-strings
+# -Werror=conversion
 
 
 

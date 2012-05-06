@@ -124,8 +124,7 @@ Point Geometry::getRandomPointFromSphere2(Sphere s) {
 }
 
 Point Geometry::getRandomPointOnSphere(Sphere s) {
-    Vector offsetVector(s.center,getRandomPointFromSphere2(s));
-    return s.center + offsetVector.resized(s.radius);
+    return s.center + Vector(s.center,getRandomPointFromSphere2(s)).resized(s.radius);
 }
 
 Vector Geometry::getRandomOrthogonalVector(Vector v) {

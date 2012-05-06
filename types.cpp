@@ -32,7 +32,7 @@ Plane::Plane(Point p, Vector v):
     ThreePoints(p,p + Geometry::getRandomOrthogonalVector(v),
                 p + Geometry::getRandomOrthogonalVector(v)) {}
 
-Particle GenerativeSphere::generateRandomParticle(int type) {
+Particle GenerativeSphere::generateParticleInSphere(int type) {
     Point initialPosition = Geometry::getRandomPointFromSphere2(*this);
     Vector step(getRandom() - 0.5,getRandom() - 0.5,getRandom() - 0.5);
     switch(type) {
@@ -74,10 +74,6 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
     Vector s(p,Geometry::rotatePointAroundLine(p + n,auxLine,acos(cos)));
     s = s.resized(particleSpeed) - objectStep;
 
-    if (n.cos(s) >= 0) {//////////////////////////////
-        cout << n.cos(s) << endl;
-    }
-
     real distanceBetweenParticleAndPolygon;
     if (isParticleOnSphere) {
         // now we should calculate point on sphere were particle will be initially placed
@@ -97,6 +93,23 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
     }
 
     return ParticlePolygon(Particle(p,s,distanceBetweenParticleAndPolygon/particleSpeed),polygon);
+}
+
+Particle GenerativeSphere::generateParticleOnSphere(int type) {
+    Point initialPosition = Geometry::getRandomPointOnSphere(*this);
+    Vector step(initialPosition,Geometry::getRandomPointOnSphere(*this));
+    switch(type) {
+    case PTYPE_ELECTRON:
+        step = step.resized(electronVelocityGenerator()) - objectStep;
+        break;
+    case PTYPE_ION:
+        step = step.resized(ionVelocityGenerator()) - objectStep;
+        break;
+    }
+
+    // see description at page 11 of the draft
+    real ttl = 2*radius*step.cos(Vector(initialPosition,center)) / step.length();
+    return Particle(initialPosition,step,(ttl > 0)? ttl: 0);
 }
 
 void Object3D::init() {

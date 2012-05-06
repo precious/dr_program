@@ -322,9 +322,10 @@ public:
     GenerativeSphere(const Sphere &_s,Object3D _object):
         Sphere(_s), object(_object), objectStep(object.step()) {}
 
-    Particle generateRandomParticle(int);
+    Particle generateParticleInSphere(int);
     //Particle generateParticleWhichIntersectsObject(int);
     ParticlePolygon generateParticleWhichIntersectsObject(int,bool);
+    Particle generateParticleOnSphere(int);
 };
 
 #endif // TYPES_H

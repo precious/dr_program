@@ -9,16 +9,16 @@
 #include <utility>
 
 namespace Graphics {
-    extern GLboolean shouldRotate;
     extern Point viewerPosition;
 
     extern int width;
     extern int height;
 
     extern bool isLMousePressed;
-    extern pair<double,Vector> rotationParams;
+    extern double rotationAngles[2];
+    extern float zoomFactor;
 
-    void initGraphics(int,int,Point&);
+    void initGraphics(int,int,Sphere&);
     void draw(Object3D&,ParticlePolygon*,int);
     void quitGraphics(int);
 }
