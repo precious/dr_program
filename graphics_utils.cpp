@@ -42,6 +42,8 @@ void Graphics::initGraphics(int _width, int _height,Sphere &satelliteObj) {
     glEnable(GL_CULL_FACE);
 
     glViewport(0, 0, width, height);
+
+    glPointSize(2);
 }
 
 void Graphics::quitGraphics(int code) {
@@ -49,7 +51,7 @@ void Graphics::quitGraphics(int code) {
     exit(code);
 }
 
-void Graphics::draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NULL,int particlesAmount = 0)
+void Graphics::draw(Object3D &satelliteObj,Particle* particlesArray = NULL,int particlesNumber = 0)
 {
     // colors
     static GLubyte purple[] = {255,150,255,0};
@@ -114,9 +116,9 @@ void Graphics::draw(Object3D &satelliteObj,ParticlePolygon* particlesArray = NUL
     // draw the particles
     if (particlesArray != NULL) {
         glBegin(GL_POINTS);
-        glColor4ubv(grey);
-        for(int i = 0;i < particlesAmount;++i) {
-            glVertex3f(particlesArray[i].first.x,particlesArray[i].first.y,particlesArray[i].first.z);
+        for(int i = 0;i < particlesNumber;++i) {
+            glColor4ubv((particlesArray[i].type == PTYPE_ELECTRON)? blue: red);
+            glVertex3f(particlesArray[i].x,particlesArray[i].y,particlesArray[i].z);
         }
         glEnd();
     }

@@ -19,7 +19,7 @@ namespace Graphics {
     extern float zoomFactor;
 
     void initGraphics(int,int,Sphere&);
-    void draw(Object3D&,ParticlePolygon*,int);
+    void draw(Object3D&,Particle*,int);
     void quitGraphics(int);
 }
 

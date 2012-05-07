@@ -39,6 +39,7 @@ namespace Geometry {
     // geometry utils returning distances and lengths
     real getDistanceBetweenPoints(Point,Point);
     real getDistanceBetweenPointAndPlane(ThreePoints&,Point);
+    real getDistanceBetweenPointAndSphere(Sphere&,Point);
     real getChordLength(Sphere,Line);
 
     // geometry utils for intersections and projections calculation
@@ -46,12 +47,13 @@ namespace Geometry {
     Point getPointOnLineProjection(Line,Point);
     DEPRECATED(Point getPlaneAndLineIntersection(ThreePoints&,Line));
     Point getPlaneAndLineIntersection2(ThreePoints&,Line);
-    Point getNearestObject3DAndParticleTrajectoryIntersection(Object3D&,Particle);
+    //Point getNearestObject3DAndParticleTrajectoryIntersection(Object3D&,Particle);
+    int getIndexOfPolygonThatParicleIntersects(Object3D&,Particle);
 
     // geometry utils for conditions checking
-    DEPRECATED(bool isPointInsideTriangle(ThreePoints&,Point&));
-    bool isPointInsideTriangle2(ThreePoints&,Point&);
-    bool doesLineIntersectTriangle(ThreePoints&,Line&);
+    DEPRECATED(bool isPointInsideTriangle(ThreePoints&,Point));
+    bool isPointInsideTriangle2(ThreePoints&,Point);
+    bool doesLineIntersectTriangle(ThreePoints&,Line);
     bool isPointInsideParallelepiped(Point,Point,Point);
     /*static bool isPointInsideObject(Point,Object3D&);*/
     bool doesParticlesTrajectoryIntersectObject(Particle,Object3D&);

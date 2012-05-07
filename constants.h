@@ -7,18 +7,25 @@ typedef float real;
 typedef float velocity;
 
 extern velocity ORBITAL_VELOCITY;
-extern velocity ION_VELOCITY;
-extern velocity ELECTRON_VELOCITY;
+//extern velocity ION_VELOCITY;
+//extern velocity ELECTRON_VELOCITY;
 
 extern real ELECTRON_VELOCITY_M;
 extern real ELECTRON_VELOCITY_D;
 extern real ION_VELOCITY_M;
 extern real ION_VELOCITY_D;
 
-extern real ELECTRON_ELECTRIC_CHARGE;
-extern real ION_ELECTRIC_CHARGE;
+// заряд, умноженный на 10^10
+extern double ELECTRON_ELECTRIC_CHARGE;
+extern double ION_ELECTRIC_CHARGE;
 
-extern int DEFAULT_GENERATIVE_SPHERE_RADIUS;
+// Дебаевский радиус
+extern int ELECTRONS_GENERATIVE_SPHERE_RADIUS;
+extern int IONS_GENERATIVE_SPHERE_RADIUS;
+
+// плотность частиц
+extern int ELECTRONS_CONSISENCE;
+extern int IONS_CONSISENCE;
 
 #endif // CONSTANTS_H
 

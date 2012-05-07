@@ -21,11 +21,11 @@ Point Point::operator-(Vector v) {
 }
 
 Particle Particle::operator+(Vector v) {
-    return Particle(Point(*this) + v,step,ttl);
+    return Particle(Point(*this) + v,step,ttl,type,polygonIndex);
 }
 
 Particle Particle::operator-(Vector v) {
-    return Particle(Point(*this) - v,step,ttl);
+    return Particle(Point(*this) - v,step,ttl,type,polygonIndex);
 }
 
 Plane::Plane(Point p, Vector v):
@@ -65,7 +65,7 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
 
     // see explanation at page 2 of draft
     if (particleSpeed <= -object.speed*n.cos(objectStep)) {
-        particleSpeed = Time::getRandom(max<velocity>(0.1,-object.speed*n.cos(objectStep)),2.*ELECTRON_VELOCITY); /// TODO fix me
+        particleSpeed = Time::getRandom(max<velocity>(0.1,-object.speed*n.cos(objectStep)),2.*ELECTRON_VELOCITY_M); /// TODO fix me
     }
 
     double cos = Time::getRandom(-1,min<velocity>(1,object.speed*n.cos(objectStep)/particleSpeed));
@@ -107,12 +107,20 @@ Particle GenerativeSphere::generateParticleOnSphere(int type) {
         break;
     }
 
-    // see description at page 11 of the draft
-    real ttl = 2*radius*step.cos(Vector(initialPosition,center)) / step.length();
-    return Particle(initialPosition,step,(ttl > 0)? ttl: 0);
+    Particle p(initialPosition,step,0,type);
+    p.polygonIndex = Geometry::getIndexOfPolygonThatParicleIntersects(object,p);
+    if (p.polygonIndex != -1) {
+        cout << "wooooow!" << endl;////////////////////////////////////////////////////////////////////////////////
+        p.ttl = Geometry::getDistanceBetweenPoints(p,
+            Geometry::getPlaneAndLineIntersection2(object.polygons->at(p.polygonIndex),Line(p,p.step)));
+    } else { // see description at page 11 of the draft
+        p.ttl = 2*radius*step.cos(Vector(initialPosition,center)) / step.length();
+    }
+    return p;
 }
 
 void Object3D::init() {
+    charge = 0;
     speed = ORBITAL_VELOCITY;
     nearestPoint = furthermostPoint = maxCoords = minCoords = polygons->at(0).set[0];
     for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();it++)
@@ -133,4 +141,8 @@ void Object3D::init() {
                    (maxCoords.y + minCoords.y)/2,
                    (maxCoords.z + minCoords.z)/2);
     radius = Geometry::getDistanceBetweenPoints(center,maxCoords);
+    polygonsCharges = new double[polygons->size()];
+    for(int i = 0;i < polygons->size();++i) {
+        polygonsCharges[i] = 0;
+    }
 }

@@ -50,8 +50,6 @@ public:
     InvalidPrimitiveException(string &msg): runtime_error(msg) {}
 };
 
-
-
 struct Point {
     real x;
     real y;
@@ -261,12 +259,16 @@ private:
 
 struct Particle: public Point {
 public:
+    char type;
     Vector step;
     real ttl;
+    int polygonIndex;
     Particle operator+(Vector v);
     Particle operator-(Vector v);
-    Particle(): Point(), step(), ttl(-1) {}
-    Particle(Point p, Vector s,real ttl_ = -1): Point(p), step(s), ttl(ttl_) {}
+    Particle(char _type = PTYPE_ELECTRON):
+        Point(), step(), ttl(-1), type(_type), polygonIndex(-1) {}
+    Particle(Point p, Vector s,real ttl_ = -1,char _type = PTYPE_ELECTRON,int _pi = -1):
+        Point(p), step(s), ttl(ttl_), type(_type), polygonIndex(_pi) {}
 };
 
 struct Sphere {
@@ -278,11 +280,13 @@ struct Sphere {
 };
 
 struct Object3D: public Sphere {
+    double charge;
     Vector front;
     Point maxCoords, minCoords;
     Point nearestPoint, furthermostPoint; // relatively to front of the object
     vector<PlaneType> *polygons;
     velocity speed;
+    double *polygonsCharges;
 
     Object3D(int polygonsNumber, Vector _front = Vector(100,0,0)): front(_front) {
         polygons = new vector<PlaneType>(polygonsNumber);
@@ -310,6 +314,15 @@ struct Object3D: public Sphere {
         }
         return sA;
     }
+
+    void changeCharge(int polygonIndex,real change) {
+        polygonsCharges[polygonIndex] += change;
+        charge += change;
+    }
+
+    ~Object3D() {
+        delete polygonsCharges;
+    }
 };
 
 struct GenerativeSphere: public Sphere {
@@ -332,9 +345,9 @@ private:
     //void init();
 
 public:
-    GenerativeSphere(Point _p, real _r,Object3D _object):
+    GenerativeSphere(Point _p, real _r,Object3D &_object):
         Sphere(_p, _r), object(_object), objectStep(object.step()) {}
-    GenerativeSphere(const Sphere &_s,Object3D _object):
+    GenerativeSphere(const Sphere &_s,Object3D &_object):
         Sphere(_s), object(_object), objectStep(object.step()) {}
 
     Particle generateParticleInSphere(int);

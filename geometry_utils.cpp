@@ -12,7 +12,7 @@ inline bool inInterval(T x,T a,T b) {
     return x <= max(a,b) && x >= min(a,b);
 }
 
-bool Geometry::isPointInsideTriangle(ThreePoints &t,Point &k) {
+bool Geometry::isPointInsideTriangle(ThreePoints &t,Point k) {
     Vector v0(Point(0,0,0)), v1(k,t.a), v2(k,t.b), v3(k,t.c);
     if (v1 == v0 || v2 == v0 || v3 == v0)
         return true;
@@ -30,7 +30,7 @@ bool Geometry::isPointInsideTriangle(ThreePoints &t,Point &k) {
     }
 }
 
-bool Geometry::isPointInsideTriangle2(ThreePoints &t,Point &k) {
+bool Geometry::isPointInsideTriangle2(ThreePoints &t,Point k) {
     Point p = getPointOnLineProjection(Line(t.a,t.b),t.c);
     if (Vector(p,t.c).cos(Vector(p,k)) < 0)
         return false;
@@ -89,7 +89,7 @@ Point Geometry::getPointOnLineProjection(Line line,Point point) {
     return line.pointByCoef(coef);
 }
 
-bool Geometry::doesLineIntersectTriangle(ThreePoints &triangle,Line &line) {
+bool Geometry::doesLineIntersectTriangle(ThreePoints &triangle,Line line) {
     Point intersection = getPlaneAndLineIntersection2(triangle,line);
     if (isinf(intersection.x)) {
         cerr << "INF" << endl;////////////////////////////////////////////////
@@ -153,6 +153,11 @@ real Geometry::getDistanceBetweenPointAndPlane(ThreePoints& plane,Point p) {
     return getDistanceBetweenPoints(getPointOnPlaneProjection(plane,p),p);
 }
 
+real Geometry::getDistanceBetweenPointAndSphere(Sphere& s,Point p) {
+    return max<real>(getDistanceBetweenPoints(p,s.center) - s.radius,0);
+}
+
+
 bool Geometry::isPointInsideParallelepiped(Point a,Point v1,Point v2) {
     return a.x <= max(v1.x,v2.x) && a.x >= min(v1.x,v2.x) &&
             a.y <= max(v1.y,v2.y) && a.y >= min(v1.y,v2.y) &&
@@ -184,7 +189,7 @@ bool Geometry::doesParticlesTrajectoryIntersectObject(Particle p,Object3D &obj) 
     Line line(p,p.step);
     /*if (!doesLineIntersectParallelepiped(line,obj.maxCoords,obj.minCoords))
         return false;*/
-    if ( !doesLineIntersectSphere(Line(p,p.step),obj) )
+    if ( !doesLineIntersectSphere(line,obj) )
         return false;
     for (unsigned int i = 0;i < obj.polygons->size();i++)
         if (doesLineIntersectTriangle(obj.polygons->at(i),line))
@@ -207,8 +212,18 @@ bool Geometry::doesLineIntersectSphere(Line l,Sphere s) {
     return getDistanceBetweenPoints(getPointOnLineProjection(l,s.center), s.center) <= s.radius;
 }
 
-Point Geometry::getNearestObject3DAndParticleTrajectoryIntersection(Object3D&,Particle) {
+/*Point Geometry::getNearestObject3DAndParticleTrajectoryIntersection(Object3D&,Particle) {
     return Point();
+}*/
+
+int Geometry::getIndexOfPolygonThatParicleIntersects(Object3D& obj,Particle p) {
+    Line line(p,p.step);
+    if ( !doesLineIntersectSphere(line,obj) )
+        return -1;
+    for (int i = 0;i < obj.polygons->size();i++)
+        if (doesLineIntersectTriangle(obj.polygons->at(i),line))
+            return i;
+    return -1;
 }
 
 // see explanation at pages 9-10 of draft
