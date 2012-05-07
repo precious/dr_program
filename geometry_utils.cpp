@@ -220,7 +220,7 @@ int Geometry::getIndexOfPolygonThatParicleIntersects(Object3D& obj,Particle p) {
     Line line(p,p.step);
     if ( !doesLineIntersectSphere(line,obj) )
         return -1;
-    for (int i = 0;i < obj.polygons->size();i++)
+    for (unsigned int i = 0;i < obj.polygons->size();i++)
         if (doesLineIntersectTriangle(obj.polygons->at(i),line))
             return i;
     return -1;

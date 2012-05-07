@@ -18,7 +18,7 @@ namespace Graphics {
     extern double rotationAngles[2];
     extern float zoomFactor;
 
-    void initGraphics(int,int,Sphere&);
+    void initGraphics(int,int);
     void draw(Object3D&,Particle*,int);
     void quitGraphics(int);
 }

@@ -24,7 +24,6 @@ struct Object3D;
 struct Particle;
 
 typedef OrientedPlane PlaneType;
-typedef pair<Particle,PlaneType*> ParticlePolygon;
 
 extern Point POINT_OF_ORIGIN; // (0,0,0)
 
@@ -40,7 +39,9 @@ extern Point POINT_OF_ORIGIN; // (0,0,0)
 #define PTYPE_ELECTRON 1
 #define PTYPE_ION 0
 
-static bool ORIENTATION = ORIENT_RIGHT_HANDED;
+// generation flags
+enum genFlags {GEN_ON_SPHERE = 1, GEN_IN_SPHERE = 2, GEN_RANDOM = 4, GEN_INTERSECT_OBJ = 8};
+
 void setOrientation(bool);
 bool getOrientation();
 
@@ -327,6 +328,7 @@ struct Object3D: public Sphere {
 
 struct GenerativeSphere: public Sphere {
 private:
+    void checkForIntersectionsAndSetTtl(Particle&);
     velocity electronVelocityGenerator() {
         static MaxwellDistributionSpeedGenerator generator =
                 // getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/4.0);
@@ -352,8 +354,9 @@ public:
 
     Particle generateParticleInSphere(int);
     //Particle generateParticleWhichIntersectsObject(int);
-    ParticlePolygon generateParticleWhichIntersectsObject(int,bool);
+    Particle generateParticleWhichIntersectsObject(int,bool);
     Particle generateParticleOnSphere(int);
+    void populateArray(Particle*,int,int,int);
 };
 
 #endif // TYPES_H

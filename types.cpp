@@ -3,15 +3,6 @@
 
 Point POINT_OF_ORIGIN = Point(0,0,0);
 
-bool getOrientation() {
-    return ORIENTATION;
-}
-
-void setOrientation(bool orientation) {
-    ORIENTATION = orientation;
-}
-
-
 Point Point::operator+(Vector v) {
     return Point(x + v.x,y + v.y, z + v.z);
 }
@@ -32,6 +23,16 @@ Plane::Plane(Point p, Vector v):
     ThreePoints(p,p + Geometry::getRandomOrthogonalVector(v),
                 p + Geometry::getRandomOrthogonalVector(v)) {}
 
+void GenerativeSphere::checkForIntersectionsAndSetTtl(Particle &p) {
+    p.polygonIndex = Geometry::getIndexOfPolygonThatParicleIntersects(object,p);
+    if (p.polygonIndex != -1) {
+        p.ttl = Geometry::getDistanceBetweenPoints(p,
+            Geometry::getPlaneAndLineIntersection2(object.polygons->at(p.polygonIndex),Line(p,p.step)))/p.step.length();
+    } else { // see description at page 11 of the draft
+        p.ttl = 2*radius*p.step.cos(Vector(p,center)) / p.step.length();
+    }
+}
+
 Particle GenerativeSphere::generateParticleInSphere(int type) {
     Point initialPosition = Geometry::getRandomPointFromSphere2(*this);
     Vector step(Time::getRandom() - 0.5,Time::getRandom() - 0.5,Time::getRandom() - 0.5);
@@ -43,12 +44,15 @@ Particle GenerativeSphere::generateParticleInSphere(int type) {
         step = step.resized(ionVelocityGenerator()) - objectStep;
         break;
     }
-    return Particle(initialPosition,step);
+
+    Particle p(initialPosition,step,0,type);
+    checkForIntersectionsAndSetTtl(p);
+    return p;
 }
 
-ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type,bool isParticleOnSphere) {
-    PlaneType *polygon = &object.polygons->at(RAND(object.polygons->size()));
-    Vector n = polygon->getNormal().normalized();
+Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type,bool isParticleOnSphere) {
+    int polygonIndex = RAND(object.polygons->size());
+    Vector n = object.polygons->at(polygonIndex).getNormal().normalized();
     velocity particleSpeed;
 
     switch(type) {
@@ -60,8 +64,9 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
         break;
     }
 
-    Point p = Geometry::getRandomPointFromTriangle(*polygon);
-    Line auxLine(p,(polygon->a != p)? polygon->a: polygon->b);
+    Point p = Geometry::getRandomPointFromTriangle(object.polygons->at(polygonIndex));
+    Line auxLine(p,(object.polygons->at(polygonIndex).a != p)?
+                     object.polygons->at(polygonIndex).a: object.polygons->at(polygonIndex).b);
 
     // see explanation at page 2 of draft
     if (particleSpeed <= -object.speed*n.cos(objectStep)) {
@@ -69,7 +74,6 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
     }
 
     double cos = Time::getRandom(-1,min<velocity>(1,object.speed*n.cos(objectStep)/particleSpeed));
-    //assert(!(cos > 1 || cos < -1));/////////
     // see explanation at page 8 of draft
     Vector s(p,Geometry::rotatePointAroundLine(p + n,auxLine,acos(cos)));
     s = s.resized(particleSpeed) - objectStep;
@@ -92,7 +96,7 @@ ParticlePolygon GenerativeSphere::generateParticleWhichIntersectsObject(int type
         p = p - s.resized(distanceBetweenParticleAndPolygon);
     }
 
-    return ParticlePolygon(Particle(p,s,distanceBetweenParticleAndPolygon/particleSpeed),polygon);
+    return Particle(p,s,distanceBetweenParticleAndPolygon/particleSpeed,type,polygonIndex);
 }
 
 Particle GenerativeSphere::generateParticleOnSphere(int type) {
@@ -108,15 +112,25 @@ Particle GenerativeSphere::generateParticleOnSphere(int type) {
     }
 
     Particle p(initialPosition,step,0,type);
-    p.polygonIndex = Geometry::getIndexOfPolygonThatParicleIntersects(object,p);
-    if (p.polygonIndex != -1) {
-        cout << "wooooow!" << endl;////////////////////////////////////////////////////////////////////////////////
-        p.ttl = Geometry::getDistanceBetweenPoints(p,
-            Geometry::getPlaneAndLineIntersection2(object.polygons->at(p.polygonIndex),Line(p,p.step)));
-    } else { // see description at page 11 of the draft
-        p.ttl = 2*radius*step.cos(Vector(initialPosition,center)) / step.length();
-    }
+    checkForIntersectionsAndSetTtl(p);
     return p;
+}
+
+void GenerativeSphere::populateArray(Particle *particles,int number,int type,int FLAGS) {
+    int n = 0;
+    bool isOnSphere = FLAGS & GEN_ON_SPHERE;
+    if (FLAGS & GEN_INTERSECT_OBJ)
+        for(;n < number;++n) {
+            particles[n] = generateParticleWhichIntersectsObject(type,isOnSphere);
+        }
+    else if (FLAGS & GEN_RANDOM)
+        for(;n < number;++n) {
+            particles[n] = generateParticleInSphere(type);
+        }
+    else if (isOnSphere)
+        for(;n < number;++n) {
+            particles[n] = generateParticleOnSphere(type);
+        }
 }
 
 void Object3D::init() {
@@ -142,7 +156,7 @@ void Object3D::init() {
                    (maxCoords.z + minCoords.z)/2);
     radius = Geometry::getDistanceBetweenPoints(center,maxCoords);
     polygonsCharges = new double[polygons->size()];
-    for(int i = 0;i < polygons->size();++i) {
+    for(unsigned int i = 0;i < polygons->size();++i) {
         polygonsCharges[i] = 0;
     }
 }

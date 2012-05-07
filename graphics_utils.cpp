@@ -7,7 +7,7 @@ float Graphics::zoomFactor = 1.0;
 bool Graphics::isLMousePressed = false;
 double Graphics::rotationAngles[2] = {0,0};
 
-void Graphics::initGraphics(int _width, int _height,Sphere &satelliteObj) {
+void Graphics::initGraphics(int _width, int _height) {
     height = _height;
     width = _width;
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -43,7 +43,7 @@ void Graphics::initGraphics(int _width, int _height,Sphere &satelliteObj) {
 
     glViewport(0, 0, width, height);
 
-    glPointSize(2);
+    glPointSize(1.5);
 }
 
 void Graphics::quitGraphics(int code) {

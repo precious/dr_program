@@ -108,16 +108,16 @@ inline void finalizeParticle(Object3D &satelliteObj,Particle* particles,
     }
 }
 
-int processParticles(Object3D &satelliteObj,Particle* particles,
+void processParticles(Object3D &satelliteObj,Particle* particles,
                      unsigned long long &electronsNumber,unsigned long long &ionsNumber,
                      double timeStep) {
-    for(int i = 0;i < electronsNumber + ionsNumber;++i) {
+    for(unsigned long long i = 0;i < electronsNumber + ionsNumber;++i) {
         particles[i] = particles[i] + particles[i].step*timeStep;
         particles[i].ttl -= timeStep;
     }
 
     // checking all particlees excluding the last one
-    for(int i = 0;i < electronsNumber + ionsNumber - 1;) {
+    for(unsigned long long i = 0;i < electronsNumber + ionsNumber - 1;) {
         if (particles[i].ttl <= 0) {
             finalizeParticle(satelliteObj,particles,electronsNumber,ionsNumber,i);
             memcpy(particles + i,particles + electronsNumber + ionsNumber - 1,sizeof(Particle));
@@ -130,62 +130,6 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
     if (lastIndex >= 0 && particles[lastIndex].ttl <= 0)
         finalizeParticle(satelliteObj,particles,electronsNumber,ionsNumber,lastIndex);
 }
-
-void processParticlesWhichIntersectObject(ParticlePolygon *particlesArray,int &count,double timeStep) {
-    for(int i = 0;i < count;++i) {
-        particlesArray[i].first = particlesArray[i].first + particlesArray[i].first.step*timeStep;
-        particlesArray[i].first.ttl -= timeStep;
-    }
-    // checking all particlees excluding the last one
-    for(int i = 0;i < count - 1;) {
-        if (particlesArray[i].first.ttl <= 0) {
-            memcpy(particlesArray + i,particlesArray + count - 1,sizeof(ParticlePolygon));
-            --count;
-        } else {
-            ++i;
-        }
-    }
-    // checking the last particle
-    if (count > 0 && particlesArray[count - 1].first.ttl <= 0)
-        --count;
-}
-
-int initRandomParticles(Particle *particlesArray,int count,GenerativeSphere generativeSphere) {
-    int n;
-    for(n = 0;n < count;++n) {
-        particlesArray[n] = generativeSphere.generateParticleInSphere(PTYPE_ELECTRON);
-    }
-    return n;
-}
-
-int initParticlesWhichIntersectsObject(ParticlePolygon *particlesArray,int count,
-                                       GenerativeSphere &generativeSphere,bool isParticleOnSphere) {
-    int n;
-    ParticlePolygon tmp(Particle(),NULL);
-    for(n = 0;n < count;++n) {
-        tmp = generativeSphere.generateParticleWhichIntersectsObject(PTYPE_ELECTRON,isParticleOnSphere);
-        memcpy(particlesArray + n,&tmp,sizeof(ParticlePolygon));
-    }
-    return n;
-}
-
-int initParticlesOnSphere(Object3D& obj,
-                          Particle *particlesArray,
-                          int electronsNumber, int ionsNumber,
-                          GenerativeSphere electronsGenerativeSphere,
-                          GenerativeSphere ionsGenerativeSphere) {
-    //COUT("generating..." << electronsNumber << " * " << ionsNumber << " * " << obj.charge);///////
-    int n = 0;
-    for(;n < electronsNumber;++n) {
-        particlesArray[n] = electronsGenerativeSphere.generateParticleOnSphere(PTYPE_ELECTRON);
-
-    }
-    for(;n < electronsNumber + ionsNumber;++n) {
-        particlesArray[n] = ionsGenerativeSphere.generateParticleOnSphere(PTYPE_ION);
-    }
-    return n;
-}
-
 
 
 int main(int argc, char** argv) {
@@ -279,21 +223,21 @@ int main(int argc, char** argv) {
 
         verboseFlag && COUT("memory usage: " << testProbabilityCount*sizeof(Particle)/(1024*1024.0) << " MB");
         verboseFlag && PRINTLN("particles generation");
-        int n = initRandomParticles(particlesArray,testProbabilityCount,electronsGenerativeSphere);
-        assert(n == testProbabilityCount);
+        electronsGenerativeSphere.populateArray(particlesArray,testProbabilityCount,PTYPE_ELECTRON,GEN_RANDOM);
 
         int intersectionsCounter = 0;
         verboseFlag && PRINTLN("checking for intersections");
-        for(int j = 0;j < n;++j) {
+        for(int j = 0;j < testProbabilityCount;++j) {
             if (Geometry::doesParticlesTrajectoryIntersectObject(particlesArray[j],satelliteObj))
                 ++intersectionsCounter;
-            verboseFlag && (!(j%(n/20 + 1))) && PRINT('.');
+            verboseFlag && (!(j%(testProbabilityCount/20 + 1))) && PRINT('.');
         }
         verboseFlag && PRINTLN("");
         if (verboseFlag) {
-            COUT("percentage: " << intersectionsCounter << "/" << n << " = " << intersectionsCounter/double(n)*100 << '%');
+            COUT("percentage: " << intersectionsCounter << "/" << testProbabilityCount
+                 << " = " << intersectionsCounter/double(testProbabilityCount)*100 << '%');
         } else {
-            cout << intersectionsCounter/double(n) << endl;
+            cout << intersectionsCounter/double(testProbabilityCount) << endl;
         }
         free(particlesArray);
     }
@@ -317,10 +261,8 @@ int main(int argc, char** argv) {
         particlesArray = (Particle*)malloc(maxParticlesNumber*sizeof(Particle));
         verboseFlag && COUT("number of particles: " << electronsNumber + ionsNumber << endl << "initialization...");
 
-
-        assert(initParticlesOnSphere(satelliteObj,particlesArray,electronsNumber,ionsNumber,
-                                     electronsGenerativeSphere,ionsGenerativeSphere)
-               == electronsNumber + ionsNumber);
+        electronsGenerativeSphere.populateArray(particlesArray,electronsNumber,PTYPE_ELECTRON,GEN_ON_SPHERE);
+        ionsGenerativeSphere.populateArray(particlesArray + electronsNumber,ionsNumber,PTYPE_ION,GEN_ON_SPHERE);
 
         verboseFlag && PRINTLN("searching for fastest particle...");
         Object3D *satelliteObjPtr = &satelliteObj;
@@ -355,7 +297,7 @@ int main(int argc, char** argv) {
         // set appropriate OpenGL & properties SDL
         int width = 640;
         int height = 480;
-        Graphics::initGraphics(width,height,satelliteObj);
+        Graphics::initGraphics(width,height);
     }
 
     timespec start, stop, *delta;
@@ -390,22 +332,16 @@ int main(int argc, char** argv) {
 
             if (modelingFlag) {
                 processParticles(satelliteObj,particlesArray,electronsNumber,ionsNumber,timeStep);
-                for(int i = 0;i < electronsNumber + ionsNumber;++i)
-                    if(particlesArray[i].polygonIndex != -1) {////////////////////////////////////////////////////////////////
-                        COUT(particlesArray[i].step.length() << " - " << particlesArray[i].ttl << "  steps");
-                    }
                 // processing new particles if necessary
                 if (electronsNumber < newElectronsNumber) {
-                    initParticlesOnSphere(satelliteObj,particlesArray + electronsNumber + ionsNumber,
-                                          newElectronsNumber - electronsNumber,0,
-                                          electronsGenerativeSphere,ionsGenerativeSphere);
+                    electronsGenerativeSphere.populateArray(particlesArray + electronsNumber + ionsNumber,
+                                           newElectronsNumber - electronsNumber,PTYPE_ELECTRON,GEN_ON_SPHERE);
                     electronsNumber = newElectronsNumber;
                     newElectronsNumber = min<unsigned long long>(electronsNumberGenerator(),maxElectronsNumber);
                 }
                 if (ionsNumber < newIonsNumber) {
-                    initParticlesOnSphere(satelliteObj,particlesArray + electronsNumber + ionsNumber,
-                                          0,newIonsNumber - ionsNumber,
-                                          electronsGenerativeSphere,ionsGenerativeSphere);
+                    ionsGenerativeSphere.populateArray(particlesArray + electronsNumber + ionsNumber,
+                                           newIonsNumber - ionsNumber,PTYPE_ION,GEN_ON_SPHERE);
                     ionsNumber = newIonsNumber;
                     newIonsNumber = min<unsigned long long>(ionsNumberGenerator(),maxIonsNumber);
                 }
