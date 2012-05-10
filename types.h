@@ -316,7 +316,7 @@ struct Object3D: public Sphere {
         return sA;
     }
 
-    void changeCharge(int polygonIndex,real change) {
+    void changeCharge(int polygonIndex,double change) {
         polygonsCharges[polygonIndex] += change;
         charge += change;
     }

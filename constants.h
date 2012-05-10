@@ -24,8 +24,8 @@ extern int ELECTRONS_GENERATIVE_SPHERE_RADIUS;
 extern int IONS_GENERATIVE_SPHERE_RADIUS;
 
 // плотность частиц
-extern int ELECTRONS_CONSISENCE;
-extern int IONS_CONSISENCE;
+extern int ELECTRONS_CONSISTENCE;
+extern int IONS_CONSISTENCE;
 
 #endif // CONSTANTS_H
 

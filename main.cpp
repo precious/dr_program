@@ -20,7 +20,7 @@
 #define PRINT(arg) cout << arg && cout.flush();
 #define COUT(args) cout << args << endl;
 
-const char usage[] = "Usage:\n\tprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][-d][-l] <filename>\n\
+const char usage[] = "Usage:\n\nprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][-d][-l][-n N][-f SF] <filename>\n\n\
     -t NUMBER - test probabilty with number of particles NUMBER\n\
     -r RADIUS - radius of generative sphere [not used]\n\
     -s TIME - time to sleep in microseconds\n\
@@ -30,7 +30,7 @@ const char usage[] = "Usage:\n\tprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][
     -l - run mainloop\n\
     -f SF - scale factor for coordinates in file to reduce them to SI\n\
         (default 0.001)\n\
-    -n - total number of particles at time moment\n";
+    -n N - total number of particles at time moment\n";
 
 static void handleKeyDown(SDL_keysym* keysym)
 {
@@ -93,7 +93,6 @@ void processEvents(void)
 // for internal usge only
 inline void finalizeParticle(Object3D &satelliteObj,Particle* particles,
                              unsigned long long &electronsNumber,unsigned long long &ionsNumber,int i) {
-    particles[i].polygonIndex != -1 && COUT("Collision!" << satelliteObj.charge);///////////////////////////////////////////////////////
     switch(particles[i].type) {
     case PTYPE_ELECTRON:
         if (particles[i].polygonIndex != -1)
@@ -106,6 +105,7 @@ inline void finalizeParticle(Object3D &satelliteObj,Particle* particles,
         ionsNumber--;
         break;
     }
+    particles[i].polygonIndex != -1 && COUT("Collision!" << satelliteObj.charge);///////////////////////////////////////////////////////
 }
 
 void processParticles(Object3D &satelliteObj,Particle* particles,
@@ -210,11 +210,10 @@ int main(int argc, char** argv) {
                                       IONS_GENERATIVE_SPHERE_RADIUS,
                                       satelliteObj);
 
-    double electronsToIonsRatio = 1.*pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)*ELECTRONS_CONSISENCE/
-            (pow(IONS_GENERATIVE_SPHERE_RADIUS,3)*IONS_CONSISENCE);
+    double electronsToIonsRatio = 1.*pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)*ELECTRONS_CONSISTENCE/
+            (pow(IONS_GENERATIVE_SPHERE_RADIUS,3)*IONS_CONSISTENCE);
     unsigned long long  averageElectronsNumber = electronsToIonsRatio*averageParticlesNumber/(electronsToIonsRatio + 1);
     unsigned long long  averageIonsNumber = averageParticlesNumber/(electronsToIonsRatio + 1);
-
 
     if (testProbabilityCount > 0) {
         // allocating memory for particles array
@@ -249,6 +248,9 @@ int main(int argc, char** argv) {
     unsigned long long maxIonsNumber = maxParticlesNumber/(electronsToIonsRatio + 1);
     unsigned long long electronsNumber;
     unsigned long long ionsNumber;
+
+    COUT("coef = " << pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)*4.0/3.0*M_PI*ELECTRONS_CONSISTENCE/averageElectronsNumber);
+
     GaussianDistributionGenerator electronsNumberGenerator =
             Time::getGaussianDistributionGenerator(averageElectronsNumber,averageElectronsNumber*0.05);
     GaussianDistributionGenerator ionsNumberGenerator =
@@ -259,6 +261,7 @@ int main(int argc, char** argv) {
         electronsNumber = averageElectronsNumber;
         ionsNumber = averageIonsNumber;
         particlesArray = (Particle*)malloc(maxParticlesNumber*sizeof(Particle));
+        verboseFlag && COUT("average number of electrons: " << electronsNumber << ", ions: " << ionsNumber);
         verboseFlag && COUT("number of particles: " << electronsNumber + ionsNumber << endl << "initialization...");
 
         electronsGenerativeSphere.populateArray(particlesArray,electronsNumber,PTYPE_ELECTRON,GEN_ON_SPHERE);
