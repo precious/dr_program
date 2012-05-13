@@ -27,5 +27,12 @@ extern int IONS_GENERATIVE_SPHERE_RADIUS;
 extern int ELECTRONS_CONSISTENCE;
 extern int IONS_CONSISTENCE;
 
+// плотность тока
+extern double ELECTRON_CURRENT_DENSITY;
+extern double ION_CURRENT_DENSITY;
+
+extern double VACUUM_PERMITTIVITY;
+// ε0 ≈ 8.854187817620×10^−12 Ф/м
+
 #endif // CONSTANTS_H
 

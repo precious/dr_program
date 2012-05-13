@@ -3,6 +3,9 @@
 
 Point POINT_OF_ORIGIN = Point(0,0,0);
 
+double Particle::electronTrajectoryCurrent;
+double Particle::ionTrajectoryCurrent;
+
 Point Point::operator+(Vector v) {
     return Point(x + v.x,y + v.y, z + v.z);
 }
@@ -134,7 +137,7 @@ void GenerativeSphere::populateArray(Particle *particles,int number,int type,int
 }
 
 void Object3D::init() {
-    charge = 0;
+    totalPlasmaCurrent = 0;
     speed = ORBITAL_VELOCITY;
     nearestPoint = furthermostPoint = maxCoords = minCoords = polygons->at(0).set[0];
     for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();it++)
@@ -155,8 +158,8 @@ void Object3D::init() {
                    (maxCoords.y + minCoords.y)/2,
                    (maxCoords.z + minCoords.z)/2);
     radius = Geometry::getDistanceBetweenPoints(center,maxCoords);
-    polygonsCharges = new double[polygons->size()];
+    polygonsCurrents = new double[polygons->size()];
     for(unsigned int i = 0;i < polygons->size();++i) {
-        polygonsCharges[i] = 0;
+        polygonsCurrents[i] = 0;
     }
 }

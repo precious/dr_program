@@ -93,7 +93,7 @@ bool Geometry::doesLineIntersectTriangle(ThreePoints &triangle,Line line) {
     Point intersection = getPlaneAndLineIntersection2(triangle,line);
     if (isinf(intersection.x)) {
         cerr << "INF" << endl;////////////////////////////////////////////////
-        /// TODO: here should be checking whether the line intersects
+        //TODO: here should be checking whether the line intersects
         /// at least one of the triangles side
         /// for this function for finding two lines intersection should be
         /// implemented

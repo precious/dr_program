@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <assert.h>
+#include <limits>
 
 #include "types.h"
 #include "file_utils.h"
@@ -16,21 +17,24 @@
 
 #define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; Graphics::quitGraphics(1); }
 #define rand(max) rand()%max
-#define PRINTLN(arg) cout << arg << endl;
-#define PRINT(arg) cout << arg && cout.flush();
-#define COUT(args) cout << args << endl;
+#define PRINTLN(arg) cout << arg << endl
+#define PRINT(arg) cout << arg && cout.flush()
+#define COUT(args) cout << args << endl
 
-const char usage[] = "Usage:\n\nprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][-d][-l][-n N][-f SF] <filename>\n\n\
+const char usage[] = "Usage:\n\nprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][-d][-n N][-f SF][-i INTERVAL][-p STEP] <filename>\n\n\
     -t NUMBER - test probabilty with number of particles NUMBER\n\
     -r RADIUS - radius of generative sphere [not used]\n\
     -s TIME - time to sleep in microseconds\n\
     -m - model particles\n\
     -v - verbose mode\n\
-    -d - draw (requires also -l option)\n\
-    -l - run mainloop\n\
+    -d - draw\n\
     -f SF - scale factor for coordinates in file to reduce them to SI\n\
         (default 0.001)\n\
-    -n N - total number of particles at time moment\n";
+    -n N - total number of particles at time momentn\n\
+    -i INTERVAL - interval to print measurings\n\
+        (use 'i' prefix for number of steps or 's' for seconds)\n\
+    -p STEP - step of particle measured in spacecrafts length\n\
+        (default 0.25)\n";
 
 static void handleKeyDown(SDL_keysym* keysym)
 {
@@ -96,16 +100,15 @@ inline void finalizeParticle(Object3D &satelliteObj,Particle* particles,
     switch(particles[i].type) {
     case PTYPE_ELECTRON:
         if (particles[i].polygonIndex != -1)
-            satelliteObj.changeCharge(particles[i].polygonIndex,ELECTRON_ELECTRIC_CHARGE);
+            satelliteObj.changePlasmaCurrents(particles[i].polygonIndex,ELECTRON_CURRENT_DENSITY);
         electronsNumber--;
         break;
     case PTYPE_ION:
         if (particles[i].polygonIndex != -1)
-            satelliteObj.changeCharge(particles[i].polygonIndex,ION_ELECTRIC_CHARGE);
+            satelliteObj.changePlasmaCurrents(particles[i].polygonIndex,ION_CURRENT_DENSITY);
         ionsNumber--;
         break;
     }
-    particles[i].polygonIndex != -1 && COUT("Collision!" << satelliteObj.charge);///////////////////////////////////////////////////////
 }
 
 void processParticles(Object3D &satelliteObj,Particle* particles,
@@ -143,14 +146,16 @@ int main(int argc, char** argv) {
     bool verboseFlag = false;
     bool drawFlag = false;
     bool testModeFlag = false;
-    bool mainloopFlag = false;
     char *filename = NULL;
     int testProbabilityCount = -1;
     int generativeSphereRadius = -1;
     int sleepTime = 0; //microsecond
-    unsigned long long averageParticlesNumber = 1000000;
+    double printInterval = 10000.0;
+    double intervalInSteps = true;
+    double distanceStepCoef = 0.25;
+    unsigned long long averageParticlesNumber = 10000;
 
-    while ((c = getopt (argc, argv, ":mvdlxt:r:s:f:t:n:")) != -1) {
+    while ((c = getopt (argc, argv, ":vdmxt:r:s:f:t:n:i:p:")) != -1) {
         switch(c) {
         case 't':
             testProbabilityCount = atoi(optarg);
@@ -179,8 +184,14 @@ int main(int argc, char** argv) {
         case 'x':
             testModeFlag = true;
             break;
-        case 'l':
-            mainloopFlag = true;
+        case 'p':
+            distanceStepCoef = atof(optarg);
+            break;
+        case 'i':
+            if(optarg[0] == 'i')
+            { printInterval = atof(optarg + 1); intervalInSteps = true; }
+            else if (optarg[0] == 's')
+            { printInterval = atof(optarg + 1); intervalInSteps = false; }
             break;
         case '?':
         default:
@@ -205,15 +216,22 @@ int main(int argc, char** argv) {
     GenerativeSphere electronsGenerativeSphere(satelliteObj.center,
                                       ELECTRONS_GENERATIVE_SPHERE_RADIUS,
                                       satelliteObj);
-
     GenerativeSphere ionsGenerativeSphere(satelliteObj.center,
                                       IONS_GENERATIVE_SPHERE_RADIUS,
-                                      satelliteObj);
+                                      satelliteObj);    
 
     double electronsToIonsRatio = 1.*pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)*ELECTRONS_CONSISTENCE/
             (pow(IONS_GENERATIVE_SPHERE_RADIUS,3)*IONS_CONSISTENCE);
     unsigned long long  averageElectronsNumber = electronsToIonsRatio*averageParticlesNumber/(electronsToIonsRatio + 1);
     unsigned long long  averageIonsNumber = averageParticlesNumber/(electronsToIonsRatio + 1);
+    Particle::electronTrajectoryCurrent =
+            4*M_PI*pow(electronsGenerativeSphere.radius,2)*ELECTRON_CURRENT_DENSITY / averageElectronsNumber;
+    Particle::ionTrajectoryCurrent =
+            4*M_PI*pow(ionsGenerativeSphere.radius,2)*ION_CURRENT_DENSITY / averageIonsNumber;
+
+    verboseFlag && COUT("electron trajectory current: " << Particle::electronTrajectoryCurrent);
+    verboseFlag && COUT("ion trajectory current: " << Particle::ionTrajectoryCurrent);
+
 
     if (testProbabilityCount > 0) {
         // allocating memory for particles array
@@ -249,8 +267,6 @@ int main(int argc, char** argv) {
     unsigned long long electronsNumber;
     unsigned long long ionsNumber;
 
-    COUT("coef = " << pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)*4.0/3.0*M_PI*ELECTRONS_CONSISTENCE/averageElectronsNumber);
-
     GaussianDistributionGenerator electronsNumberGenerator =
             Time::getGaussianDistributionGenerator(averageElectronsNumber,averageElectronsNumber*0.05);
     GaussianDistributionGenerator ionsNumberGenerator =
@@ -276,7 +292,7 @@ int main(int argc, char** argv) {
         }, particlesArray,ionsNumber + electronsNumber);
         verboseFlag && COUT("fastest particle speed: " << fastestParticle.step.length());
 
-        double distanceStep = satelliteObj.radius/2.;
+        double distanceStep = satelliteObj.radius*2.0*distanceStepCoef;
         timeStep = distanceStep/ELECTRON_VELOCITY_M; // time to do step for particle with average velocity
 
         verboseFlag && PRINTLN("decreasing distance to object for all particles");      
@@ -286,7 +302,7 @@ int main(int argc, char** argv) {
 
         Data::map<Particle*,Particle>(
                     [timeDelta](Particle &pp) -> void {pp = pp + pp.step*timeDelta; pp.ttl -= timeDelta;},
-                    particlesArray,ionsNumber + electronsNumber); /// TODO check this
+                    particlesArray,ionsNumber + electronsNumber); //TODO check this
 
         verboseFlag && COUT("distanceStep: " << distanceStep << "; timeStep: " << timeStep);
     }
@@ -296,6 +312,7 @@ int main(int argc, char** argv) {
         verboseFlag && cout << "polygons: " << satelliteObj.polygons->size() << endl;
         verboseFlag && cout << "center: " << satelliteObj.center << endl;
         verboseFlag && cout << "radius: " << satelliteObj.radius << endl;
+        verboseFlag && cout << "capacitance: " << satelliteObj.capacitance() << endl;
 
         // set appropriate OpenGL & properties SDL
         int width = 640;
@@ -311,8 +328,11 @@ int main(int argc, char** argv) {
     // -------- main program loop --------
     unsigned long long newElectronsNumber = min<unsigned long long>(electronsNumberGenerator(),maxElectronsNumber);
     unsigned long long newIonsNumber = min<unsigned long long>(ionsNumberGenerator(),maxIonsNumber);
-
-    if (mainloopFlag && (drawFlag || modelingFlag)) {
+    double elapsedTime = 0.0;
+    double timeToPrint = printInterval;
+    double spacecraftCapacitance = satelliteObj.capacitance();
+    double surfaceCharge;
+    if (drawFlag || modelingFlag) {
         while(true) {
 
             if (drawFlag) {
@@ -335,6 +355,12 @@ int main(int argc, char** argv) {
 
             if (modelingFlag) {
                 processParticles(satelliteObj,particlesArray,electronsNumber,ionsNumber,timeStep);
+                elapsedTime += timeStep;
+                timeToPrint -= ((intervalInSteps)? 1: timeStep);
+                surfaceCharge = satelliteObj.totalPlasmaCurrent*elapsedTime;
+                (timeToPrint <= 0) &&
+                        COUT(surfaceCharge << " " << surfaceCharge/spacecraftCapacitance << "   " << elapsedTime) &&
+                        (timeToPrint = printInterval);
                 // processing new particles if necessary
                 if (electronsNumber < newElectronsNumber) {
                     electronsGenerativeSphere.populateArray(particlesArray + electronsNumber + ionsNumber,

@@ -66,8 +66,8 @@ void Graphics::draw(Object3D &satelliteObj,Particle* particlesArray = NULL,int p
     // Projections matrix processing
     static float ratio = (float)width/(float)height;
     static double diameter = satelliteObj.radius*2;
-    static GLdouble zNear = 0.0;
-    static GLdouble zFar = zNear + 2*diameter;
+    static GLdouble zNear = 1.0;
+    static GLdouble zFar = zNear + 10*diameter;
     static GLdouble left = satelliteObj.center.x - diameter;
     static GLdouble right = satelliteObj.center.x + diameter;
     static GLdouble bottom = satelliteObj.center.y - diameter;

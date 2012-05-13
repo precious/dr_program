@@ -39,7 +39,7 @@ GaussianDistributionGenerator Time::getGaussianDistributionGenerator(double M,do
 
 MaxwellDistributionSpeedGenerator Time::getMaxwellDistributionSpeedGenerator(double M,double D) {
     return  [M,D]() -> velocity {
-            /// TODO check for M, D
+            //TODO check for M, D
             static GaussianDistributionGenerator gdg = getGaussianDistributionGenerator(M/sqrt(3.0),D/sqrt(3.0));
             return sqrt(pow(gdg(),2) + pow(gdg(),2) + pow(gdg(),2));
     };

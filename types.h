@@ -260,6 +260,8 @@ private:
 
 struct Particle: public Point {
 public:
+    static double electronTrajectoryCurrent;
+    static double ionTrajectoryCurrent;
     char type;
     Vector step;
     real ttl;
@@ -281,13 +283,13 @@ struct Sphere {
 };
 
 struct Object3D: public Sphere {
-    double charge;
+    double totalPlasmaCurrent;
     Vector front;
     Point maxCoords, minCoords;
     Point nearestPoint, furthermostPoint; // relatively to front of the object
     vector<PlaneType> *polygons;
     velocity speed;
-    double *polygonsCharges;
+    double *polygonsCurrents;
 
     Object3D(int polygonsNumber, Vector _front = Vector(100,0,0)): front(_front) {
         polygons = new vector<PlaneType>(polygonsNumber);
@@ -316,13 +318,17 @@ struct Object3D: public Sphere {
         return sA;
     }
 
-    void changeCharge(int polygonIndex,double change) {
-        polygonsCharges[polygonIndex] += change;
-        charge += change;
+    double capacitance() {
+        return 4*M_PI*VACUUM_PERMITTIVITY*sqrt(surfaceArea()/(4*M_PI));
+    }
+
+    void changePlasmaCurrents(int polygonIndex,double change) {
+        polygonsCurrents[polygonIndex] += change;
+        totalPlasmaCurrent += change;
     }
 
     ~Object3D() {
-        delete polygonsCharges;
+        delete polygonsCurrents;
     }
 };
 
