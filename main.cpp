@@ -21,7 +21,7 @@
 #define PRINT(arg) cout << arg && cout.flush()
 #define COUT(args) cout << args << endl
 
-const char usage[] = "Usage:\n\nprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][-d][-n N][-f SF][-i INTERVAL][-p STEP] <filename>\n\n\
+const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-t NUMBER][-r RADIUS][-s TIME][-n N][-f SF][-i INTERVAL][-p STEP] <filename>\n\n\
     -t NUMBER - test probabilty with number of particles NUMBER\n\
     -r RADIUS - radius of generative sphere [not used]\n\
     -s TIME - time to sleep in microseconds\n\
@@ -29,12 +29,13 @@ const char usage[] = "Usage:\n\nprogram [-t NUMBER][-r RADIUS][-s TIME][-m][-v][
     -v - verbose mode\n\
     -d - draw\n\
     -f SF - scale factor for coordinates in file to reduce them to SI\n\
-        (default 0.001)\n\
+        (default 1)\n\
     -n N - total number of particles at time momentn\n\
     -i INTERVAL - interval to print measurings\n\
         (use 'i' prefix for number of steps or 's' for seconds)\n\
     -p STEP - step of particle measured in spacecrafts length\n\
-        (default 0.25)\n";
+        (default 0.25)\n\
+    -x - file with complex data format\n";
 
 static void handleKeyDown(SDL_keysym* keysym)
 {
@@ -111,9 +112,10 @@ inline void finalizeParticle(Object3D &satelliteObj,Particle* particles,
     }
 }
 
-void processParticles(Object3D &satelliteObj,Particle* particles,
+int processParticles(Object3D &satelliteObj,Particle* particles,
                      unsigned long long &electronsNumber,unsigned long long &ionsNumber,
                      double timeStep) {
+    int finalizedNumber = 0;
     for(unsigned long long i = 0;i < electronsNumber + ionsNumber;++i) {
         particles[i] = particles[i] + particles[i].step*timeStep;
         particles[i].ttl -= timeStep;
@@ -122,6 +124,8 @@ void processParticles(Object3D &satelliteObj,Particle* particles,
     // checking all particlees excluding the last one
     for(unsigned long long i = 0;i < electronsNumber + ionsNumber - 1;) {
         if (particles[i].ttl <= 0) {
+            if (particles[i].polygonIndex != -1)
+                ++finalizedNumber;
             finalizeParticle(satelliteObj,particles,electronsNumber,ionsNumber,i);
             memcpy(particles + i,particles + electronsNumber + ionsNumber - 1,sizeof(Particle));
         } else {
@@ -130,8 +134,13 @@ void processParticles(Object3D &satelliteObj,Particle* particles,
     }
     // checking the last particle
     int lastIndex = electronsNumber + ionsNumber - 1;
-    if (lastIndex >= 0 && particles[lastIndex].ttl <= 0)
+    if (lastIndex >= 0 && particles[lastIndex].ttl <= 0) {
+        if (particles[lastIndex].polygonIndex != -1)
+            ++finalizedNumber;
         finalizeParticle(satelliteObj,particles,electronsNumber,ionsNumber,lastIndex);
+
+    }
+    return finalizedNumber;
 }
 
 
@@ -145,7 +154,6 @@ int main(int argc, char** argv) {
     bool modelingFlag = false;
     bool verboseFlag = false;
     bool drawFlag = false;
-    bool testModeFlag = false;
     char *filename = NULL;
     int testProbabilityCount = -1;
     int generativeSphereRadius = -1;
@@ -154,6 +162,7 @@ int main(int argc, char** argv) {
     double intervalInSteps = true;
     double distanceStepCoef = 0.25;
     unsigned long long averageParticlesNumber = 10000;
+    float complexDataFileFlag = false;
 
     while ((c = getopt (argc, argv, ":vdmxt:r:s:f:t:n:i:p:")) != -1) {
         switch(c) {
@@ -182,7 +191,7 @@ int main(int argc, char** argv) {
             modelingFlag = true;
             break;
         case 'x':
-            testModeFlag = true;
+            complexDataFileFlag = true;
             break;
         case 'p':
             distanceStepCoef = atof(optarg);
@@ -207,7 +216,12 @@ int main(int argc, char** argv) {
 
     /*------------------------------------*/
     // getting coordinatates from file
-    vector<PlaneType> *coordinatesList = File::getCoordinatesFromFile(filename);
+    vector<PlaneType> *coordinatesList;
+    if (complexDataFileFlag) {
+        coordinatesList = File::getCoordinatesFromSpecialFile(filename);
+    } else {
+        coordinatesList = File::getCoordinatesFromPlainFile(filename);
+    }
     assert(coordinatesList != NULL);
 
     // creating object using coordinates
@@ -231,7 +245,8 @@ int main(int argc, char** argv) {
 
     verboseFlag && COUT("electron trajectory current: " << Particle::electronTrajectoryCurrent);
     verboseFlag && COUT("ion trajectory current: " << Particle::ionTrajectoryCurrent);
-
+    unsigned long long  realToModelNumber = 4.0/3.0*M_PI*pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)
+            *ELECTRONS_CONSISTENCE/averageElectronsNumber;
 
     if (testProbabilityCount > 0) {
         // allocating memory for particles array
@@ -332,6 +347,7 @@ int main(int argc, char** argv) {
     double timeToPrint = printInterval;
     double spacecraftCapacitance = satelliteObj.capacitance();
     double surfaceCharge;
+    unsigned long long numberOfIntersections = 0;
     if (drawFlag || modelingFlag) {
         while(true) {
 
@@ -354,13 +370,15 @@ int main(int argc, char** argv) {
             }
 
             if (modelingFlag) {
-                processParticles(satelliteObj,particlesArray,electronsNumber,ionsNumber,timeStep);
+                numberOfIntersections += processParticles(satelliteObj,particlesArray,electronsNumber,ionsNumber,timeStep);
                 elapsedTime += timeStep;
                 timeToPrint -= ((intervalInSteps)? 1: timeStep);
                 surfaceCharge = satelliteObj.totalPlasmaCurrent*elapsedTime;
-                (timeToPrint <= 0) &&
-                        COUT(surfaceCharge << " " << surfaceCharge/spacecraftCapacitance << "   " << elapsedTime) &&
-                        (timeToPrint = printInterval);
+                if (timeToPrint <= 0) {
+                    cout << surfaceCharge << " " << surfaceCharge/spacecraftCapacitance
+                                   << "   " << elapsedTime << "   " << numberOfIntersections*realToModelNumber << endl;
+                    (timeToPrint = printInterval);
+                }
                 // processing new particles if necessary
                 if (electronsNumber < newElectronsNumber) {
                     electronsGenerativeSphere.populateArray(particlesArray + electronsNumber + ionsNumber,
@@ -378,9 +396,6 @@ int main(int argc, char** argv) {
 
             sleepTime && usleep(sleepTime);
         }
-    }
-
-    if (testModeFlag) {
     }
 
     if (particlesArray != NULL) {

@@ -100,7 +100,7 @@ bool Geometry::doesLineIntersectTriangle(ThreePoints &triangle,Line line) {
         return false;
     }
     if (isnan(intersection.x)) {
-        cerr << "NAN" << endl;////////////////////////////////////////////////
+        cerr << "NAN " << endl;////////////////////////////////////////////////
         return false;
     }
     bool retVal = isPointInsideTriangle2(triangle,intersection);
@@ -118,13 +118,13 @@ Point Geometry::getRandomPointFromSphere(Sphere s) {
 }
 
 Point Geometry::getRandomPointFromSphere2(Sphere s) {
-    return s.center + Vector(POINT_OF_ORIGIN,
-                             Point(Time::getRandom() - 0.5,Time::getRandom() - 0.5,Time::getRandom() - 0.5))
-            * sqrt(s.radius*Time::getRandom(0,s.radius));
+    return s.center + Vector(Time::getRandom() - 0.5,Time::getRandom() - 0.5,Time::getRandom() - 0.5)
+            .resized(sqrt(s.radius*Time::getRandom(0,s.radius)));
 }
 
 Point Geometry::getRandomPointOnSphere(Sphere s) {
-    return s.center + Vector(s.center,getRandomPointFromSphere2(s)).resized(s.radius);
+    return s.center + Vector(Time::getRandom() - 0.5,Time::getRandom() - 0.5,Time::getRandom() - 0.5)
+            .resized(s.radius);
 }
 
 Vector Geometry::getRandomOrthogonalVector(Vector v) {

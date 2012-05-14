@@ -24,7 +24,7 @@ HEADERS += \
     graphics_utils.h \
     file_utils.h
 
-LIBS += -Wall -lGL -lGLU `sdl-config --cflags --libs` -lrt
+LIBS += -Wall -lGL -lGLU `sdl-config --cflags --libs` -lrt -lassimp
 QMAKE_CXXFLAGS += -std=c++0x -Wno-write-strings
 # -Werror=conversion
 

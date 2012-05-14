@@ -162,4 +162,16 @@ void Object3D::init() {
     for(unsigned int i = 0;i < polygons->size();++i) {
         polygonsCurrents[i] = 0;
     }
+
+    // move the spacecraft to the point or origin
+    Vector shift(center,POINT_OF_ORIGIN);
+    if (shift.length() > radius) {
+        for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();it++)
+            for(int i = 0;i < 3;i++) {
+                (*it).set[i] = (*it).set[i] + shift;
+            }
+        // and reinit
+        init();
+    }
+
 }

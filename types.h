@@ -45,10 +45,10 @@ enum genFlags {GEN_ON_SPHERE = 1, GEN_IN_SPHERE = 2, GEN_RANDOM = 4, GEN_INTERSE
 void setOrientation(bool);
 bool getOrientation();
 
-class InvalidPrimitiveException: public runtime_error {
+class ZeroNormal: public runtime_error {
 public:
-    InvalidPrimitiveException(string *msg): runtime_error(*msg) {}
-    InvalidPrimitiveException(string &msg): runtime_error(msg) {}
+    ZeroNormal(char *msg): runtime_error(string(msg)) {}
+    ZeroNormal(string &msg): runtime_error(msg) {}
 };
 
 struct Point {
@@ -250,10 +250,9 @@ private:
         if (pointsOrder == ORDER_CW) {
             normal = normal*(-1);
         }
-        ///////// assert (!isnan(normal.normalized().x) && !isnan(normal.normalized().y) && !isnan(normal.normalized().z));
-        if (isnan(normal.normalized().x) || isnan(normal.normalized().y) || isnan(normal.normalized().z)) {
-            cout << a << "  " << b << "  " << c << endl;
-            assert(false);
+        double test1 = normal.length(), test2 = area();
+        if (std::isnan(test1) || std::isnan(test2) || test1 < 0.0000001 || test2 < 0.0000001 ) {
+            throw ZeroNormal("zero-normal");
         }
     }
 };
