@@ -55,7 +55,6 @@ namespace Geometry {
     bool isPointInsideTriangle2(ThreePoints&,Point);
     bool doesLineIntersectTriangle(ThreePoints&,Line);
     bool isPointInsideParallelepiped(Point,Point,Point);
-    /*static bool isPointInsideObject(Point,Object3D&);*/
     bool doesParticlesTrajectoryIntersectObject(Particle,Object3D&);
     bool doesLineIntersectParallelepiped(Line,Point,Point);
     bool doesLineIntersectSphere(Line,Sphere);

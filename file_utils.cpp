@@ -25,11 +25,7 @@ vector<PlaneType>* File::getCoordinatesFromPlainFile(char *filename) {
                 if (!fileInputStream.eof())
                     fileInputStream.clear();
                 break;
-            } /*else {
-                tempThreePoints->set[i].x *= SCALE;
-                tempThreePoints->set[i].y *= SCALE;
-                tempThreePoints->set[i].z *= SCALE;
-            }*/
+            }
         }
 
         // if all values have been read successfuly then push array to result list

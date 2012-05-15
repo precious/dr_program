@@ -120,7 +120,6 @@ struct Vector: public Point {
     }
     Vector normalized() {
         double len = length();
-       ////// assert(len != 0);
         return Vector(x/len,y/len,z/len);
     }
     Vector resized(real _length) {
@@ -336,20 +335,16 @@ private:
     void checkForIntersectionsAndSetTtl(Particle&);
     velocity electronVelocityGenerator() {
         static MaxwellDistributionSpeedGenerator generator =
-                // getGaussianDistributionGenerator(ELECTRON_VELOCITY,ELECTRON_VELOCITY/4.0);
                 Time::getMaxwellDistributionSpeedGenerator(ELECTRON_VELOCITY_M,ELECTRON_VELOCITY_D);
         return generator();
     }
     velocity ionVelocityGenerator() {
         static MaxwellDistributionSpeedGenerator generator =
-                // getGaussianDistributionGenerator(ION_VELOCITY,ION_VELOCITY/4.0);
                 Time::getMaxwellDistributionSpeedGenerator(ION_VELOCITY_M,ION_VELOCITY_D);
         return generator();
     }
     Object3D &object;
     Vector objectStep;
-    // Sphere sphereAroundObject;
-    //void init();
 
 public:
     GenerativeSphere(Point _p, real _r,Object3D &_object):
@@ -358,7 +353,6 @@ public:
         Sphere(_s), object(_object), objectStep(object.step()) {}
 
     Particle generateParticleInSphere(int);
-    //Particle generateParticleWhichIntersectsObject(int);
     Particle generateParticleWhichIntersectsObject(int,bool);
     Particle generateParticleOnSphere(int);
     void populateArray(Particle*,int,int,int);

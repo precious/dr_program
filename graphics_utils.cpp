@@ -89,13 +89,11 @@ void Graphics::draw(Object3D &satelliteObj,Particle* particlesArray = NULL,int p
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(left*zoomFactor,right*zoomFactor,bottom*zoomFactor,top*zoomFactor,zNear,zFar);
-    //glOrtho(left, right, bottom, top, zNear, zFar);
 
     // Modelview matrix processing
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     /* Move down the z-axis. */
-    //glTranslatef(viewerPosition.x, viewerPosition.y, viewerPosition.z);
     gluLookAt(viewerPosition.x, viewerPosition.y, viewerPosition.z,
               satelliteObj.center.x, satelliteObj.center.y, satelliteObj.center.z,
               0.0, 1.0, 0.0);

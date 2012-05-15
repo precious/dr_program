@@ -92,7 +92,7 @@ Point Geometry::getPointOnLineProjection(Line line,Point point) {
 bool Geometry::doesLineIntersectTriangle(ThreePoints &triangle,Line line) {
     Point intersection = getPlaneAndLineIntersection2(triangle,line);
     if (isinf(intersection.x)) {
-        cerr << "INF" << endl;////////////////////////////////////////////////
+        cerr << "INF" << endl;
         //TODO: here should be checking whether the line intersects
         /// at least one of the triangles side
         /// for this function for finding two lines intersection should be
@@ -100,7 +100,7 @@ bool Geometry::doesLineIntersectTriangle(ThreePoints &triangle,Line line) {
         return false;
     }
     if (isnan(intersection.x)) {
-        cerr << "NAN " << endl;////////////////////////////////////////////////
+        cerr << "NAN " << endl;
         return false;
     }
     bool retVal = isPointInsideTriangle2(triangle,intersection);
@@ -164,13 +164,6 @@ bool Geometry::isPointInsideParallelepiped(Point a,Point v1,Point v2) {
             a.z <= max(v1.z,v2.z) && a.z >= min(v1.z,v2.z);
 }
 
-/*bool GeometryUtils::isPointInsideObject(Point p,Object3D& obj) {
-    for (vector<PlaneType>::iterator it = obj.polygons->begin();it != obj.polygons->end();it++) {
-        if doesLineIntersectTriangle(*it,)
-    }
-    return false;
-}*/
-
 bool Geometry::doesLineIntersectParallelepiped(Line l,Point p1,Point p2) {
     Plane planePendicularToOX(p1,Vector(1,0,0));
     Plane planePendicularToOY(p1,Vector(0,1,0));
@@ -187,8 +180,6 @@ bool Geometry::doesLineIntersectParallelepiped(Line l,Point p1,Point p2) {
 
 bool Geometry::doesParticlesTrajectoryIntersectObject(Particle p,Object3D &obj) {
     Line line(p,p.step);
-    /*if (!doesLineIntersectParallelepiped(line,obj.maxCoords,obj.minCoords))
-        return false;*/
     if ( !doesLineIntersectSphere(line,obj) )
         return false;
     for (unsigned int i = 0;i < obj.polygons->size();i++)
@@ -211,10 +202,6 @@ Point Geometry::getRandomPointFromTriangle(ThreePoints& tp) {
 bool Geometry::doesLineIntersectSphere(Line l,Sphere s) {
     return getDistanceBetweenPoints(getPointOnLineProjection(l,s.center), s.center) <= s.radius;
 }
-
-/*Point Geometry::getNearestObject3DAndParticleTrajectoryIntersection(Object3D&,Particle) {
-    return Point();
-}*/
 
 int Geometry::getIndexOfPolygonThatParicleIntersects(Object3D& obj,Particle p) {
     Line line(p,p.step);
