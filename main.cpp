@@ -248,6 +248,8 @@ int main(int argc, char** argv) {
     unsigned long long  realToModelNumber = 4.0/3.0*M_PI*pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)
             *ELECTRONS_CONSISTENCE/averageElectronsNumber;
 
+    verboseFlag && COUT("real number/modeln number: " << realToModelNumber);
+
     if (testProbabilityCount > 0) {
         // allocating memory for particles array
         verboseFlag && PRINTLN("memory allocation");

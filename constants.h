@@ -15,24 +15,24 @@ extern real ELECTRON_VELOCITY_D;
 extern real ION_VELOCITY_M;
 extern real ION_VELOCITY_D;
 
-// заряд, умноженный на 10^10
+// charge multiplied by 10^10
 extern double ELECTRON_ELECTRIC_CHARGE;
 extern double ION_ELECTRIC_CHARGE;
 
-// Дебаевский радиус
+// Debye radius
 extern int ELECTRONS_GENERATIVE_SPHERE_RADIUS;
 extern int IONS_GENERATIVE_SPHERE_RADIUS;
 
-// плотность частиц
+// particles density
 extern int ELECTRONS_CONSISTENCE;
 extern int IONS_CONSISTENCE;
 
-// плотность тока
+// current density
 extern double ELECTRON_CURRENT_DENSITY;
 extern double ION_CURRENT_DENSITY;
 
 extern double VACUUM_PERMITTIVITY;
-// ε0 ≈ 8.854187817620×10^−12 Ф/м
+// e0 ~ 8.854187817620*10^-12 F/m
 
 #endif // CONSTANTS_H
 

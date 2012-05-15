@@ -43,8 +43,8 @@ bool Geometry::isPointInsideTriangle2(ThreePoints &t,Point k) {
     return true;
 }
 
-// коэффициент точки пересечения находим подставляя параметрические уравнения прямой
-// в векторное уравнение плоскости
+// koeffitsiyent tochki peresecheniya nakhodim podstavlyaya parametricheskiye uravneniya pryamoy
+// v vektornoye uravneniye ploskosti
 Point Geometry::getPlaneAndLineIntersection2(ThreePoints &plane,Line line) {
     real coef = plane.getNormal()*Vector(line.a,plane.a) /
             (plane.getNormal()*line.directionVector);
@@ -56,8 +56,8 @@ Point Geometry::getPointOnPlaneProjection(ThreePoints& plane,Point p) {
 }
 
 // this method is deprecated. use getPlaneAndLineIntersection2 instead.
-// коэффициент точки пересечения находим подставляя параметрические уравнения прямой
-// в каноническое уравнение плоскости
+// koeffitsiyent tochki peresecheniya nakhodim podstavlyaya parametricheskiye uravneniya pryamoy
+// v kanonicheskoye uravneniye ploskosti
 Point Geometry::getPlaneAndLineIntersection(ThreePoints &plane,Line line) {
     real coef1 = (plane.b.y - plane.a.y)*(plane.c.z - plane.a.z) -
             (plane.c.y - plane.a.y)*(plane.b.z - plane.a.z);
@@ -80,9 +80,9 @@ Point Geometry::getPlaneAndLineIntersection(ThreePoints &plane,Line line) {
     return line.pointByCoef(-coef);
 }
 
-// коэффициент точки пересечения находим из условия перпендикулярности напрвляющего вектора
-// прямой и вектора, образованного заданной точкой и ее проекией (в качестве координат последней
-// берем параметрические уравнения прямой)
+// koeffitsiyent tochki peresecheniya nakhodim iz usloviya perpendikulyarnosti naprvlyayushchego vektora
+// pryamoy i vektora, obrazovannogo zadannoy tochkoy i yeye proyekiyey (v kachestve koordinat posledney
+// berem parametricheskiye uravneniya pryamoy)
 Point Geometry::getPointOnLineProjection(Line line,Point point) {
     real coef = line.directionVector*Vector(line.a,point) /
             (line.directionVector*line.directionVector);
