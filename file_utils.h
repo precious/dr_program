@@ -1,9 +1,9 @@
 #ifndef READ_FILE_H
 #define READ_FILE_H
 
-#include <assimp/assimp.hpp>
-#include <assimp/aiScene.h>
-#include <assimp/aiPostProcess.h>
+#include <assimp/scene.h>
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
 
 #include <iostream>
 #include <fstream>
