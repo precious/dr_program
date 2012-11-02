@@ -1,8 +1,7 @@
 #ifndef DATA_UTILS_H
 #define DATA_UTILS_H
 
-// methods of this namespace act similar to the stl algorithms however don't use
-// iterators and work only with containers that have operator[] (and with usual C arrays)
+// methods to be used on ranges of elements
 
 namespace Data {
    // C - container type (vector or pointer to array)
@@ -13,12 +12,6 @@ namespace Data {
        for(int i = 1;i < size;i++)
            result = f(result,container[i]);
        return result;
-   }
-
-   template <typename C,typename T>
-   static void map(function<void (T&)> f,C container,int size) {
-       for(int i = 0;i < size;i++)
-           f(container[i]);
    }
 }
 

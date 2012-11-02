@@ -267,9 +267,9 @@ public:
     Particle operator+(Vector v);
     Particle operator-(Vector v);
     Particle(char _type = PTYPE_ELECTRON):
-        Point(), step(), ttl(-1), type(_type), polygonIndex(-1) {}
+        Point(), type(_type), step(), ttl(-1), polygonIndex(-1) {}
     Particle(Point p, Vector s,real ttl_ = -1,char _type = PTYPE_ELECTRON,int _pi = -1):
-        Point(p), step(s), ttl(ttl_), type(_type), polygonIndex(_pi) {}
+        Point(p), type(_type), step(s), ttl(ttl_), polygonIndex(_pi) {}
 };
 
 struct Sphere {

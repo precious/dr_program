@@ -55,7 +55,7 @@ void Graphics::draw(Object3D &satelliteObj,Particle* particlesArray = NULL,int p
 {
     // colors
     static GLubyte purple[] = {255,150,255,0};
-    static GLubyte grey[] = {100,100,100,0};
+    //static GLubyte grey[] = {100,100,100,0};
     static GLubyte red[] = {255,0,0,0};
     static GLubyte green[] = {0,255,0,0};
     static GLubyte blue[] = {0,0,255,0};

@@ -317,9 +317,8 @@ int main(int argc, char** argv) {
         double distanceDelta = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,fastestParticle);
         double timeDelta = (distanceDelta - 5*distanceStep)/fastestParticle.step.length();
 
-        Data::map<Particle*,Particle>(
-                    [timeDelta](Particle &pp) -> void {pp = pp + pp.step*timeDelta; pp.ttl -= timeDelta;},
-                    particlesArray,ionsNumber + electronsNumber); //TODO check this
+        for_each(particlesArray,particlesArray + ionsNumber + electronsNumber,
+                    [timeDelta](Particle &pp) -> void {pp = pp + pp.step*timeDelta; pp.ttl -= timeDelta;}); //TODO check this
 
         verboseFlag && COUT("distanceStep: " << distanceStep << "; timeStep: " << timeStep);
     }
