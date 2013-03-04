@@ -9,6 +9,9 @@ all: constants.o types.o geometry_utils.o time_utils.o file_utils.o \
 	graphics_utils.o main.o $(INCLUDE) $(LIBS) $(CXXFLAGS) \
 	-o program
 
+	cd Yasko_fortran; ./gf Kul.f90 obj; 
+	cp -sf Yasko_fortran/Kul.o .
+
 constants.o: constants.cpp constants.h 
 	$(CXX) $(INCLUDE) $(CXXFLAGS) -c -o constants.o constants.cpp
 
@@ -31,4 +34,4 @@ main.o: main.cpp
 	$(CXX) $(INCLUDE) $(CXXFLAGS) -c -o main.o main.cpp
 	
 clean:
-	rm -rf *.o program
+	rm -rf *.o program Yasko_fortran/*.o
