@@ -47,6 +47,12 @@ integer function Laplace(N,P1,P2,P3)
   return
 END function Laplace
 
+integer function Testfun(N)
+  integer :: N
+  Testfun = N*2
+  return
+END function Testfun
+
   subroutine ResultF(Point, Pot, Grad)
   USE BEM_Lapl_3D
     type(Vector3D), intent(in) :: Point
