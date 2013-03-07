@@ -16,6 +16,15 @@ integer function Laplace(N,P1,P2,P3)
   real(bem) :: Pot
   real :: time0, time1
 
+!---------- Print vector parameters ---------------------
+    PRINT *, "1 -------------"
+    WRITE(*,"(3F8.2)")  P1(1)%x, P1(1)%y, P1(1)%z
+    PRINT *, "2 -------------"
+    WRITE(*,"(3F8.2)")  P2(1)%x, P2(1)%y, P2(1)%z
+    PRINT *, "3 -------------"
+    WRITE(*,"(3F8.2)")  P3(1)%x, P3(1)%y, P3(1)%z
+    PRINT *, "4 -------------"
+
 !---------- Allocate N boundary elements ----------------
   i=InitialiseBE(N)
 !--------------------------------------------------------
@@ -42,23 +51,23 @@ integer function Laplace(N,P1,P2,P3)
  BE%POT = 1._bem
 !-------------------------------------------------------------------
 
-  i = SolveBVP(Method)         ! Solve boundary-valued problem by 
+  i = SolveBVP(Method)         ! Solve boundary-valued problem by
   Laplace = i
   return
 END function Laplace
 
-integer function Testfun(N)
-  integer :: N
-  Testfun = N*2
-  return
-END function Testfun
+!integer function Testfun(N)
+!  integer :: N
+!  Testfun = N*2
+!  return
+!END function Testfun
 
   subroutine ResultF(Point, Pot, Grad)
   USE BEM_Lapl_3D
     type(Vector3D), intent(in) :: Point
     real(bem), intent(out) :: Pot
-    type(Vector3D), intent(out) :: Grad 
+    type(Vector3D), intent(out) :: Grad
     Pot = Potential(Point)
     Grad = Gradient(Point)
   end subroutine ResultF
-  
+
