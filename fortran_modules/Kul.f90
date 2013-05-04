@@ -6,7 +6,7 @@ include 'Lapl_3D.f90'
 !-----  by the direct boundary element method.                    -------!
 !-----  Domain is interior of sphere, radius=1                    -------!
 !------------------------------------------------------------------------!
-integer function Laplace(N,P1,P2,P3)
+integer function Laplace(N,P1,P2,P3) !! initialize object coordinates
   USE BEM_Lapl_3D
   IMPLICIT NONE
   integer, intent(in) :: N
@@ -17,13 +17,13 @@ integer function Laplace(N,P1,P2,P3)
   real :: time0, time1
 
 !---------- Print vector parameters ---------------------
-    PRINT *, "1 -------------"
-    WRITE(*,"(3F8.2)")  P1(1)%x, P1(1)%y, P1(1)%z
-    PRINT *, "2 -------------"
-    WRITE(*,"(3F8.2)")  P2(1)%x, P2(1)%y, P2(1)%z
-    PRINT *, "3 -------------"
-    WRITE(*,"(3F8.2)")  P3(1)%x, P3(1)%y, P3(1)%z
-    PRINT *, "4 -------------"
+!    PRINT *, "1 -------------"
+!    WRITE(*,"(3F8.2)")  P1(1)%x, P1(1)%y, P1(1)%z
+!    PRINT *, "2 -------------"
+!    WRITE(*,"(3F8.2)")  P2(1)%x, P2(1)%y, P2(1)%z
+!    PRINT *, "3 -------------"
+!    WRITE(*,"(3F8.2)")  P3(1)%x, P3(1)%y, P3(1)%z
+!    PRINT *, "4 -------------"
 
 !---------- Allocate N boundary elements ----------------
   i=InitialiseBE(N)
