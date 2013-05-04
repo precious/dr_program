@@ -14,20 +14,19 @@
 #include "constants.h"
 #include "data_utils.h"
 #include "graphics_utils.h"
+#include "fortran_modules.h"
 
-#define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; Graphics::quitGraphics(1); }
 #define rand(max) rand()%max
-#define PRINTLN(arg) cout << arg << endl
-#define PRINT(arg) cout << arg && cout.flush()
-#define COUT(args) cout << args << endl
 
-const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-t NUMBER][-r RADIUS][-s TIME][-n N][-f SF][-i INTERVAL][-p STEP] <filename>\n\n\
+const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
+[-r RADIUS][-s TIME][-n N][-f SF][-i INTERVAL][-p STEP] <filename>\n\n\
     -t NUMBER - test probabilty with number of particles NUMBER\n\
     -r RADIUS - radius of generative sphere [not used]\n\
     -s TIME - time to sleep in microseconds\n\
     -m - model particles\n\
     -v - verbose mode\n\
     -d - draw\n\
+    -a - draw axes\n\
     -f SF - scale factor for coordinates in file to reduce them to SI\n\
         (default 1)\n\
     -n N - total number of particles at time momentn\n\
@@ -35,7 +34,8 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-t NUMBER][-r RADIUS][-
         (use 'i' prefix for number of steps or 's' for seconds)\n\
     -p STEP - step of particle measured in spacecrafts length\n\
         (default 0.25)\n\
-    -x - file with complex data format\n";
+    -x - file with complex data format\n\
+    -g - calculate gradient\n";
 
 static void handleKeyDown(SDL_keysym* keysym)
 {
@@ -163,9 +163,13 @@ int main(int argc, char** argv) {
     double distanceStepCoef = 0.25;
     unsigned long long averageParticlesNumber = 10000;
     float complexDataFileFlag = false;
+    bool calculateGrad = false;
 
-    while ((c = getopt (argc, argv, ":vdmxt:r:s:f:t:n:i:p:")) != -1) {
+    while ((c = getopt (argc, argv, ":vdamxgt:r:s:f:t:n:i:p:")) != -1) {
         switch(c) {
+        case 'a':
+            Graphics::drawAxes = true;
+            break;
         case 't':
             testProbabilityCount = atoi(optarg);
             break;
@@ -195,6 +199,9 @@ int main(int argc, char** argv) {
             break;
         case 'p':
             distanceStepCoef = atof(optarg);
+            break;
+        case 'g':
+            calculateGrad = true;
             break;
         case 'i':
             if(optarg[0] == 'i')
@@ -334,6 +341,16 @@ int main(int argc, char** argv) {
         int width = 640;
         int height = 480;
         Graphics::initGraphics(width,height);
+    }
+
+    if (calculateGrad) {
+        solveBoundaryProblem(coordinatesList,verboseFlag);
+        // get grad and pot for arbitrary point //////////////////////
+        Vector grad;
+        real pot;
+        resultf_(new Point(10,9,8),&pot,&grad);
+        cout << "pot: " << pot << endl;
+        cout << "grad: " << grad << endl;
     }
 
     timespec start, stop, *delta;

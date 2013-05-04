@@ -73,7 +73,7 @@ Point Geometry::getPlaneAndLineIntersection(ThreePoints &plane,Line line) {
 
     // inf means that the line is parallel towards plane
     // nan means that the line belongs to plane
-    if(isinf(coef) || isnan(coef)) {
+    if(std::isinf(coef) || std::isnan(coef)) {
         return Point(coef,coef,coef);
     }
 
@@ -91,7 +91,7 @@ Point Geometry::getPointOnLineProjection(Line line,Point point) {
 
 bool Geometry::doesLineIntersectTriangle(ThreePoints &triangle,Line line) {
     Point intersection = getPlaneAndLineIntersection2(triangle,line);
-    if (isinf(intersection.x)) {
+    if (std::isinf(intersection.x)) {
         cerr << "INF" << endl;
         //TODO: here should be checking whether the line intersects
         /// at least one of the triangles side
@@ -99,7 +99,7 @@ bool Geometry::doesLineIntersectTriangle(ThreePoints &triangle,Line line) {
         /// implemented
         return false;
     }
-    if (isnan(intersection.x)) {
+    if (std::isnan(intersection.x)) {
         cerr << "NAN " << endl;
         return false;
     }

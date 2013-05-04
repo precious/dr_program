@@ -1,16 +1,13 @@
 CXX = g++
-LIBS = `sdl-config --cflags --libs` -lGL -lGLU -lrt -lassimp
+LIBS = `sdl-config --cflags --libs` -lGL -lGLU -lrt -lassimp -lgfortran fortran_modules/Kul.o
 CXXFLAGS += -std=c++0x -Wno-write-strings -O3 -Wall
 INCLUDE = -I.
 
 all: constants.o types.o geometry_utils.o time_utils.o file_utils.o \
-		 graphics_utils.o main.o data_utils.h
+		 graphics_utils.o main.o data_utils.h fortran_modules/Kul.o
 	$(CXX) constants.o types.o geometry_utils.o time_utils.o file_utils.o \
 	graphics_utils.o main.o $(INCLUDE) $(LIBS) $(CXXFLAGS) \
 	-o program
-
-	cd Yasko_fortran; ./gf Kul.f90 obj; 
-	cp -sf Yasko_fortran/Kul.o .
 
 constants.o: constants.cpp constants.h 
 	$(CXX) $(INCLUDE) $(CXXFLAGS) -c -o constants.o constants.cpp
@@ -32,6 +29,14 @@ graphics_utils.o: graphics_utils.cpp graphics_utils.h
 	
 main.o: main.cpp
 	$(CXX) $(INCLUDE) $(CXXFLAGS) -c -o main.o main.cpp
+
+fortran_modules/Kul.o: fortran_modules/Kul.f90 fortran_modules/Lapl_3D.f90  \
+			 fortran_modules/ReadFile.f90 fortran_modules/Symmetry.f90 \
+			 fortran_modules/t0Lapl3D.f90 fortran_modules/t1Lapl3D.f90 \
+			 fortran_modules/t2Lapl3D.f90
+	cd fortran_modules; ./gf Kul.f90 obj
+	
+
 	
 clean:
-	rm -rf *.o program Yasko_fortran/*.o
+	rm -rf *.o program fortran_modules/*.o

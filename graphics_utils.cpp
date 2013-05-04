@@ -6,6 +6,7 @@ int Graphics::height = 0;
 float Graphics::zoomFactor = 1.0;
 bool Graphics::isLMousePressed = false;
 double Graphics::rotationAngles[2] = {0,0};
+bool Graphics::drawAxes = false;
 
 void Graphics::initGraphics(int _width, int _height) {
     height = _height;
@@ -105,11 +106,13 @@ void Graphics::draw(Object3D &satelliteObj,Particle* particlesArray = NULL,int p
         glRotated(rotationAngles[1],1,0,0);
 
     // draw axes:
-    glBegin(GL_LINES);
-    glColor4ubv(red); glVertex3d(0,0,0); glVertex3d(1.5*diameter,0,0);
-    glColor4ubv(green); glVertex3d(0,0,0); glVertex3d(0,1.5*diameter,0);
-    glColor4ubv(blue); glVertex3d(0,0,0); glVertex3d(0,0,1.5*diameter);
-    glEnd();
+    if (drawAxes) {
+        glBegin(GL_LINES);
+        glColor4ubv(red); glVertex3d(0,0,0); glVertex3d(1.5*diameter,0,0);
+        glColor4ubv(green); glVertex3d(0,0,0); glVertex3d(0,1.5*diameter,0);
+        glColor4ubv(blue); glVertex3d(0,0,0); glVertex3d(0,0,1.5*diameter);
+        glEnd();
+    }
 
     // draw the particles
     if (particlesArray != NULL) {

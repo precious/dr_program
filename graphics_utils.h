@@ -15,6 +15,7 @@ namespace Graphics {
     extern int height;
 
     extern bool isLMousePressed;
+    extern bool drawAxes;
     extern double rotationAngles[2];
     extern float zoomFactor;
 

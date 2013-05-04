@@ -3,7 +3,12 @@
 
 #include <cmath>
 
-typedef float real;
+#define EXIT_ERR(msg) { cerr << msg << "\nerrno: " << errno << endl; Graphics::quitGraphics(1); }
+#define PRINTLN(arg) cout << arg << endl
+#define PRINT(arg) cout << arg && cout.flush()
+#define COUT(args) cout << args << endl
+
+typedef double real;
 typedef float velocity;
 
 extern velocity ORBITAL_VELOCITY;
