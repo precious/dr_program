@@ -7,6 +7,7 @@
 #include <iostream>
 #include <random>
 #include <functional>
+#include <iomanip>
 #include "constants.h"
 
 using namespace std;

@@ -1,6 +1,8 @@
 #ifndef FORTRAN_MODULES_H
 #define FORTRAN_MODULES_H
 
+#include "time_utils.h"
+
 // the next funxtions are defined in Kul.f90 and linked from fortran_modules/Kul.o
 extern "C" int laplace_(int*,Point*,Point*,Point*); // integer function Laplace(N,P1,P2,P3)
 extern "C" void resultf_(Point*,real*,Vector*); //ResultF(Point, Pot, Grad)
@@ -20,8 +22,16 @@ int solveBoundaryProblem(vector<PlaneType> *coordinatesList,bool verbose = false
     }
 
     // Solve boundary-valued problem
+    timespec start, stop, *delta;
     verbose && COUT("solving boundary problem in fortran module...");
+    clock_gettime(CLOCK_ID,&start);
     int retval = laplace_(&numVertices,P1,P2,P3);
+    clock_gettime(CLOCK_ID,&stop);
+    delta = Time::getTimespecDelta(&start,&stop);
+    if (verbose) {
+        PRINT("elapsed time: ");
+        Time::printTimespec(delta);
+    }
     delete[] P1,P2,P3;
 
     verbose && COUT("fortran init retval: " << retval);

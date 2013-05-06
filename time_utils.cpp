@@ -3,7 +3,7 @@
 int CLOCK_ID = CLOCK_THREAD_CPUTIME_ID;
 
 void Time::printTimespec(timespec *ts) {
-    cout << "seconds: " << ts->tv_sec << ", nanoseconds: " << ts->tv_nsec << endl;
+    cout << ts->tv_sec << '.' << std::setfill('0') << std::setw(9) << ts->tv_nsec << " sec" << endl;
 }
 
 timespec* Time::getTimespecDelta(timespec *older,timespec *newer) {
