@@ -139,6 +139,7 @@ void GenerativeSphere::populateArray(Particle *particles,int number,int type,int
 void Object3D::init() {
     totalPlasmaCurrent = 0;
     speed = ORBITAL_VELOCITY;
+    assert(polygons->size() > 0);
     nearestPoint = furthermostPoint = maxCoords = minCoords = polygons->at(0).set[0];
     for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();it++)
         for(int i = 0;i < 3;i++) {
