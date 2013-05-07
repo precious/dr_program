@@ -330,13 +330,13 @@ int main(int argc, char** argv) {
         verboseFlag && COUT("distanceStep: " << distanceStep << "; timeStep: " << timeStep);
     }
 
+    verboseFlag && COUT("polygons: " << satelliteObj.polygons->size());
+    verboseFlag && COUT("center: " << satelliteObj.center);
+    verboseFlag && COUT("radius: " << satelliteObj.radius);
+    verboseFlag && COUT("capacitance: " << satelliteObj.capacitance());
+
     // video mode initialization
     if (drawFlag) {
-        verboseFlag && cout << "polygons: " << satelliteObj.polygons->size() << endl;
-        verboseFlag && cout << "center: " << satelliteObj.center << endl;
-        verboseFlag && cout << "radius: " << satelliteObj.radius << endl;
-        verboseFlag && cout << "capacitance: " << satelliteObj.capacitance() << endl;
-
         // set appropriate OpenGL & properties SDL
         int width = 640;
         int height = 480;

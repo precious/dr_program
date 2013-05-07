@@ -32,7 +32,9 @@ int solveBoundaryProblem(vector<PlaneType> *coordinatesList,bool verbose = false
         PRINT("elapsed time: ");
         Time::printTimespec(delta);
     }
-    delete[] P1,P2,P3;
+    delete[] P1;
+    delete[] P2;
+    delete[] P3;
 
     verbose && COUT("fortran init retval: " << retval);
     assert(retval > 0);
