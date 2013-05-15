@@ -39,5 +39,9 @@ extern double ION_CURRENT_DENSITY;
 extern double VACUUM_PERMITTIVITY;
 // e0 ~ 8.854187817620*10^-12 F/m
 
+// mass to charge ratio
+extern double ELECTRON_CHARGE_TO_MASS;
+extern double ION_CHARGE_TO_MASS;
+
 #endif // CONSTANTS_H
 

@@ -262,15 +262,37 @@ public:
     static double electronTrajectoryCurrent;
     static double ionTrajectoryCurrent;
     char type;
-    Vector step;
+    Vector speed;
     real ttl;
     int polygonIndex;
     Particle operator+(Vector v);
     Particle operator-(Vector v);
     Particle(char _type = PTYPE_ELECTRON):
-        Point(), type(_type), step(), ttl(-1), polygonIndex(-1) {}
+        Point(), type(_type), speed(), ttl(-1), polygonIndex(-1) {}
     Particle(Point p, Vector s,real ttl_ = -1,char _type = PTYPE_ELECTRON,int _pi = -1):
-        Point(p), type(_type), step(s), ttl(ttl_), polygonIndex(_pi) {}
+        Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi) {}
+    void affectField(Vector fieldGrad,real fieldPot,double timeStep) {
+        real acceleration = -fieldGrad.length()*
+                ((type == PTYPE_ELECTRON)? ELECTRON_CHARGE_TO_MASS: ION_CHARGE_TO_MASS);
+        real speedValue = speed.length() + acceleration*timeStep;
+        // calculate vector of moved distance
+        Vector distance = Vector(affectFieldSingleCoordinate(speed.x,fieldGrad.x,fieldPot,timeStep),
+                       affectFieldSingleCoordinate(speed.y,fieldGrad.y,fieldPot,timeStep),
+                       affectFieldSingleCoordinate(speed.z,fieldGrad.z,fieldPot,timeStep));
+        Point newPosition = *(Point*)this + distance;
+        x = newPosition.x;
+        y = newPosition.y;
+        z = newPosition.z;
+        speed = distance.resized(speedValue);
+    }
+
+private:
+    real affectFieldSingleCoordinate(real speedCoord, real fieldGradCoord,
+                                     real fieldPot, double timeStep) {
+        return speedCoord*timeStep -
+                fieldGradCoord*timeStep*timeStep*
+                ((type == PTYPE_ELECTRON)? ELECTRON_CHARGE_TO_MASS: ION_CHARGE_TO_MASS)/2;
+    }
 };
 
 struct Sphere {

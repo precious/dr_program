@@ -117,7 +117,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                      double timeStep) {
     int finalizedNumber = 0;
     for(unsigned long long i = 0;i < electronsNumber + ionsNumber;++i) {
-        particles[i] = particles[i] + particles[i].step*timeStep;
+        particles[i] = particles[i] + particles[i].speed*timeStep;
         particles[i].ttl -= timeStep;
     }
 
@@ -312,9 +312,9 @@ int main(int argc, char** argv) {
         Particle fastestParticle = Data::reduce<Particle*,Particle>([satelliteObjPtr](Particle &p1,Particle &p2) -> Particle& {
             if (p1.polygonIndex == -1) return p2;
             if (p2.polygonIndex == -1) return p1;
-            return (p2.step.length() > p1.step.length())? p2: p1;
+            return (p2.speed.length() > p1.speed.length())? p2: p1;
         }, particlesArray,ionsNumber + electronsNumber);
-        verboseFlag && COUT("fastest particle speed: " << fastestParticle.step.length());
+        verboseFlag && COUT("fastest particle speed: " << fastestParticle.speed.length());
 
         double distanceStep = satelliteObj.radius*2.0*distanceStepCoef;
         timeStep = distanceStep/ELECTRON_VELOCITY_M; // time to do step for particle with average velocity
@@ -322,10 +322,10 @@ int main(int argc, char** argv) {
         verboseFlag && PRINTLN("decreasing distance to object for all particles");      
         // time during the fastest particle will reach object
         double distanceDelta = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,fastestParticle);
-        double timeDelta = (distanceDelta - 5*distanceStep)/fastestParticle.step.length();
+        double timeDelta = (distanceDelta - 5*distanceStep)/fastestParticle.speed.length();
 
         for_each(particlesArray,particlesArray + ionsNumber + electronsNumber,
-                    [timeDelta](Particle &pp) -> void {pp = pp + pp.step*timeDelta; pp.ttl -= timeDelta;}); //TODO check this
+                    [timeDelta](Particle &pp) -> void {pp = pp + pp.speed*timeDelta; pp.ttl -= timeDelta;}); //TODO check this
 
         verboseFlag && COUT("distanceStep: " << distanceStep << "; timeStep: " << timeStep);
     }

@@ -179,7 +179,7 @@ bool Geometry::doesLineIntersectParallelepiped(Line l,Point p1,Point p2) {
 }
 
 bool Geometry::doesParticlesTrajectoryIntersectObject(Particle p,Object3D &obj) {
-    Line line(p,p.step);
+    Line line(p,p.speed);
     if ( !doesLineIntersectSphere(line,obj) )
         return false;
     for (unsigned int i = 0;i < obj.polygons->size();i++)
@@ -204,7 +204,7 @@ bool Geometry::doesLineIntersectSphere(Line l,Sphere s) {
 }
 
 int Geometry::getIndexOfPolygonThatParicleIntersects(Object3D& obj,Particle p) {
-    Line line(p,p.step);
+    Line line(p,p.speed);
     if ( !doesLineIntersectSphere(line,obj) )
         return -1;
     for (unsigned int i = 0;i < obj.polygons->size();i++)

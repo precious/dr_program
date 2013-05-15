@@ -15,11 +15,11 @@ Point Point::operator-(Vector v) {
 }
 
 Particle Particle::operator+(Vector v) {
-    return Particle(Point(*this) + v,step,ttl,type,polygonIndex);
+    return Particle(Point(*this) + v,speed,ttl,type,polygonIndex);
 }
 
 Particle Particle::operator-(Vector v) {
-    return Particle(Point(*this) - v,step,ttl,type,polygonIndex);
+    return Particle(Point(*this) - v,speed,ttl,type,polygonIndex);
 }
 
 Plane::Plane(Point p, Vector v):
@@ -30,9 +30,9 @@ void GenerativeSphere::checkForIntersectionsAndSetTtl(Particle &p) {
     p.polygonIndex = Geometry::getIndexOfPolygonThatParicleIntersects(object,p);
     if (p.polygonIndex != -1) {
         p.ttl = Geometry::getDistanceBetweenPoints(p,
-            Geometry::getPlaneAndLineIntersection2(object.polygons->at(p.polygonIndex),Line(p,p.step)))/p.step.length();
+            Geometry::getPlaneAndLineIntersection2(object.polygons->at(p.polygonIndex),Line(p,p.speed)))/p.speed.length();
     } else { // see description at page 11 of the draft
-        p.ttl = 2*radius*p.step.cos(Vector(p,center)) / p.step.length();
+        p.ttl = 2*radius*p.speed.cos(Vector(p,center)) / p.speed.length();
     }
 }
 
