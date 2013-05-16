@@ -340,6 +340,7 @@ struct Object3D: public Sphere {
     }
 
     double capacitance() {
+        // calculating capacitance as for sphere with the same radius
         return 4*M_PI*VACUUM_PERMITTIVITY*sqrt(surfaceArea()/(4*M_PI));
     }
 

@@ -121,7 +121,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
         particles[i].ttl -= timeStep;
     }
 
-    // checking all particlees excluding the last one
+    // checking all particles excluding the last one
     for(unsigned long long i = 0;i < electronsNumber + ionsNumber - 1;) {
         if (particles[i].ttl <= 0) {
             if (particles[i].polygonIndex != -1)
@@ -138,7 +138,6 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
         if (particles[lastIndex].polygonIndex != -1)
             ++finalizedNumber;
         finalizeParticle(satelliteObj,particles,electronsNumber,ionsNumber,lastIndex);
-
     }
     return finalizedNumber;
 }
