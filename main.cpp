@@ -392,7 +392,7 @@ int main(int argc, char** argv) {
                 timeToPrint -= ((intervalInSteps)? 1: timeStep);
                 surfaceCharge = satelliteObj.totalPlasmaCurrent*elapsedTime;
                 if (timeToPrint <= 0) {
-                    cout << surfaceCharge << " " << surfaceCharge/spacecraftCapacitance
+                    cout << satelliteObj.totalPlasmaCurrent << " " << surfaceCharge << " " << surfaceCharge/spacecraftCapacitance
                                    << "   " << elapsedTime << "   " << numberOfIntersections*realToModelNumber << endl;
                     (timeToPrint = printInterval);
                 }

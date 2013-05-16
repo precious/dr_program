@@ -164,7 +164,7 @@ void Object3D::init() {
         polygonsCurrents[i] = 0;
     }
 
-    // move the spacecraft to the point or origin
+    // move the spacecraft to the point of origin
     Vector shift(center,POINT_OF_ORIGIN);
     if (shift.length() > radius) {
         for(vector<PlaneType>::iterator it = polygons->begin();it != polygons->end();it++)
