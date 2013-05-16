@@ -1,13 +1,12 @@
 CXX = g++
-LIBS = `sdl-config --cflags --libs` -lGL -lGLU -lrt -lassimp -lgfortran fortran_modules/Kul.o
+LIBS = fortran_modules/Kul.o `sdl-config --cflags --libs` -lGL -lGLU -lrt -lassimp -lgfortran
 CXXFLAGS += -std=c++0x -Wno-write-strings -O3 -Wall
 INCLUDE = -I.
 
 all: constants.o types.o geometry_utils.o time_utils.o file_utils.o \
 		 graphics_utils.o main.o data_utils.h fortran_modules/Kul.o
 	$(CXX) constants.o types.o geometry_utils.o time_utils.o file_utils.o \
-	graphics_utils.o main.o $(INCLUDE) $(LIBS) $(CXXFLAGS) \
-	-o program
+	graphics_utils.o main.o  $(CXXFLAGS) -o program $(INCLUDE) $(LIBS)
 
 constants.o: constants.cpp constants.h 
 	$(CXX) $(INCLUDE) $(CXXFLAGS) -c -o constants.o constants.cpp

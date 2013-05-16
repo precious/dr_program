@@ -37,6 +37,11 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
     -x - file with complex data format\n\
     -g - include electrical field affecting\n";
 
+namespace Globals {
+    unsigned long long  realToModelNumber;
+    double electricFieldToCharge= 0;
+}
+
 static void handleKeyDown(SDL_keysym* keysym)
 {
     switch(keysym->sym) {
@@ -100,13 +105,17 @@ inline void finalizeParticle(Object3D &satelliteObj,Particle* particles,
                              unsigned long long &electronsNumber,unsigned long long &ionsNumber,int i) {
     switch(particles[i].type) {
     case PTYPE_ELECTRON:
-        if (particles[i].polygonIndex != -1)
+        if (particles[i].polygonIndex != -1) {
             satelliteObj.changePlasmaCurrents(particles[i].polygonIndex,ELECTRON_CURRENT_DENSITY);
+            satelliteObj.totalCharge += ELECTRON_ELECTRIC_CHARGE*Globals::realToModelNumber;
+        }
         electronsNumber--;
         break;
     case PTYPE_ION:
-        if (particles[i].polygonIndex != -1)
+        if (particles[i].polygonIndex != -1) {
             satelliteObj.changePlasmaCurrents(particles[i].polygonIndex,ION_CURRENT_DENSITY);
+            satelliteObj.totalCharge += ION_ELECTRIC_CHARGE*Globals::realToModelNumber;
+        }
         ionsNumber--;
         break;
     }
@@ -251,10 +260,10 @@ int main(int argc, char** argv) {
 
     verboseFlag && COUT("electron trajectory current: " << Particle::electronTrajectoryCurrent);
     verboseFlag && COUT("ion trajectory current: " << Particle::ionTrajectoryCurrent);
-    unsigned long long  realToModelNumber = 4.0/3.0*M_PI*pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)
+    Globals::realToModelNumber = 4.0/3.0*M_PI*pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)
             *ELECTRONS_CONSISTENCE/averageElectronsNumber;
 
-    verboseFlag && COUT("real number/modeln number: " << realToModelNumber);
+    verboseFlag && COUT("real number/modeln number: " << Globals::realToModelNumber);
 
     if (testProbabilityCount > 0) {
         // allocating memory for particles array
@@ -393,7 +402,7 @@ int main(int argc, char** argv) {
                 surfaceCharge = satelliteObj.totalPlasmaCurrent*elapsedTime;
                 if (timeToPrint <= 0) {
                     cout << satelliteObj.totalPlasmaCurrent << " " << surfaceCharge << " " << surfaceCharge/spacecraftCapacitance
-                                   << "   " << elapsedTime << "   " << numberOfIntersections*realToModelNumber << endl;
+                         << "   " << elapsedTime << "   " << numberOfIntersections*Globals::realToModelNumber << " " << satelliteObj.totalCharge << endl;
                     (timeToPrint = printInterval);
                 }
                 // processing new particles if necessary

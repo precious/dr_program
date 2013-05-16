@@ -20,7 +20,7 @@ extern real ELECTRON_VELOCITY_D;
 extern real ION_VELOCITY_M;
 extern real ION_VELOCITY_D;
 
-// charge multiplied by 10^10
+// charges
 extern double ELECTRON_ELECTRIC_CHARGE;
 extern double ION_ELECTRIC_CHARGE;
 

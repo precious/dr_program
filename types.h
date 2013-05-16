@@ -305,6 +305,7 @@ struct Sphere {
 
 struct Object3D: public Sphere {
     double totalPlasmaCurrent;
+    double totalCharge;
     Vector front;
     Point maxCoords, minCoords;
     Point nearestPoint, furthermostPoint; // relatively to front of the object
