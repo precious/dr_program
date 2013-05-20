@@ -8,6 +8,23 @@
 #define PRINT(arg) cout << arg && cout.flush()
 #define COUT(args) cout << args << endl
 
+// Particle types
+#define PTYPE_ELECTRON 1
+#define PTYPE_ION 0
+
+// charges
+extern double ELECTRON_ELECTRIC_CHARGE;
+extern double ION_ELECTRIC_CHARGE;
+
+// charge to mass ratio
+extern double ELECTRON_CHARGE_TO_MASS;
+extern double ION_CHARGE_TO_MASS;
+
+#define PARTICLE_CHARGE(_particle_type) \
+    ((_particle_type == PTYPE_ELECTRON)? ELECTRON_ELECTRIC_CHARGE: ION_ELECTRIC_CHARGE)
+#define PARTICLE_CHARGE_TO_MASS(_particle_type) \
+    ((_particle_type == PTYPE_ELECTRON)? ELECTRON_CHARGE_TO_MASS: ION_CHARGE_TO_MASS)
+
 typedef double real;
 typedef float velocity;
 
@@ -19,10 +36,6 @@ extern real ELECTRON_VELOCITY_M;
 extern real ELECTRON_VELOCITY_D;
 extern real ION_VELOCITY_M;
 extern real ION_VELOCITY_D;
-
-// charges
-extern double ELECTRON_ELECTRIC_CHARGE;
-extern double ION_ELECTRIC_CHARGE;
 
 // Debye radius
 extern int ELECTRONS_GENERATIVE_SPHERE_RADIUS;
@@ -38,10 +51,6 @@ extern double ION_CURRENT_DENSITY;
 
 extern double VACUUM_PERMITTIVITY;
 // e0 ~ 8.854187817620*10^-12 F/m
-
-// mass to charge ratio
-extern double ELECTRON_CHARGE_TO_MASS;
-extern double ION_CHARGE_TO_MASS;
 
 #endif // CONSTANTS_H
 

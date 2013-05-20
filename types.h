@@ -35,10 +35,6 @@ extern Point POINT_OF_ORIGIN; // (0,0,0)
 #define ORDER_CW 1
 #define ORDER_CCW 0
 
-// Particle types
-#define PTYPE_ELECTRON 1
-#define PTYPE_ION 0
-
 // generation flags
 enum genFlags {GEN_ON_SPHERE = 1, GEN_IN_SPHERE = 2, GEN_RANDOM = 4, GEN_INTERSECT_OBJ = 8};
 
@@ -272,8 +268,7 @@ public:
     Particle(Point p, Vector s,real ttl_ = -1,char _type = PTYPE_ELECTRON,int _pi = -1):
         Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi) {}
     void affectField(Vector fieldGrad,real fieldPot,double timeStep) {
-        real acceleration = -fieldGrad.length()*
-                ((type == PTYPE_ELECTRON)? ELECTRON_CHARGE_TO_MASS: ION_CHARGE_TO_MASS);
+        real acceleration = -fieldGrad.length()*PARTICLE_CHARGE_TO_MASS(type);
         real speedValue = speed.length() + acceleration*timeStep;
         // calculate vector of moved distance
         Vector distance = Vector(affectFieldSingleCoordinate(speed.x,fieldGrad.x,fieldPot,timeStep),
@@ -289,9 +284,7 @@ public:
 private:
     real affectFieldSingleCoordinate(real speedCoord, real fieldGradCoord,
                                      real fieldPot, double timeStep) {
-        return speedCoord*timeStep -
-                fieldGradCoord*timeStep*timeStep*
-                ((type == PTYPE_ELECTRON)? ELECTRON_CHARGE_TO_MASS: ION_CHARGE_TO_MASS)/2;
+        return speedCoord*timeStep - fieldGradCoord*timeStep*timeStep*PARTICLE_CHARGE_TO_MASS(type)/2;
     }
 };
 

@@ -34,12 +34,11 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
         (use 'i' prefix for number of steps or 's' for seconds)\n\
     -p STEP - step of particle measured in spacecrafts length\n\
         (default 0.25)\n\
-    -x - file with complex data format\n\
-    -g - include electrical field affecting\n";
+    -x - file with complex data format\n";
 
 namespace Globals {
     unsigned long long  realToModelNumber;
-    double electricFieldToCharge= 0;
+    double electricFieldToCharge = 0;
 }
 
 static void handleKeyDown(SDL_keysym* keysym)
@@ -171,7 +170,6 @@ int main(int argc, char** argv) {
     double distanceStepCoef = 0.25;
     unsigned long long averageParticlesNumber = 10000;
     float complexDataFileFlag = false;
-    bool includeFieldAffecting = false;
 
     while ((c = getopt (argc, argv, ":vdamxgt:r:s:f:t:n:i:p:")) != -1) {
         switch(c) {
@@ -207,9 +205,6 @@ int main(int argc, char** argv) {
             break;
         case 'p':
             distanceStepCoef = atof(optarg);
-            break;
-        case 'g':
-            includeFieldAffecting = true;
             break;
         case 'i':
             if(optarg[0] == 'i')
@@ -351,16 +346,6 @@ int main(int argc, char** argv) {
         Graphics::initGraphics(width,height);
     }
 
-    if (includeFieldAffecting) {
-        solveBoundaryProblem(coordinatesList,verboseFlag);
-//        // get grad and pot for arbitrary point //////////////////////
-//        Vector grad;
-//        real pot;
-//        resultf_(new Point(10,9,8),&pot,&grad);
-//        cout << "pot: " << pot << endl;
-//        cout << "grad: " << grad << endl;
-    }
-
     timespec start, stop, *delta;
     int framesCount = 0;
     double seconds = 0;
@@ -375,6 +360,9 @@ int main(int argc, char** argv) {
     double surfaceCharge;
     unsigned long long numberOfIntersections = 0;
     if (drawFlag || modelingFlag) {
+        if (modelingFlag) {
+            solveBoundaryProblem(coordinatesList,verboseFlag); // solve using fortran module
+        }
         while(true) {
 
             if (drawFlag) {
