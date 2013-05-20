@@ -124,7 +124,15 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                      unsigned long long &electronsNumber,unsigned long long &ionsNumber,
                      double timeStep) {
     int finalizedNumber = 0;
+    Vector fieldGrad;
+    real fieldPot;
+//    if (Globals::electricFieldToCharge == 0) {
+
+//    }
     for(unsigned long long i = 0;i < electronsNumber + ionsNumber;++i) {
+//        resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
+
+//        particles[i].affectField(fieldPot,timeStep);
         particles[i] = particles[i] + particles[i].speed*timeStep;
         particles[i].ttl -= timeStep;
     }
@@ -362,6 +370,14 @@ int main(int argc, char** argv) {
     if (drawFlag || modelingFlag) {
         if (modelingFlag) {
             solveBoundaryProblem(coordinatesList,verboseFlag); // solve using fortran module
+            //////////////////////////////////////////////////////////////////////////////////
+            real q;
+            Vector q1;
+            resultf_(&(satelliteObj.polygons->at(0).a),&q,&q1);
+            cout << "q = " << q << " q1 = " << q1 << " q1 len =  " << q1.length() << endl;
+            resultf_(&(satelliteObj.polygons->at(0).b),&q,&q1);
+            cout << "q = " << q << " q1 = " << q1 << " q1 len =  " << q1.length() << endl;
+            //////////////////////////////////////////////////////////////////////////////////
         }
         while(true) {
 

@@ -272,8 +272,8 @@ public:
         real speedValue = speed.length() + acceleration*timeStep;
         // calculate vector of moved distance
         Vector distance = Vector(affectFieldSingleCoordinate(speed.x,fieldGrad.x,fieldPot,timeStep),
-                       affectFieldSingleCoordinate(speed.y,fieldGrad.y,fieldPot,timeStep),
-                       affectFieldSingleCoordinate(speed.z,fieldGrad.z,fieldPot,timeStep));
+                                 affectFieldSingleCoordinate(speed.y,fieldGrad.y,fieldPot,timeStep),
+                                 affectFieldSingleCoordinate(speed.z,fieldGrad.z,fieldPot,timeStep));
         Point newPosition = *(Point*)this + distance;
         x = newPosition.x;
         y = newPosition.y;
