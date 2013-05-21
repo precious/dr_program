@@ -27,6 +27,12 @@ typedef OrientedPlane PlaneType;
 
 extern Point POINT_OF_ORIGIN; // (0,0,0)
 
+// flags fot particle states
+extern unsigned int PARTICLE_WILL_INTERSECT_OBJ;
+extern unsigned int PARTICLE_WILL_NOT_INTERSECT_OBJ;
+extern unsigned int PARTICLE_HAS_UNDEFINED_BEHAVIOUR;
+//extern unsigned int PARTICLE_WILL_;
+
 // system of coordinates orientation
 #define ORIENT_RIGHT_HANDED 1
 #define ORIENT_LEFT_HANDED 0
@@ -40,6 +46,16 @@ enum genFlags {GEN_ON_SPHERE = 1, GEN_IN_SPHERE = 2, GEN_RANDOM = 4, GEN_INTERSE
 
 void setOrientation(bool);
 bool getOrientation();
+
+template <typename T>
+inline char sign(T t) {
+    return (t > 0)? 1: (t < 0)? -1: 0;
+}
+
+template <typename T>
+inline bool inInterval(T x,T a,T b) {
+    return x <= max(a,b) && x >= min(a,b);
+}
 
 class ZeroNormal: public runtime_error {
 public:
@@ -261,12 +277,14 @@ public:
     Vector speed;
     real ttl;
     int polygonIndex;
+    int flags;
     Particle operator+(Vector v);
     Particle operator-(Vector v);
-    Particle(char _type = PTYPE_ELECTRON):
-        Point(), type(_type), speed(), ttl(-1), polygonIndex(-1) {}
-    Particle(Point p, Vector s,real ttl_ = -1,char _type = PTYPE_ELECTRON,int _pi = -1):
-        Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi) {}
+    Particle(char _type = PTYPE_ELECTRON,int _flags = PARTICLE_HAS_UNDEFINED_BEHAVIOUR):
+        Point(), type(_type), speed(), ttl(-1), polygonIndex(-1), flags(_flags) {}
+    Particle(Point p, Vector s,real ttl_ = -1,char _type = PTYPE_ELECTRON,int _pi = -1,
+             int _flags = PARTICLE_HAS_UNDEFINED_BEHAVIOUR):
+        Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi), flags(_flags) {}
     void affectField(Vector fieldGrad,real fieldPot,double timeStep) {
         real acceleration = -fieldGrad.length()*PARTICLE_CHARGE_TO_MASS(type);
         real speedValue = speed.length() + acceleration*timeStep;

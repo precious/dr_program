@@ -3,6 +3,10 @@
 
 Point POINT_OF_ORIGIN = Point(0,0,0);
 
+unsigned int PARTICLE_WILL_INTERSECT_OBJ = 0;
+unsigned int PARTICLE_WILL_NOT_INTERSECT_OBJ = 1;
+unsigned int PARTICLE_HAS_UNDEFINED_BEHAVIOUR = 2;
+
 double Particle::electronTrajectoryCurrent;
 double Particle::ionTrajectoryCurrent;
 

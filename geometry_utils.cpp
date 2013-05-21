@@ -2,16 +2,6 @@
 
 using namespace std;
 
-template <typename T>
-inline char sign(T t) {
-    return (t > 0)? 1: (t < 0)? -1: 0;
-}
-
-template <typename T>
-inline bool inInterval(T x,T a,T b) {
-    return x <= max(a,b) && x >= min(a,b);
-}
-
 bool Geometry::isPointInsideTriangle(ThreePoints &t,Point k) {
     Vector v0(Point(0,0,0)), v1(k,t.a), v2(k,t.b), v3(k,t.c);
     if (v1 == v0 || v2 == v0 || v3 == v0)
