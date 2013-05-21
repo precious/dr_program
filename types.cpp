@@ -3,9 +3,9 @@
 
 Point POINT_OF_ORIGIN = Point(0,0,0);
 
-unsigned int PARTICLE_WILL_INTERSECT_OBJ = 0;
-unsigned int PARTICLE_WILL_NOT_INTERSECT_OBJ = 1;
-unsigned int PARTICLE_HAS_UNDEFINED_BEHAVIOUR = 2;
+int PARTICLE_WILL_INTERSECT_OBJ = 1;
+int PARTICLE_WILL_NOT_INTERSECT_OBJ = 2;
+int PARTICLE_HAS_UNDEFINED_BEHAVIOUR = 4;
 
 double Particle::electronTrajectoryCurrent;
 double Particle::ionTrajectoryCurrent;
@@ -19,11 +19,19 @@ Point Point::operator-(Vector v) {
 }
 
 Particle Particle::operator+(Vector v) {
-    return Particle(Point(*this) + v,speed,ttl,type,polygonIndex);
+    Point newPosition = (Point)(*this) + v;
+    x = newPosition.x;
+    y = newPosition.y;
+    z = newPosition.z;
+    return (*this);
 }
 
 Particle Particle::operator-(Vector v) {
-    return Particle(Point(*this) - v,speed,ttl,type,polygonIndex);
+    Point newPosition = (Point)(*this) - v;
+    x = newPosition.x;
+    y = newPosition.y;
+    z = newPosition.z;
+    return (*this);
 }
 
 Plane::Plane(Point p, Vector v):

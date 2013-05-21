@@ -28,9 +28,9 @@ typedef OrientedPlane PlaneType;
 extern Point POINT_OF_ORIGIN; // (0,0,0)
 
 // flags fot particle states
-extern unsigned int PARTICLE_WILL_INTERSECT_OBJ;
-extern unsigned int PARTICLE_WILL_NOT_INTERSECT_OBJ;
-extern unsigned int PARTICLE_HAS_UNDEFINED_BEHAVIOUR;
+extern int PARTICLE_WILL_INTERSECT_OBJ;
+extern int PARTICLE_WILL_NOT_INTERSECT_OBJ;
+extern int PARTICLE_HAS_UNDEFINED_BEHAVIOUR;
 //extern unsigned int PARTICLE_WILL_;
 
 // system of coordinates orientation
@@ -277,14 +277,14 @@ public:
     Vector speed;
     real ttl;
     int polygonIndex;
-    int flags;
+    int behaviour;
     Particle operator+(Vector v);
     Particle operator-(Vector v);
     Particle(char _type = PTYPE_ELECTRON,int _flags = PARTICLE_HAS_UNDEFINED_BEHAVIOUR):
-        Point(), type(_type), speed(), ttl(-1), polygonIndex(-1), flags(_flags) {}
+        Point(), type(_type), speed(), ttl(-1), polygonIndex(-1), behaviour(_flags) {}
     Particle(Point p, Vector s,real ttl_ = -1,char _type = PTYPE_ELECTRON,int _pi = -1,
              int _flags = PARTICLE_HAS_UNDEFINED_BEHAVIOUR):
-        Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi), flags(_flags) {}
+        Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi), behaviour(_flags) {}
     void affectField(Vector fieldGrad,real fieldPot,double timeStep) {
         real acceleration = -fieldGrad.length()*PARTICLE_CHARGE_TO_MASS(type);
         real speedValue = speed.length() + acceleration*timeStep;
