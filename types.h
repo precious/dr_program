@@ -322,7 +322,7 @@ struct Object3D: public Sphere {
     Point nearestPoint, furthermostPoint; // relatively to front of the object
     vector<PlaneType> *polygons;
     velocity speed;
-    double *polygonsCurrents;
+//    double *polygonsCurrents;
 
     Object3D(int polygonsNumber, Vector _front = Vector(100,0,0)): front(_front) {
         polygons = new vector<PlaneType>(polygonsNumber);
@@ -356,13 +356,13 @@ struct Object3D: public Sphere {
         return 4*M_PI*VACUUM_PERMITTIVITY*sqrt(surfaceArea()/(4*M_PI));
     }
 
-    void changePlasmaCurrents(int polygonIndex,double change) {
-        polygonsCurrents[polygonIndex] += change;
+    void changePlasmaCurrents(double change) {
+//        polygonsCurrents[polygonIndex] += change;
         totalPlasmaCurrent += change;
     }
 
     ~Object3D() {
-        delete polygonsCurrents;
+//        delete polygonsCurrents;
     }
 };
 

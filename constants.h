@@ -20,10 +20,18 @@ extern double ION_ELECTRIC_CHARGE;
 extern double ELECTRON_CHARGE_TO_MASS;
 extern double ION_CHARGE_TO_MASS;
 
+// current density
+extern double ELECTRON_CURRENT_DENSITY;
+extern double ION_CURRENT_DENSITY;
+
 #define PARTICLE_CHARGE(_particle_type) \
     ((_particle_type == PTYPE_ELECTRON)? ELECTRON_ELECTRIC_CHARGE: ION_ELECTRIC_CHARGE)
+
 #define PARTICLE_CHARGE_TO_MASS(_particle_type) \
     ((_particle_type == PTYPE_ELECTRON)? ELECTRON_CHARGE_TO_MASS: ION_CHARGE_TO_MASS)
+
+#define PARTICLE_CURRENT_DENSITY(_particle_type) \
+    ((_particle_type == PTYPE_ELECTRON)? ELECTRON_CURRENT_DENSITY: ION_CURRENT_DENSITY)
 
 typedef double real;
 typedef float velocity;
@@ -44,10 +52,6 @@ extern int IONS_GENERATIVE_SPHERE_RADIUS;
 // particles density
 extern int ELECTRONS_CONSISTENCE;
 extern int IONS_CONSISTENCE;
-
-// current density
-extern double ELECTRON_CURRENT_DENSITY;
-extern double ION_CURRENT_DENSITY;
 
 extern double VACUUM_PERMITTIVITY;
 // e0 ~ 8.854187817620*10^-12 F/m

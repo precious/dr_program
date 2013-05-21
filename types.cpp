@@ -164,10 +164,10 @@ void Object3D::init() {
                    (maxCoords.y + minCoords.y)/2,
                    (maxCoords.z + minCoords.z)/2);
     radius = Geometry::getDistanceBetweenPoints(center,maxCoords);
-    polygonsCurrents = new double[polygons->size()];
-    for(unsigned int i = 0;i < polygons->size();++i) {
-        polygonsCurrents[i] = 0;
-    }
+//    polygonsCurrents = new double[polygons->size()];
+//    for(unsigned int i = 0;i < polygons->size();++i) {
+//        polygonsCurrents[i] = 0;
+//    }
 
     // move the spacecraft to the point of origin
     Vector shift(center,POINT_OF_ORIGIN);

@@ -102,19 +102,18 @@ void processEvents(void)
 // for internal usage only
 inline void finalizeParticle(Object3D &satelliteObj,Particle* particles,
                              unsigned long long &electronsNumber,unsigned long long &ionsNumber,int i) {
+    if (particles[i].flags & PARTICLE_WILL_INTERSECT_OBJ) {
+        satelliteObj.totalCharge += PARTICLE_CHARGE(particles[i].type)*Globals::realToModelNumber;
+        satelliteObj.changePlasmaCurrents((particles[i].type == PTYPE_ELECTRON)?
+                                              Particle::electronTrajectoryCurrent:
+                                              Particle::ionTrajectoryCurrent);
+    }
+
     switch(particles[i].type) {
     case PTYPE_ELECTRON:
-        if (particles[i].polygonIndex != -1) {
-            satelliteObj.changePlasmaCurrents(particles[i].polygonIndex,ELECTRON_CURRENT_DENSITY);
-            satelliteObj.totalCharge += ELECTRON_ELECTRIC_CHARGE*Globals::realToModelNumber;
-        }
         electronsNumber--;
         break;
     case PTYPE_ION:
-        if (particles[i].polygonIndex != -1) {
-            satelliteObj.changePlasmaCurrents(particles[i].polygonIndex,ION_CURRENT_DENSITY);
-            satelliteObj.totalCharge += ION_ELECTRIC_CHARGE*Globals::realToModelNumber;
-        }
         ionsNumber--;
         break;
     }
@@ -289,7 +288,7 @@ int main(int argc, char** argv) {
                                       satelliteObj);
     GenerativeSphere ionsGenerativeSphere(satelliteObj.center,
                                       IONS_GENERATIVE_SPHERE_RADIUS,
-                                      satelliteObj);    
+                                      satelliteObj);
 
     double electronsToIonsRatio = 1.*pow(ELECTRONS_GENERATIVE_SPHERE_RADIUS,3)*ELECTRONS_CONSISTENCE/
             (pow(IONS_GENERATIVE_SPHERE_RADIUS,3)*IONS_CONSISTENCE);
