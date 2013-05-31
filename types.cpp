@@ -107,7 +107,7 @@ Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type,bool i
         //assert (abs(radius - GU::getDistanceBetweenPoints(p,center)) <= 0.00001);
     } else {
         // see explanation at page 5 of draft
-        real distanceBetweenParticleAndPolygon = sqrt(Time::getRandom(object.radius,radius)*radius);
+        distanceBetweenParticleAndPolygon = sqrt(Time::getRandom(object.radius,radius)*radius);
         p = p - s.resized(distanceBetweenParticleAndPolygon);
     }
 

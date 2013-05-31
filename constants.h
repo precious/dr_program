@@ -46,8 +46,8 @@ extern real ION_VELOCITY_M;
 extern real ION_VELOCITY_D;
 
 // Debye radius
-extern int ELECTRONS_GENERATIVE_SPHERE_RADIUS;
-extern int IONS_GENERATIVE_SPHERE_RADIUS;
+extern real ELECTRONS_GENERATIVE_SPHERE_RADIUS;
+extern real IONS_GENERATIVE_SPHERE_RADIUS;
 
 // particles density
 extern int ELECTRONS_CONSISTENCE;

@@ -140,8 +140,8 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
             real index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
             real distanceToSatellite = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,particles[i]);
             if (distanceToSatellite == 0 || // if particle is inside satellite's sphere or too close to sphere and will be inside it soon
-                    distanceToSatellite < particles[i].speed.length()*timeStep &&
-                    Geometry::doesLineIntersectSphere(Line(particles[i],particles[i].speed),satelliteObj))  {
+                    (distanceToSatellite < particles[i].speed.length()*timeStep &&
+                    Geometry::doesLineIntersectSphere(Line(particles[i],particles[i].speed),satelliteObj)))  {
                 Globals::debug && COUT("particle is inside satellite's sphere or too close to sphere and will be inside it soon");
                 if (index != -1) { // then particle will intersect object
                     particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;

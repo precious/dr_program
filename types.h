@@ -160,6 +160,9 @@ struct Locus { // collection of points
         os << l.set[T - 1];
         return os;
     }
+
+    virtual ~Locus() {
+    }
 };
 
 struct Line: public Locus<2> {
