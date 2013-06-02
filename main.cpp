@@ -38,7 +38,7 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
 
 namespace Globals {
     unsigned long long  realToModelNumber;
-    const double INITIAL_CHARGE = -0.3;
+    const double INITIAL_CHARGE = 3000000; ///////////////////////////////
     bool debug = true;
 }
 
@@ -136,7 +136,12 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
         } else { // particles[i].behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR
             resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
             fieldGrad = fieldGrad*satelliteObj.totalCharge; // resize gradient vector according to current satellite charge
-            particles[i].affectField(fieldGrad,fieldPot,timeStep);
+//            /////////////////////////////////
+//            Vector before = particles[i].speed;
+//            particles[i].affectField(fieldGrad,fieldPot,timeStep);
+//            //////////////////////////////////////////////
+//            real cos = before.cos(particles[i].speed);
+//            Globals::debug && PRINT(acos(cos)/M_PI*180 << ",");
             real index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
             real distanceToSatellite = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,particles[i]);
             if (distanceToSatellite == 0 || // if particle is inside satellite's sphere or too close to sphere and will be inside it soon
@@ -181,6 +186,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
             }
         }
     }
+//    Globals::debug &&             cout << endl;;
 
     // !!!! rewrite finalizing
     // checking all particles excluding the last one

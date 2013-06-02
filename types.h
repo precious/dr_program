@@ -289,8 +289,7 @@ public:
              int _flags = PARTICLE_HAS_UNDEFINED_BEHAVIOUR):
         Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi), behaviour(_flags) {}
     void affectField(Vector fieldGrad,real fieldPot,double timeStep) {
-        real acceleration = -fieldGrad.length()*PARTICLE_CHARGE_TO_MASS(type);
-        real speedValue = speed.length() + acceleration*timeStep;
+//        real speedValue = speed.length() + acceleration*timeStep;
         // calculate vector of moved distance
         Vector distance = Vector(affectFieldSingleCoordinate(speed.x,fieldGrad.x,fieldPot,timeStep),
                                  affectFieldSingleCoordinate(speed.y,fieldGrad.y,fieldPot,timeStep),
@@ -299,7 +298,9 @@ public:
         x = newPosition.x;
         y = newPosition.y;
         z = newPosition.z;
-        speed = distance.resized(speedValue);
+        Vector acceleration = fieldGrad*(-PARTICLE_CHARGE_TO_MASS(type));
+//        PRINT("[" << acceleration.length() << "|" << speed.length() << "]"); ///////////////////////////////
+        speed = speed + acceleration*timeStep; // distance.resized(speedValue);
     }
 
 private:
