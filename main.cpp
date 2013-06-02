@@ -135,13 +135,14 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
             particles[i].ttl -= timeStep;
         } else { // particles[i].behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR
             resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
+//            real cos = fieldGrad.cos(Vector(particles[i],satelliteObj.center)); ////////////////////////////////////
+//            Globals::debug && PRINT(acos(cos)/M_PI*180 << ","); ////////////////////////////////////
             fieldGrad = fieldGrad*satelliteObj.totalCharge; // resize gradient vector according to current satellite charge
 //            /////////////////////////////////
 //            Vector before = particles[i].speed;
-//            particles[i].affectField(fieldGrad,fieldPot,timeStep);
+            particles[i].affectField(fieldGrad,fieldPot,timeStep);
 //            //////////////////////////////////////////////
-//            real cos = before.cos(particles[i].speed);
-//            Globals::debug && PRINT(acos(cos)/M_PI*180 << ",");
+
             real index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
             real distanceToSatellite = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,particles[i]);
             if (distanceToSatellite == 0 || // if particle is inside satellite's sphere or too close to sphere and will be inside it soon
