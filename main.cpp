@@ -38,7 +38,7 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
 
 namespace Globals {
     unsigned long long  realToModelNumber;
-    const double INITIAL_CHARGE = 0.0;
+    const double INITIAL_CHARGE = -0.3;
     bool debug = true;
 }
 

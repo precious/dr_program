@@ -303,7 +303,7 @@ public:
     }
 
 private:
-    real affectFieldSingleCoordinate(real speedCoord, real fieldGradCoord,
+    inline real affectFieldSingleCoordinate(real speedCoord, real fieldGradCoord,
                                      real fieldPot, double timeStep) {
         return speedCoord*timeStep - fieldGradCoord*timeStep*timeStep*PARTICLE_CHARGE_TO_MASS(type)/2;
     }
