@@ -289,7 +289,7 @@ public:
              int _flags = PARTICLE_HAS_UNDEFINED_BEHAVIOUR):
         Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi), behaviour(_flags) {}
     void affectField(Vector fieldGrad,real fieldPot,double timeStep) {
-//        real speedValue = speed.length() + acceleration*timeStep;
+//        real speedValue = speed.length() + acceleration*timeStep; ///////////////////////////////
         // calculate vector of moved distance
         Vector distance = Vector(affectFieldSingleCoordinate(speed.x,fieldGrad.x,fieldPot,timeStep),
                                  affectFieldSingleCoordinate(speed.y,fieldGrad.y,fieldPot,timeStep),
@@ -299,7 +299,8 @@ public:
         y = newPosition.y;
         z = newPosition.z;
         Vector acceleration = fieldGrad*(PARTICLE_CHARGE_TO_MASS(type)); //!! +, not -
-//        PRINT("[" << acceleration.length() << "|" << speed.length() << "]"); ///////////////////////////////
+//        PRINT("[" << acceleration.length()*timeStep << "|" << speed.length()*timeStep << "]"); ///////////////////////////////
+//        PRINT("[" << (int)sign(PARTICLE_CHARGE_TO_MASS(type)) << "]"); ///////////////////////////////
         speed = speed + acceleration*timeStep; // distance.resized(speedValue);
     }
 
@@ -320,7 +321,7 @@ struct Sphere {
 
 struct Object3D: public Sphere {
     double totalPlasmaCurrent;
-    double totalCharge;
+    long double totalCharge;
     Vector front;
     Point maxCoords, minCoords;
     Point nearestPoint, furthermostPoint; // relatively to front of the object

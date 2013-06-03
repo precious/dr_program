@@ -38,7 +38,7 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
 
 namespace Globals {
     unsigned long long  realToModelNumber;
-    const double INITIAL_CHARGE = 3000000; ///////////////////////////////
+    const double INITIAL_CHARGE = 1000000; ///////////////////////////////
     bool debug = true;
 }
 
@@ -105,7 +105,7 @@ inline void finalizeParticle(Object3D &satelliteObj,Particle* particles,
                              unsigned long long &electronsNumber,unsigned long long &ionsNumber,int i) {
     if (particles[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ) {
         satelliteObj.totalCharge += PARTICLE_CHARGE(particles[i].type)*Globals::realToModelNumber;
-        Globals::debug && COUT("charge delta = " << PARTICLE_CHARGE(particles[i].type)*Globals::realToModelNumber);
+        Globals::debug && COUT("charge delta = " << PARTICLE_CHARGE(particles[i].type)*Globals::realToModelNumber << ", totalCharge = " << satelliteObj.totalCharge);
         satelliteObj.changePlasmaCurrents((particles[i].type == PTYPE_ELECTRON)?
                                               Particle::electronTrajectoryCurrent:
                                               Particle::ionTrajectoryCurrent);
@@ -134,13 +134,38 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
             particles[i] = particles[i] + particles[i].speed*timeStep;
             particles[i].ttl -= timeStep;
         } else { // particles[i].behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR
+
+// Here is modelling without affecting of field ////////////////////////////////////////////////////////////////////////////////////////////////////
+//            real index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
+//            if (index == -1) {
+//                particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
+//                real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
+//                                                            Line(particles[i],particles[i].speed));
+//                // here we assume that particles is now approximately at the beginning of chord
+//                particles[i].ttl = chrodLength / particles[i].speed.length();
+//            } else {
+//                particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
+//                particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
+//                        particles[i].speed.length();
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
             resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
-//            real cos = fieldGrad.cos(Vector(particles[i],satelliteObj.center)); ////////////////////////////////////
-//            Globals::debug && PRINT(acos(cos)/M_PI*180 << ","); ////////////////////////////////////
             fieldGrad = fieldGrad*satelliteObj.totalCharge; // resize gradient vector according to current satellite charge
+//                        real cos = fieldGrad.cos(Vector(particles[i],satelliteObj.center)); ////////////////////////////////////
+//                        Globals::debug && PRINT(acos(cos)/M_PI*180 << ","); ////////////////////////////////////
+
 //            /////////////////////////////////
+//            real before = particles[i].speed.cos(Vector(particles[i],satelliteObj.center));
+//            Point beforeP = particles[i];
 //            Vector before = particles[i].speed;
             particles[i].affectField(fieldGrad,fieldPot,timeStep);
+//            real after = particles[i].speed.cos(Vector(beforeP,satelliteObj.center));
+
+//            real cos = particles[i].speed.cos(before); ////////////////////////////////////
+//            if (acos(cos)/M_PI*180 > 0.00005)
+//                Globals::debug && PRINT("!! " << acos(cos)/M_PI*180 << ","); ////////////////////////////////////
+//              Globals::debug && PRINT("!! " << (acos(before) - acos(after)) / M_PI*180 << ","); ////////////////////////////////////
 //            //////////////////////////////////////////////
 
             real index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
@@ -181,8 +206,10 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
 //                    Globals::debug && COUT("for some reason particle has left generative sphere");
                     // if for some reason particle has left generative sphere - remove it
                     GenerativeSphere &gs = (particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere;
-                    if (Geometry::getDistanceBetweenPoints(gs.center,particles[i]) > gs.radius)
+                    if (Geometry::getDistanceBetweenPoints(gs.center,particles[i]) > gs.radius) {
+//                        Globals::debug && COUT("kick i = " << i); ///////////////////////////
                         particles[i].ttl = -1;
+                    }
                 }
             }
         }
