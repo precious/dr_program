@@ -38,7 +38,7 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
 
 namespace Globals {
     unsigned long long  realToModelNumber;
-    const double INITIAL_CHARGE = 1000000; ///////////////////////////////
+    const double INITIAL_CHARGE = -0.500000445; ///////////////////////////////
     bool debug = true;
 }
 
@@ -148,32 +148,15 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
 //                particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
 //                        particles[i].speed.length();
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-            resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
-            fieldGrad = fieldGrad*satelliteObj.totalCharge; // resize gradient vector according to current satellite charge
-//                        real cos = fieldGrad.cos(Vector(particles[i],satelliteObj.center)); ////////////////////////////////////
-//                        Globals::debug && PRINT(acos(cos)/M_PI*180 << ","); ////////////////////////////////////
-
-//            /////////////////////////////////
-//            real before = particles[i].speed.cos(Vector(particles[i],satelliteObj.center));
-//            Point beforeP = particles[i];
-//            Vector before = particles[i].speed;
-            particles[i].affectField(fieldGrad,fieldPot,timeStep);
-//            real after = particles[i].speed.cos(Vector(beforeP,satelliteObj.center));
-
-//            real cos = particles[i].speed.cos(before); ////////////////////////////////////
-//            if (acos(cos)/M_PI*180 > 0.00005)
-//                Globals::debug && PRINT("!! " << acos(cos)/M_PI*180 << ","); ////////////////////////////////////
-//              Globals::debug && PRINT("!! " << (acos(before) - acos(after)) / M_PI*180 << ","); ////////////////////////////////////
-//            //////////////////////////////////////////////
-
-            real index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
             real distanceToSatellite = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,particles[i]);
+            int index;
+
             if (distanceToSatellite == 0 || // if particle is inside satellite's sphere or too close to sphere and will be inside it soon
                     (distanceToSatellite < particles[i].speed.length()*timeStep &&
                     Geometry::doesLineIntersectSphere(Line(particles[i],particles[i].speed),satelliteObj)))  {
                 Globals::debug && COUT("particle is inside satellite's sphere or too close to sphere and will be inside it soon");
+
+                index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
                 if (index != -1) { // then particle will intersect object
                     particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
                     particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
@@ -187,6 +170,18 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                     particles[i].ttl = chrodLength / 2.0 / particles[i].speed.length();
                 }
             } else {
+                resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
+                real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToSatellite*distanceToSatellite);
+                fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
+
+//                Point beforeP = particles[i]; /////////////////////////////////
+//                real before =  particles[i].speed.cos(Vector(beforeP,satelliteObj.center)); //////////////////////////////////////
+//                particles[i].affectField(fieldGrad,fieldPot,timeStep);
+//                real after = particles[i].speed.cos(Vector(beforeP,satelliteObj.center)); //////////////////////////////////////
+//                real res = (acos(before) - acos(after)) / M_PI*180;
+//                res > 1 && particles[i].type == PTYPE_ELECTRON && Globals::debug && PRINT("!! " << res << ","); ////////////////////////////////////
+
+                index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
                 if (index == -1 && sign(PARTICLE_CHARGE(particles[i].type)) == sign(satelliteObj.totalCharge)) {
                     // particle will be repeled by satellite
 //                    Globals::debug && COUT("particle will be repeled by satellite");
@@ -212,8 +207,28 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                     }
                 }
             }
+
+//            PRINT("[" << fieldGrad.length() << "|" << (fieldGrad*satelliteObj.totalCharge).length() << "]"); ///////////////////////////////
+//            PRINT("[" << electricField << "|" << fieldPot << "|" << electricField*distance << "]"); ///////////////////////////////
+
+//                        real cos = fieldGrad.cos(Vector(particles[i],satelliteObj.center)); ////////////////////////////////////
+//                        Globals::debug && PRINT(acos(cos)/M_PI*180 << ","); ////////////////////////////////////
+
+//            /////////////////////////////////
+//            real before = particles[i].speed.cos(Vector(particles[i],satelliteObj.center));
+//            Point beforeP = particles[i];
+//            Vector before = particles[i].speed;
+
+//            real after = particles[i].speed.cos(Vector(beforeP,satelliteObj.center));
+
+//            real cos = particles[i].speed.cos(before); ////////////////////////////////////
+//            if (acos(cos)/M_PI*180 > 0.00005)
+//                Globals::debug && PRINT("!! " << acos(cos)/M_PI*180 << ","); ////////////////////////////////////
+//              Globals::debug && PRINT("!! " << (acos(before) - acos(after)) / M_PI*180 << ","); ////////////////////////////////////
+//            //////////////////////////////////////////////
         }
     }
+
 //    Globals::debug &&             cout << endl;;
 
     // !!!! rewrite finalizing

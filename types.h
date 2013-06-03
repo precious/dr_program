@@ -291,24 +291,28 @@ public:
     void affectField(Vector fieldGrad,real fieldPot,double timeStep) {
 //        real speedValue = speed.length() + acceleration*timeStep; ///////////////////////////////
         // calculate vector of moved distance
-        Vector distance = Vector(affectFieldSingleCoordinate(speed.x,fieldGrad.x,fieldPot,timeStep),
-                                 affectFieldSingleCoordinate(speed.y,fieldGrad.y,fieldPot,timeStep),
-                                 affectFieldSingleCoordinate(speed.z,fieldGrad.z,fieldPot,timeStep));
+
+//                Vector(affectFieldSingleCoordinate(speed.x,fieldGrad.x,fieldPot,timeStep),
+//                                 affectFieldSingleCoordinate(speed.y,fieldGrad.y,fieldPot,timeStep),
+//                                 affectFieldSingleCoordinate(speed.z,fieldGrad.z,fieldPot,timeStep));
+        Vector distance = speed*timeStep + fieldGrad*(timeStep*timeStep*PARTICLE_CHARGE_TO_MASS(type)/2); //!! +, not -
         Point newPosition = *(Point*)this + distance;
         x = newPosition.x;
         y = newPosition.y;
         z = newPosition.z;
         Vector acceleration = fieldGrad*(PARTICLE_CHARGE_TO_MASS(type)); //!! +, not -
+
+//        fieldGrad.length() > 50 && PRINT("[" << (acceleration*timeStep).length() << "|" << speed.length() << "]"); ///////////////////////////////
 //        PRINT("[" << acceleration.length()*timeStep << "|" << speed.length()*timeStep << "]"); ///////////////////////////////
 //        PRINT("[" << (int)sign(PARTICLE_CHARGE_TO_MASS(type)) << "]"); ///////////////////////////////
         speed = speed + acceleration*timeStep; // distance.resized(speedValue);
     }
 
-private:
-    inline real affectFieldSingleCoordinate(real speedCoord, real fieldGradCoord,
-                                     real fieldPot, double timeStep) {
-        return speedCoord*timeStep + fieldGradCoord*timeStep*timeStep*PARTICLE_CHARGE_TO_MASS(type)/2; //!! +, not -
-    }
+//private:
+//    inline real affectFieldSingleCoordinate(real speedCoord, real fieldGradCoord,
+//                                     real fieldPot, double timeStep) {
+//        return speedCoord*timeStep + fieldGradCoord*timeStep*timeStep*PARTICLE_CHARGE_TO_MASS(type)/2; //!! +, not -
+//    }
 };
 
 struct Sphere {
