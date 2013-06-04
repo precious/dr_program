@@ -136,10 +136,19 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
 //    Globals::debug && COUT("---------------------------------------------------------------------------------------------------");
 //    toPrint && PRINTLN('.');
     for(unsigned long long i = 0;i < electronsNumber + ionsNumber;++i) {
+//              particles[i].type != PTYPE_ELECTRON && Globals::debug && COUT("for some reason particle has left generative sphere");
+        // if for some reason particle has left generative sphere - remove it
+        GenerativeSphere &gs = (particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere;
+        if (Geometry::getDistanceBetweenPoints(gs.center,particles[i]) > gs.radius) {
+//                        Globals::debug && COUT("kick i = " << i); ///////////////////////////
+            particles[i].ttl = -1;
+            continue;
+        }
+
         particles[i].addPreviousStates(particles[i]);
 //        particles[i].type == PTYPE_ION && PRINT("[" << particles[i].ttl << "    " << particles[i].speed.length() << "]"); ////////////////////////////////////////////////
 //        toPrint && particles[i].type == PTYPE_ION && PRINT("[" << particles[i].behaviour << "]"); ////////////////////////////////////////////////
-        if (false) { //particles[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ || particles[i].behaviour == PARTICLE_WILL_NOT_INTERSECT_OBJ) {
+        if (particles[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ) { // || particles[i].behaviour == PARTICLE_WILL_NOT_INTERSECT_OBJ) {
             particles[i] = particles[i] + particles[i].speed*timeStep;
             particles[i].ttl -= timeStep;
         } else { // particles[i].behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR
@@ -171,56 +180,49 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                     particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
                             particles[i].speed.length();
                     Globals::debug && COUT("particle will intersect object, ttl = " << particles[i].ttl <<", timestep = " << timeStep << ", steps = " << particles[i].ttl/timeStep <<", i = " << i <<", behaviour = " << particles[i].behaviour);
+                    continue;
                 } else { // then particle will not intersect object
-                    particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
-                    real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
-                                                                Line(particles[i],particles[i].speed));
-                    // here we assume that particles is now approximately at the center of chord, so distance to generative sphere is approx chord/2
-                    particles[i].ttl = chrodLength / 2.0 / particles[i].speed.length();
+//                    particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
+//                    real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
+//                                                                Line(particles[i],particles[i].speed));
+//                    // here we assume that particles is now approximately at the center of chord, so distance to generative sphere is approx chord/2
+//                    particles[i].ttl = chrodLength / 2.0 / particles[i].speed.length();
                 }
+            }
 
-                particles[i] = particles[i] + particles[i].speed*timeStep; /////////////////////////////////////////////
-                particles[i].ttl -= timeStep; //////////////////////////////////////////////////////////////////////////
-            } else {
-                real distanceToCenterOfSatellite = Geometry::getDistanceBetweenPoints(satelliteObj.center,particles[i]);
-                resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
-                real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToCenterOfSatellite*distanceToCenterOfSatellite);
-                fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
+            real distanceToCenterOfSatellite = Geometry::getDistanceBetweenPoints(satelliteObj.center,particles[i]);
+            resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
+            real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToCenterOfSatellite*distanceToCenterOfSatellite);
+            fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
 
 //                Point beforeP = particles[i]; /////////////////////////////////
 //                real before =  particles[i].speed.cos(Vector(beforeP,satelliteObj.center)); //////////////////////////////////////
-                particles[i].affectField(fieldGrad,fieldPot,timeStep);
+            particles[i].affectField(fieldGrad,fieldPot,timeStep);
 //                real after = particles[i].speed.cos(Vector(beforeP,satelliteObj.center)); //////////////////////////////////////
 //                real res = (acos(before) - acos(after)) / M_PI*180; //////////////////////////////////////
 //                res > 1 && particles[i].type == PTYPE_ELECTRON && Globals::debug && PRINT("!! " << res << ","); ////////////////////////////////////
 
-                index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
-                if (index == -1 && sign(PARTICLE_CHARGE(particles[i].type)) == sign(satelliteObj.totalCharge)) {
-                    // particle will be repeled by satellite
+            index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
+            if (index == -1 && sign(PARTICLE_CHARGE(particles[i].type)) == sign(satelliteObj.totalCharge)) {
+                // particle will be repeled by satellite
 //                    particles[i].type != PTYPE_ELECTRON && Globals::debug && COUT("particle will be repeled by satellite");
-                    particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
-                    real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
-                                                                Line(particles[i],particles[i].speed));
-                    // here we assume that particles is now approximately at the beginning of chord
-                    particles[i].ttl = chrodLength / particles[i].speed.length();
-                } else if (index != -1 && sign(PARTICLE_CHARGE(particles[i].type)) == -sign(satelliteObj.totalCharge)) {
-                    // particle will intersect satellite
-//                    Globals::debug && COUT("behaviour before = " << particles[i].behaviour);
-                    particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
-                    particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
-                            particles[i].speed.length();
-                    Globals::debug && COUT("particle will intersect satellite, ttl = " << particles[i].ttl <<", timestep = " << timeStep << ", steps = " << particles[i].ttl/timeStep <<", i = " << i <<", behaviour = " << particles[i].behaviour);
-                }
-
-//              particles[i].type != PTYPE_ELECTRON && Globals::debug && COUT("for some reason particle has left generative sphere");
-                // if for some reason particle has left generative sphere - remove it
-                GenerativeSphere &gs = (particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere;
-                if (Geometry::getDistanceBetweenPoints(gs.center,particles[i]) > gs.radius) {
-//                        Globals::debug && COUT("kick i = " << i); ///////////////////////////
-                    particles[i].ttl = -1;
-                }
-
+                particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
+                real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
+                                                            Line(particles[i],particles[i].speed));
+                // here we assume that particles is now approximately at the beginning of chord
+                particles[i].ttl = chrodLength / particles[i].speed.length();
+            } else {
+                particles[i].ttl -= timeStep;
             }
+            /*else if (index != -1 && sign(PARTICLE_CHARGE(particles[i].type)) == -sign(satelliteObj.totalCharge)) {
+                // particle will intersect satellite
+//                    Globals::debug && COUT("behaviour before = " << particles[i].behaviour);
+                particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
+                particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
+                        particles[i].speed.length();
+                Globals::debug && COUT("particle will intersect satellite, ttl = " << particles[i].ttl <<", timestep = " << timeStep << ", steps = " << particles[i].ttl/timeStep <<", i = " << i <<", behaviour = " << particles[i].behaviour);
+
+            }*/
         }
     }
 
