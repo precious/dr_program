@@ -56,7 +56,7 @@ void Graphics::draw(Object3D &satelliteObj,Particle* particlesArray = NULL,int p
 {
     // colors
     static GLubyte purple[] = {255,150,255,0};
-    //static GLubyte grey[] = {100,100,100,0};
+    static GLubyte grey[] = {150,150,150,0};
     static GLubyte red[] = {255,0,0,0};
     static GLubyte green[] = {0,255,0,0};
     static GLubyte blue[] = {0,0,255,0};
@@ -67,8 +67,8 @@ void Graphics::draw(Object3D &satelliteObj,Particle* particlesArray = NULL,int p
     // Projections matrix processing
     static float ratio = (float)width/(float)height;
     static double diameter = satelliteObj.radius*2;
-    static GLdouble zNear = 1.0;
-    static GLdouble zFar = zNear + 10*diameter;
+    static GLdouble zNear = 0.0;
+    static GLdouble zFar = zNear + 20*diameter;
     static GLdouble left = satelliteObj.center.x - diameter;
     static GLdouble right = satelliteObj.center.x + diameter;
     static GLdouble bottom = satelliteObj.center.y - diameter;
@@ -118,8 +118,38 @@ void Graphics::draw(Object3D &satelliteObj,Particle* particlesArray = NULL,int p
     if (particlesArray != NULL) {
         glBegin(GL_POINTS);
         for(int i = 0;i < particlesNumber;++i) {
-            glColor4ubv((particlesArray[i].type == PTYPE_ELECTRON)? blue: red);
-            glVertex3f(particlesArray[i].x,particlesArray[i].y,particlesArray[i].z);
+//            switch (particlesArray[i].behaviour) {
+//            case PARTICLE_WILL_INTERSECT_OBJ:
+//                glColor4ubv(green);
+//                break;
+//            case PARTICLE_WILL_NOT_INTERSECT_OBJ:
+//                glColor4ubv(grey);
+//                break;
+//            case PARTICLE_HAS_UNDEFINED_BEHAVIOUR:
+//                glColor4ubv(blue);
+//                break;
+//            default:
+//                glColor4ubv(red); // should not happen
+//                break;
+//            }
+            if (particlesArray[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ) {
+                glColor4ubv(green);
+            } else {
+                glColor4ubv((particlesArray[i].type == PTYPE_ELECTRON)? blue: red); // this will colorize electrons to blue, ions to red
+            }
+
+
+
+            if (particlesArray[i].getPreviousStates()->size() != 0) {
+                glBegin(GL_LINE_STRIP);
+                for(auto it = particlesArray[i].getPreviousStates()->begin();
+                        it != particlesArray[i].getPreviousStates()->end();++it)
+                    glVertex3f((*it).x,(*it).y,(*it).z);
+                glVertex3f(particlesArray[i].x,particlesArray[i].y,particlesArray[i].z);
+                glEnd();
+            } else {
+                glVertex3f(particlesArray[i].x,particlesArray[i].y,particlesArray[i].z);
+            }
         }
         glEnd();
     }

@@ -3,10 +3,6 @@
 
 Point POINT_OF_ORIGIN = Point(0,0,0);
 
-int PARTICLE_WILL_INTERSECT_OBJ = 1;
-int PARTICLE_WILL_NOT_INTERSECT_OBJ = 2;
-int PARTICLE_HAS_UNDEFINED_BEHAVIOUR = 4;
-
 double Particle::electronTrajectoryCurrent;
 double Particle::ionTrajectoryCurrent;
 
@@ -48,7 +44,7 @@ void GenerativeSphere::checkForIntersectionsAndSetTtl(Particle &p) {
     }
 }
 
-Particle GenerativeSphere::generateParticleInSphere(int type) {
+void GenerativeSphere::generateParticleInSphere(Particle *p,int type) {
     Point initialPosition = Geometry::getRandomPointFromSphere2(*this);
     Vector step(Time::getRandom() - 0.5,Time::getRandom() - 0.5,Time::getRandom() - 0.5);
     switch(type) {
@@ -60,12 +56,11 @@ Particle GenerativeSphere::generateParticleInSphere(int type) {
         break;
     }
 
-    Particle p(initialPosition,step,0,type);
-    checkForIntersectionsAndSetTtl(p);
-    return p;
+    *p = Particle(initialPosition,step,0,type);
+    checkForIntersectionsAndSetTtl(*p);
 }
 
-Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type,bool isParticleOnSphere) {
+void GenerativeSphere::generateParticleWhichIntersectsObject(Particle *pt,int type,bool isParticleOnSphere) {
     int polygonIndex = RAND(object.polygons->size());
     Vector n = object.polygons->at(polygonIndex).getNormal().normalized();
     velocity particleSpeed;
@@ -111,12 +106,14 @@ Particle GenerativeSphere::generateParticleWhichIntersectsObject(int type,bool i
         p = p - s.resized(distanceBetweenParticleAndPolygon);
     }
 
-    return Particle(p,s,distanceBetweenParticleAndPolygon/particleSpeed,type,polygonIndex);
+    *pt = Particle(p,s,distanceBetweenParticleAndPolygon/particleSpeed,type,polygonIndex);
 }
 
-Particle GenerativeSphere::generateParticleOnSphere(int type) {
+void GenerativeSphere::generateParticleOnSphere(Particle *p,int type) {
+
     Point initialPosition = Geometry::getRandomPointOnSphere(*this);
     Vector step(initialPosition,Geometry::getRandomPointOnSphere(*this));
+
     switch(type) {
     case PTYPE_ELECTRON:
         step = step.resized(electronVelocityGenerator()) - objectStep;
@@ -126,9 +123,8 @@ Particle GenerativeSphere::generateParticleOnSphere(int type) {
         break;
     }
 
-    Particle p(initialPosition,step,0,type);
-    checkForIntersectionsAndSetTtl(p);
-    return p;
+    *p = Particle(initialPosition,step,0,type);
+    checkForIntersectionsAndSetTtl(*p);
 }
 
 void GenerativeSphere::populateArray(Particle *particles,int number,int type,int FLAGS) {
@@ -136,15 +132,15 @@ void GenerativeSphere::populateArray(Particle *particles,int number,int type,int
     bool isOnSphere = FLAGS & GEN_ON_SPHERE;
     if (FLAGS & GEN_INTERSECT_OBJ)
         for(;n < number;++n) {
-            particles[n] = generateParticleWhichIntersectsObject(type,isOnSphere);
+            generateParticleWhichIntersectsObject(particles + n,type,isOnSphere);
         }
     else if (FLAGS & GEN_RANDOM)
         for(;n < number;++n) {
-            particles[n] = generateParticleInSphere(type);
+            generateParticleInSphere(particles + n,type);
         }
     else if (isOnSphere)
         for(;n < number;++n) {
-            particles[n] = generateParticleOnSphere(type);
+            generateParticleOnSphere(particles + n,type);
         }
 }
 

@@ -48,14 +48,14 @@ namespace Geometry {
     DEPRECATED(Point getPlaneAndLineIntersection(ThreePoints&,Line));
     Point getPlaneAndLineIntersection2(ThreePoints&,Line);
     //Point getNearestObject3DAndParticleTrajectoryIntersection(Object3D&,Particle);
-    int getIndexOfPolygonThatParicleIntersects(Object3D&,Particle);
+    int getIndexOfPolygonThatParicleIntersects(Object3D&, Particle&);
 
     // geometry utils for conditions checking
     DEPRECATED(bool isPointInsideTriangle(ThreePoints&,Point));
     bool isPointInsideTriangle2(ThreePoints&,Point);
     bool doesLineIntersectTriangle(ThreePoints&,Line);
     bool isPointInsideParallelepiped(Point,Point,Point);
-    bool doesParticlesTrajectoryIntersectObject(Particle,Object3D&);
+    bool doesParticlesTrajectoryIntersectObject(Particle&,Object3D&);
     bool doesLineIntersectParallelepiped(Line,Point,Point);
     bool doesLineIntersectSphere(Line,Sphere);
 

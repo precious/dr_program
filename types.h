@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <cmath>
 #include <vector>
+#include <list>
 #include <cstring>
 #include <assert.h>
 
@@ -28,9 +29,9 @@ typedef OrientedPlane PlaneType;
 extern Point POINT_OF_ORIGIN; // (0,0,0)
 
 // flags fot particle states
-extern int PARTICLE_WILL_INTERSECT_OBJ;
-extern int PARTICLE_WILL_NOT_INTERSECT_OBJ;
-extern int PARTICLE_HAS_UNDEFINED_BEHAVIOUR;
+const int PARTICLE_WILL_INTERSECT_OBJ = 1;
+const int PARTICLE_WILL_NOT_INTERSECT_OBJ = 2;
+const int PARTICLE_HAS_UNDEFINED_BEHAVIOUR = 4;
 //extern unsigned int PARTICLE_WILL_;
 
 // system of coordinates orientation
@@ -274,6 +275,7 @@ private:
 
 struct Particle: public Point {
 public:
+    list<Point> *previousStates;
     static double electronTrajectoryCurrent;
     static double ionTrajectoryCurrent;
     char type;
@@ -284,10 +286,14 @@ public:
     Particle operator+(Vector v);
     Particle operator-(Vector v);
     Particle(char _type = PTYPE_ELECTRON,int _flags = PARTICLE_HAS_UNDEFINED_BEHAVIOUR):
-        Point(), type(_type), speed(), ttl(-1), polygonIndex(-1), behaviour(_flags) {}
+        Point(), type(_type), speed(), ttl(-1), polygonIndex(-1), behaviour(_flags) {
+        previousStates = NULL;
+    }
     Particle(Point p, Vector s,real ttl_ = -1,char _type = PTYPE_ELECTRON,int _pi = -1,
              int _flags = PARTICLE_HAS_UNDEFINED_BEHAVIOUR):
-        Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi), behaviour(_flags) {}
+        Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi), behaviour(_flags) {
+        previousStates = NULL;
+    }
     void affectField(Vector fieldGrad,real fieldPot,double timeStep) {
 //        real speedValue = speed.length() + acceleration*timeStep; ///////////////////////////////
         // calculate vector of moved distance
@@ -308,11 +314,32 @@ public:
         speed = speed + acceleration*timeStep; // distance.resized(speedValue);
     }
 
+    void addPreviousStates(Point p) {
+        if (previousStates == NULL)
+            initPreviousStates();
+        previousStates->push_back(p);
+    }
+
+    list<Point>* getPreviousStates() {
+        if (previousStates == NULL)
+            initPreviousStates();
+        return previousStates;
+    }
+
+    void finalize() {
+        if (previousStates != NULL)
+            delete previousStates;
+    }
+
 //private:
 //    inline real affectFieldSingleCoordinate(real speedCoord, real fieldGradCoord,
 //                                     real fieldPot, double timeStep) {
 //        return speedCoord*timeStep + fieldGradCoord*timeStep*timeStep*PARTICLE_CHARGE_TO_MASS(type)/2; //!! +, not -
 //    }
+private:
+    void initPreviousStates() {
+        previousStates = new list<Point>();
+    }
 };
 
 struct Sphere {
@@ -397,9 +424,9 @@ public:
     GenerativeSphere(const Sphere &_s,Object3D &_object):
         Sphere(_s), object(_object), objectStep(object.step()) {}
 
-    Particle generateParticleInSphere(int);
-    Particle generateParticleWhichIntersectsObject(int,bool);
-    Particle generateParticleOnSphere(int);
+    void generateParticleInSphere(Particle *,int);
+    void generateParticleWhichIntersectsObject(Particle *,int,bool);
+    void generateParticleOnSphere(Particle *,int);
     void populateArray(Particle*,int,int,int);
 };
 
