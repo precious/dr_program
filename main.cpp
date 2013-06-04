@@ -128,8 +128,15 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
     int finalizedNumber = 0;
     Vector fieldGrad;
     real fieldPot;
+    static unsigned long long prevIonsNum = 0; ////////////////////////////////
+    bool toPrint = ionsNumber == prevIonsNum; //////////////////////////////////////
+    prevIonsNum = ionsNumber;//////////////////////////////////////
 //    Globals::debug && COUT("---------------------------------------------------------------------------------------------------");
+//    toPrint && PRINTLN('.');
     for(unsigned long long i = 0;i < electronsNumber + ionsNumber;++i) {
+//        particles[i].type == PTYPE_ION && PRINT("[" << particles[i].ttl << "    " << particles[i].speed.length() << "]"); ////////////////////////////////////////////////
+//        toPrint && particles[i].type == PTYPE_ION && PRINT("[" << particles[i].behaviour << "]"); ////////////////////////////////////////////////
+        int type = particles[i].type; //////////////////////////////
         if (particles[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ || particles[i].behaviour == PARTICLE_WILL_NOT_INTERSECT_OBJ) {
             particles[i] = particles[i] + particles[i].speed*timeStep;
             particles[i].ttl -= timeStep;
@@ -176,15 +183,15 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
 
 //                Point beforeP = particles[i]; /////////////////////////////////
 //                real before =  particles[i].speed.cos(Vector(beforeP,satelliteObj.center)); //////////////////////////////////////
-//                particles[i].affectField(fieldGrad,fieldPot,timeStep);
+                particles[i].affectField(fieldGrad,fieldPot,timeStep);
 //                real after = particles[i].speed.cos(Vector(beforeP,satelliteObj.center)); //////////////////////////////////////
-//                real res = (acos(before) - acos(after)) / M_PI*180;
+//                real res = (acos(before) - acos(after)) / M_PI*180; //////////////////////////////////////
 //                res > 1 && particles[i].type == PTYPE_ELECTRON && Globals::debug && PRINT("!! " << res << ","); ////////////////////////////////////
 
                 index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
                 if (index == -1 && sign(PARTICLE_CHARGE(particles[i].type)) == sign(satelliteObj.totalCharge)) {
                     // particle will be repeled by satellite
-//                    Globals::debug && COUT("particle will be repeled by satellite");
+                    particles[i].type != PTYPE_ELECTRON && Globals::debug && COUT("particle will be repeled by satellite");
                     particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
                     real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
                                                                 Line(particles[i],particles[i].speed));
@@ -198,7 +205,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                             particles[i].speed.length();
                     Globals::debug && COUT("particle will intersect satellite, ttl = " << particles[i].ttl <<", timestep = " << timeStep << ", steps = " << particles[i].ttl/timeStep <<", i = " << i <<", behaviour = " << particles[i].behaviour);
                 } else {
-//                    Globals::debug && COUT("for some reason particle has left generative sphere");
+//                    particles[i].type != PTYPE_ELECTRON && Globals::debug && COUT("for some reason particle has left generative sphere");
                     // if for some reason particle has left generative sphere - remove it
                     GenerativeSphere &gs = (particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere;
                     if (Geometry::getDistanceBetweenPoints(gs.center,particles[i]) > gs.radius) {
@@ -227,28 +234,24 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
 //              Globals::debug && PRINT("!! " << (acos(before) - acos(after)) / M_PI*180 << ","); ////////////////////////////////////
 //            //////////////////////////////////////////////
         }
+        assert(type == particles[i].type && (type == PTYPE_ELECTRON || type == PTYPE_ION));
     }
 
 //    Globals::debug &&             cout << endl;;
 
-    // !!!! rewrite finalizing
     // checking all particles excluding the last one
-    for(unsigned long long i = 0;i < electronsNumber + ionsNumber - 1;) {
+    unsigned long long end = electronsNumber + ionsNumber;
+    for(unsigned long long i = 0;i < end;) {
         if (particles[i].ttl <= 0) {
-            if (particles[i].polygonIndex != -1)
+            if (particles[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ)
                 ++finalizedNumber;
             finalizeParticle(satelliteObj,particles,electronsNumber,ionsNumber,i);
-            memcpy(particles + i,particles + electronsNumber + ionsNumber - 1,sizeof(Particle));
+            if (i != end - 1)
+                memcpy(particles + i,particles + end - 1,sizeof(Particle));
+            end--;
         } else {
             ++i;
         }
-    }
-    // checking the last particle
-    int lastIndex = electronsNumber + ionsNumber - 1;
-    if (lastIndex >= 0 && particles[lastIndex].ttl <= 0) {
-        if (particles[lastIndex].polygonIndex != -1)
-            ++finalizedNumber;
-        finalizeParticle(satelliteObj,particles,electronsNumber,ionsNumber,lastIndex);
     }
     return finalizedNumber;
 }
@@ -414,25 +417,25 @@ int main(int argc, char** argv) {
         electronsGenerativeSphere.populateArray(particlesArray,electronsNumber,PTYPE_ELECTRON,GEN_ON_SPHERE);
         ionsGenerativeSphere.populateArray(particlesArray + electronsNumber,ionsNumber,PTYPE_ION,GEN_ON_SPHERE);
 
-        verboseFlag && PRINTLN("searching for fastest particle...");
-        Object3D *satelliteObjPtr = &satelliteObj;
-        Particle fastestParticle = Data::reduce<Particle*,Particle>([satelliteObjPtr](Particle &p1,Particle &p2) -> Particle& {
-            if (p1.polygonIndex == -1) return p2;
-            if (p2.polygonIndex == -1) return p1;
-            return (p2.speed.length() > p1.speed.length())? p2: p1;
-        }, particlesArray,ionsNumber + electronsNumber);
-        verboseFlag && COUT("fastest particle speed: " << fastestParticle.speed.length());
+//        verboseFlag && PRINTLN("searching for fastest particle...");
+//        Object3D *satelliteObjPtr = &satelliteObj;
+//        Particle fastestParticle = Data::reduce<Particle*,Particle>([satelliteObjPtr](Particle &p1,Particle &p2) -> Particle& {
+//            if (p1.polygonIndex == -1) return p2;
+//            if (p2.polygonIndex == -1) return p1;
+//            return (p2.speed.length() > p1.speed.length())? p2: p1;
+//        }, particlesArray,ionsNumber + electronsNumber);
+//        verboseFlag && COUT("fastest particle speed: " << fastestParticle.speed.length());
 
         double distanceStep = satelliteObj.radius*2.0*distanceStepCoef;
         timeStep = distanceStep/ELECTRON_VELOCITY_M; // time to do step for particle with average velocity
 
-        verboseFlag && PRINTLN("decreasing distance to object for all particles");      
-        // time during the fastest particle will reach object
-        double distanceDelta = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,fastestParticle);
-        double timeDelta = (distanceDelta - 5*distanceStep)/fastestParticle.speed.length();
+//        verboseFlag && PRINTLN("decreasing distance to object for all particles");
+//        // time during the fastest particle will reach object
+//        double distanceDelta = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,fastestParticle);
+//        double timeDelta = (distanceDelta - 5*distanceStep)/fastestParticle.speed.length();
 
-        for_each(particlesArray,particlesArray + ionsNumber + electronsNumber,
-                    [timeDelta](Particle &pp) -> void {pp = pp + pp.speed*timeDelta; pp.ttl -= timeDelta;}); //TODO check this
+//        for_each(particlesArray,particlesArray + ionsNumber + electronsNumber,
+//                    [timeDelta](Particle &pp) -> void {pp = pp + pp.speed*timeDelta; pp.ttl -= timeDelta;}); //TODO check this
 
         verboseFlag && COUT("distanceStep: " << distanceStep << "; timeStep: " << timeStep);
     }
@@ -502,12 +505,20 @@ int main(int argc, char** argv) {
                 elapsedTime += timeStep;
                 timeToPrint -= ((intervalInSteps)? 1: timeStep);
                 surfaceCharge = satelliteObj.totalPlasmaCurrent*elapsedTime;
+//                //////////////////////////////////////////////////////////////////
+//                unsigned long long realEN = 0, realIN = 0;
+//                for(unsigned long long i = 0; i < electronsNumber + ionsNumber;i++) {
+//                    if (particlesArray[i].type == PTYPE_ELECTRON) realEN += 1;
+//                    else realIN += 1;
+//                }
+//                //////////////////////////////////////////////////////////////////
                 if (timeToPrint <= 0) {
                     cout << satelliteObj.totalPlasmaCurrent << " " << surfaceCharge << " " << surfaceCharge/spacecraftCapacitance
-                         << "   " << elapsedTime << "   " << numberOfIntersections*Globals::realToModelNumber << " " << satelliteObj.totalCharge << endl;
+                         << "   " << elapsedTime << "   " << numberOfIntersections*Globals::realToModelNumber << " " << satelliteObj.totalCharge
+                         << "   " << electronsNumber << "   " << ionsNumber << endl; // "   " << realEN << "   " << realIN << endl;
                     (timeToPrint = printInterval);
                 }
-                // processing new particles if necessary
+                // producing new particles if necessary
                 if (electronsNumber < newElectronsNumber) {
                     electronsGenerativeSphere.populateArray(particlesArray + electronsNumber + ionsNumber,
                                            newElectronsNumber - electronsNumber,PTYPE_ELECTRON,GEN_ON_SPHERE);
