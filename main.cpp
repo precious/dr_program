@@ -38,8 +38,9 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
 
 namespace Globals {
     unsigned long long  realToModelNumber;
-    const double INITIAL_CHARGE = 0.0000445; //-0.000145; // -0.00000445; ///////////////////////////////
+    const double INITIAL_CHARGE = -0.00000445; //-0.000145; // -0.00000445; ///////////////////////////////
     bool debug = true;
+    bool pause = false;
 }
 
 static void handleKeyDown(SDL_keysym* keysym)
@@ -47,6 +48,9 @@ static void handleKeyDown(SDL_keysym* keysym)
     switch(keysym->sym) {
     case SDLK_ESCAPE:
         Graphics::quitGraphics(0);
+        break;
+    case SDLK_p:
+        Globals::pause = !Globals::pause;
         break;
     default:
         break;
@@ -57,8 +61,8 @@ void processEvents(void)
 {
     /* Our SDL event placeholder. */
     SDL_Event event;
-    float zoomDelta = 0.01;
-    float zoomDelta2 = 0.1;
+    float zoomDelta = 0.05;
+    float zoomDelta2 = 0.5;
 
     /* Grab all the events off the queue. */
     while(SDL_PollEvent(&event)) {
@@ -469,6 +473,9 @@ int main(int argc, char** argv) {
                 }
 
             }
+
+            if (Globals::pause)
+                continue;
 
             if (modelingFlag) {
                 numberOfIntersections += processParticles(satelliteObj,particlesArray,electronsNumber,
