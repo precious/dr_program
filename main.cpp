@@ -24,6 +24,10 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
     -r RADIUS - radius of generative sphere [not used]\n\
     -s TIME - time to sleep in microseconds\n\
     -m - model particles\n\
+    -o NUM - modeling type; 1, 2 or 3\n\
+        1 - modeling without field affecting\n\
+        2 - (default) most optimized modeling\n\
+        3 - modeling best applicable for drawing\n\
     -v - verbose mode\n\
     -d - draw\n\
     -j - draw trajectories of particles\n\
@@ -39,10 +43,11 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
 
 namespace Globals {
     unsigned long long  realToModelNumber;
-    const double INITIAL_CHARGE = -0.00000005; //-0.000145; // -0.00000445; ///////////////////////////////
+    const double INITIAL_CHARGE = -0.0000005; //-0.000145; // -0.00000445; ///////////////////////////////
     bool debug = true;
     bool pause = false;
     bool drawTrajectories = false;
+    int modelingType = 2;
 }
 
 static void handleKeyDown(SDL_keysym* keysym)
@@ -137,11 +142,9 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
     Vector fieldGrad;
     real fieldPot;
 
-    int modelingType = 1;
-
     for(unsigned long long i = 0;i < electronsNumber + ionsNumber;++i) {
         GenerativeSphere &gs = (particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere;
-        if (Geometry::getDistanceBetweenPoints(gs.center,particles[i]) > gs.radius) {
+        if (Geometry::getDistanceBetweenPoints(gs.center,particles[i]) > gs.radius) { // kick paricle if it has left the modeling sphere
             particles[i].ttl = -1;
             continue;
         }
@@ -150,17 +153,14 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
             particles[i].addPreviousStates(particles[i]);
 
             // ---------------------------------------------------------------------------------------------------------------------
-        if (modelingType == 1) { // modeling without affecting of field
+        if (Globals::modelingType == 1) { // modeling without affecting of field
             // ---------------------------------------------------------------------------------------------------------------------
             // if for some reason particle has left generative sphere - remove it
             if (particles[i].behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR) {
                 real index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
                 if (index == -1) {
                     particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
-                    real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
-                                                                Line(particles[i],particles[i].speed));
-                    // here we assume that particles is now approximately at the beginning of chord
-                    particles[i].ttl = chrodLength / particles[i].speed.length();
+                    particles[i].ttl = 100; // particle will be kicked
                 } else {
                     particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
                     particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
@@ -170,7 +170,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
             particles[i] = particles[i] + particles[i].speed*timeStep;
             particles[i].ttl -= timeStep;
             // ---------------------------------------------------------------------------------------------------------------------
-        } else if (modelingType == 2) { // most optimized modeling
+        } else if (Globals::modelingType == 2) { // most optimized modeling
             // ---------------------------------------------------------------------------------------------------------------------
             if (particles[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ || particles[i].behaviour == PARTICLE_WILL_NOT_INTERSECT_OBJ) {
                 particles[i] = particles[i] + particles[i].speed*timeStep;
@@ -191,10 +191,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                         continue;
                     } else { // then particle will not intersect object
                         particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
-                        real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
-                                                                    Line(particles[i],particles[i].speed));
-                        // here we assume that particles is now approximately at the center of chord, so distance to generative sphere is approx chord/2
-                        particles[i].ttl = chrodLength / 2.0 / particles[i].speed.length();
+                        particles[i].ttl = 100; // particle will be kicked
                     }
                 } else {
                     real distanceToCenterOfSatellite = Geometry::getDistanceBetweenPoints(satelliteObj.center,particles[i]);
@@ -206,10 +203,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                     if (index == -1 && sign(PARTICLE_CHARGE(particles[i].type)) == sign(satelliteObj.totalCharge)) {
                         // particle will be repeled by satellite
                         particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
-                        real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
-                                                                    Line(particles[i],particles[i].speed));
-                        // here we assume that particles is now approximately at the beginning of chord
-                        particles[i].ttl = chrodLength / particles[i].speed.length();
+                        particles[i].ttl = 100; // particle will be kicked
                     } else if (index != -1 && sign(PARTICLE_CHARGE(particles[i].type)) == -sign(satelliteObj.totalCharge)) {
                         // particle will intersect satellite
                         particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
@@ -220,7 +214,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                 }
             }
             // ---------------------------------------------------------------------------------------------------------------------
-        } else { // modeling best applicabe for drawing
+        } else { // modeling best applicable for drawing
             // ---------------------------------------------------------------------------------------------------------------------
             if (particles[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ) {
                 particles[i] = particles[i] + particles[i].speed*timeStep;
@@ -244,17 +238,6 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                     real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToCenterOfSatellite*distanceToCenterOfSatellite);
                     fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
                     particles[i].affectField(fieldGrad,fieldPot,timeStep);
-//                    index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
-//                    if (index == -1 && sign(PARTICLE_CHARGE(particles[i].type)) == sign(satelliteObj.totalCharge)) {
-//                        // particle will be repeled by satellite
-//                        particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
-//                        real chrodLength = Geometry::getChordLength((particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere,
-//                                                                    Line(particles[i],particles[i].speed));
-//                        // here we assume that particles is now approximately at the beginning of chord
-//                        particles[i].ttl = chrodLength / particles[i].speed.length();
-//                    } else {
-//                        particles[i].ttl -= timeStep;
-//                    }
                 }
             }
             // ---------------------------------------------------------------------------------------------------------------------
@@ -301,7 +284,7 @@ int main(int argc, char** argv) {
     unsigned long long averageParticlesNumber = 10000;
     float complexDataFileFlag = false;
 
-    while ((c = getopt (argc, argv, ":vdjamxgt:r:s:f:t:n:i:p:")) != -1) {
+    while ((c = getopt (argc, argv, ":vdjamxgt:r:s:f:t:n:i:p:o:")) != -1) {
         switch(c) {
         case 'a':
             Graphics::drawAxes = true;
@@ -338,6 +321,9 @@ int main(int argc, char** argv) {
             break;
         case 'p':
             distanceStepCoef = atof(optarg);
+            break;
+        case 'o':
+            Globals::modelingType = atoi(optarg);
             break;
         case 'i':
             if(optarg[0] == 'i')

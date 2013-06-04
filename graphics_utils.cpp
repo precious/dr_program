@@ -138,8 +138,6 @@ void Graphics::draw(Object3D &satelliteObj,Particle* particlesArray = NULL,int p
                 glColor4ubv((particlesArray[i].type == PTYPE_ELECTRON)? blue: red); // this will colorize electrons to blue, ions to red
             }
 
-
-
             if (particlesArray[i].getPreviousStates()->size() != 0) {
                 glBegin(GL_LINE_STRIP);
                 for(auto it = particlesArray[i].getPreviousStates()->begin();
