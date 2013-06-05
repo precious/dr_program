@@ -466,7 +466,7 @@ int main(int argc, char** argv) {
     double surfaceCharge;
     unsigned long long numberOfIntersections = 0;
     if (drawFlag || modelingFlag) {
-        if (modelingFlag) {
+        if (modelingFlag && Globals::modelingType != 1) {
             solveBoundaryProblem(coordinatesList,verboseFlag); // solve using fortran module
 //            real pot;
 //            Vector grad;
