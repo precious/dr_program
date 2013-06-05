@@ -294,24 +294,14 @@ public:
         Point(p), type(_type), speed(s), ttl(ttl_), polygonIndex(_pi), behaviour(_flags) {
         previousStates = NULL;
     }
-    void affectField(Vector fieldGrad,real fieldPot,double timeStep) {
-//        real speedValue = speed.length() + acceleration*timeStep; ///////////////////////////////
-        // calculate vector of moved distance
-
-//                Vector(affectFieldSingleCoordinate(speed.x,fieldGrad.x,fieldPot,timeStep),
-//                                 affectFieldSingleCoordinate(speed.y,fieldGrad.y,fieldPot,timeStep),
-//                                 affectFieldSingleCoordinate(speed.z,fieldGrad.z,fieldPot,timeStep));
+    void affectField(Vector fieldGrad,double timeStep) {
         Vector distance = speed*timeStep + fieldGrad*(timeStep*timeStep*PARTICLE_CHARGE_TO_MASS(type)/2); //!! +, not -
         Point newPosition = *(Point*)this + distance;
         x = newPosition.x;
         y = newPosition.y;
         z = newPosition.z;
         Vector acceleration = fieldGrad*(PARTICLE_CHARGE_TO_MASS(type)); //!! +, not -
-
-//        fieldGrad.length() > 50 && PRINT("[" << (acceleration*timeStep).length() << "|" << speed.length() << "]"); ///////////////////////////////
-//        PRINT("[" << acceleration.length()*timeStep << "|" << speed.length()*timeStep << "]"); ///////////////////////////////
-//        PRINT("[" << (int)sign(PARTICLE_CHARGE_TO_MASS(type)) << "]"); ///////////////////////////////
-        speed = speed + acceleration*timeStep; // distance.resized(speedValue);
+        speed = speed + acceleration*timeStep;
     }
 
     void addPreviousStates(Point p) {
@@ -331,11 +321,6 @@ public:
             delete previousStates;
     }
 
-//private:
-//    inline real affectFieldSingleCoordinate(real speedCoord, real fieldGradCoord,
-//                                     real fieldPot, double timeStep) {
-//        return speedCoord*timeStep + fieldGradCoord*timeStep*timeStep*PARTICLE_CHARGE_TO_MASS(type)/2; //!! +, not -
-//    }
 private:
     void initPreviousStates() {
         previousStates = new list<Point>();

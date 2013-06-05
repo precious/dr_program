@@ -26,7 +26,7 @@ HEADERS += \
     fortran_modules.h
 
 LIBS += fortran_modules/Kul.o -Wall -lGL -lGLU `sdl-config --cflags --libs` -lrt -lassimp -lgfortran
-QMAKE_CXXFLAGS += -std=c++0x
+QMAKE_CXXFLAGS += -std=c++0x -Wno-write-strings
 # -Werror=conversion
 
 OTHER_FILES += \

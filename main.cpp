@@ -44,7 +44,7 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
 
 namespace Globals {
     unsigned long long  realToModelNumber;
-    long double initialCharge = -0.0000005; //-0.000145; // -0.00000445; ///////////////////////////////
+    long double initialCharge = -0.0000005; // -0.00000445;
     bool debug = true;
     bool pause = false;
     bool drawTrajectories = false;
@@ -199,7 +199,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                     resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
                     real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToCenterOfSatellite*distanceToCenterOfSatellite);
                     fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
-                    particles[i].affectField(fieldGrad,fieldPot,timeStep);
+                    particles[i].affectField(fieldGrad,timeStep);
                     index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
                     if (index == -1 && sign(PARTICLE_CHARGE(particles[i].type)) == sign(satelliteObj.totalCharge)) {
                         // particle will be repeled by satellite
@@ -238,7 +238,7 @@ int processParticles(Object3D &satelliteObj,Particle* particles,
                     resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
                     real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToCenterOfSatellite*distanceToCenterOfSatellite);
                     fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
-                    particles[i].affectField(fieldGrad,fieldPot,timeStep);
+                    particles[i].affectField(fieldGrad,timeStep);
                 }
             }
             // ---------------------------------------------------------------------------------------------------------------------
@@ -468,15 +468,6 @@ int main(int argc, char** argv) {
     if (drawFlag || modelingFlag) {
         if (modelingFlag && Globals::modelingType != 1) {
             solveBoundaryProblem(coordinatesList,verboseFlag); // solve using fortran module
-//            real pot;
-//            Vector grad;
-//            resultf_(&(satelliteObj.polygons->at(0).a),&pot,&grad);
-//            Globals::electricFieldToCharge = grad.length()/satelliteObj.totalCharge;
-//            ////////////////////////////////////////////////////////////////////////////////
-//            cout << "q = " << q << " q1 = " << q1 << " q1 len =  " << q1.length() << endl;
-//            resultf_(&(satelliteObj.polygons->at(0).b),&q,&q1);
-//            cout << "q = " << q << " q1 = " << q1 << " q1 len =  " << q1.length() << endl;
-//            //////////////////////////////////////////////////////////////////////////////////
         }
         while(true) {
 
@@ -507,13 +498,6 @@ int main(int argc, char** argv) {
                 elapsedTime += timeStep;
                 timeToPrint -= ((intervalInSteps)? 1: timeStep);
                 surfaceCharge = satelliteObj.totalPlasmaCurrent*elapsedTime;
-//                //////////////////////////////////////////////////////////////////
-//                unsigned long long realEN = 0, realIN = 0;
-//                for(unsigned long long i = 0; i < electronsNumber + ionsNumber;i++) {
-//                    if (particlesArray[i].type == PTYPE_ELECTRON) realEN += 1;
-//                    else realIN += 1;
-//                }
-//                //////////////////////////////////////////////////////////////////
                 if (timeToPrint <= 0) {
                     cout << satelliteObj.totalPlasmaCurrent << " " << surfaceCharge << " " << surfaceCharge/spacecraftCapacitance
                          << "   " << elapsedTime << "   " << numberOfIntersections*Globals::realToModelNumber << " " << satelliteObj.totalCharge
