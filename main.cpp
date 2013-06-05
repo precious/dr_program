@@ -32,6 +32,7 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
     -d - draw\n\
     -j - draw trajectories of particles\n\
     -a - draw axes\n\
+    -c CHARGE - initial charge of spacecraft (default -0.0000005)\n\
     -f SF - scale factor for coordinates in file to reduce them to SI\n\
         (default 1)\n\
     -n N - total number of particles at time momentn\n\
@@ -43,7 +44,7 @@ const char usage[] = "Usage:\n\nprogram [-m][-v][-d][-x][-g][-t NUMBER]\
 
 namespace Globals {
     unsigned long long  realToModelNumber;
-    const double INITIAL_CHARGE = -0.0000005; //-0.000145; // -0.00000445; ///////////////////////////////
+    long double initialCharge = -0.0000005; //-0.000145; // -0.00000445; ///////////////////////////////
     bool debug = true;
     bool pause = false;
     bool drawTrajectories = false;
@@ -284,7 +285,7 @@ int main(int argc, char** argv) {
     unsigned long long averageParticlesNumber = 10000;
     float complexDataFileFlag = false;
 
-    while ((c = getopt (argc, argv, ":vdjamxgt:r:s:f:t:n:i:p:o:")) != -1) {
+    while ((c = getopt (argc, argv, ":vdjamxgt:r:s:f:t:n:i:p:o:c:")) != -1) {
         switch(c) {
         case 'a':
             Graphics::drawAxes = true;
@@ -325,6 +326,9 @@ int main(int argc, char** argv) {
         case 'o':
             Globals::modelingType = atoi(optarg);
             break;
+        case 'c':
+            Globals::initialCharge = strtold(optarg,NULL);
+            break;
         case 'i':
             if(optarg[0] == 'i')
             { printInterval = atof(optarg + 1); intervalInSteps = true; }
@@ -355,7 +359,7 @@ int main(int argc, char** argv) {
 
     // creating object using coordinates
     Object3D satelliteObj(coordinatesList);
-    satelliteObj.totalCharge = Globals::INITIAL_CHARGE;
+    satelliteObj.totalCharge = Globals::initialCharge;
 
     GenerativeSphere electronsGenerativeSphere(satelliteObj.center,
                                       ELECTRONS_GENERATIVE_SPHERE_RADIUS,
