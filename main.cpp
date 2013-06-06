@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <limits>
+#include <pthread.h>
 
 #include "types.h"
 #include "file_utils.h"
@@ -49,6 +50,8 @@ namespace Globals {
     bool pause = false;
     bool drawTrajectories = false;
     int modelingType = 2;
+
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 }
 
 static void handleKeyDown(SDL_keysym* keysym)
@@ -135,119 +138,142 @@ inline void finalizeParticle(Object3D &satelliteObj,Particle* particles,
     particles[i].finalize();
 }
 
+namespace Globals {
+    struct _Env { // struct used in pthreads
+        Object3D *satelliteObj;
+        GenerativeSphere *electronsGenerativeSphere;
+        GenerativeSphere *ionsGenerativeSphere;
+        double timeStep;
+    } env;
+}
+
+void* processSingleParticle(void *_particle) { // function to call in pthread; Globals::env should be filled
+    Object3D &satelliteObj = *Globals::env.satelliteObj;
+    double timeStep = Globals::env.timeStep;
+
+    Particle *particle = (Particle*)_particle;
+    Vector fieldGrad;
+    real fieldPot;
+
+    GenerativeSphere *gs = (particle->type == PTYPE_ELECTRON)? Globals::env.electronsGenerativeSphere: Globals::env.ionsGenerativeSphere;
+    if (Geometry::getDistanceBetweenPoints(gs->center,*particle) > gs->radius) { // kick paricle if it has left the modeling sphere
+        particle->ttl = -1;
+        return NULL;
+    }
+
+    if (Globals::drawTrajectories)
+        particle->addPreviousStates(*particle);
+
+        // ---------------------------------------------------------------------------------------------------------------------
+    if (Globals::modelingType == 1) { // modeling without affecting of field
+        // ---------------------------------------------------------------------------------------------------------------------
+        // if for some reason particle has left generative sphere - remove it
+        if (particle->behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR) {
+            real index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,*particle);
+            if (index == -1) {
+                particle->behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
+                particle->ttl = 100; // particle will be kicked
+            } else {
+                particle->behaviour = PARTICLE_WILL_INTERSECT_OBJ;
+                particle->ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),*particle) /
+                        particle->speed.length();
+            }
+        }
+        *particle = *particle + particle->speed*timeStep;
+        particle->ttl -= timeStep;
+        // ---------------------------------------------------------------------------------------------------------------------
+    } else if (Globals::modelingType == 2) { // most optimized modeling
+        // ---------------------------------------------------------------------------------------------------------------------
+        if (particle->behaviour == PARTICLE_WILL_INTERSECT_OBJ || particle->behaviour == PARTICLE_WILL_NOT_INTERSECT_OBJ) {
+            *particle = *particle + particle->speed*timeStep;
+            particle->ttl -= timeStep;
+        } else { // particle->behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR
+            real distanceToSatellite = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,*particle);
+            int index;
+
+            if (distanceToSatellite == 0 || // if particle is inside satellite's sphere or too close to sphere and will be inside it soon
+                    (distanceToSatellite < particle->speed.length()*timeStep &&
+                    Geometry::doesLineIntersectSphere(Line(*particle,particle->speed),satelliteObj)))  {
+                index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,*particle);
+                if (index != -1) { // then particle will intersect object
+                    particle->behaviour = PARTICLE_WILL_INTERSECT_OBJ;
+                    particle->ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),*particle) /
+                            particle->speed.length();
+                    Globals::debug && COUT("particle will intersect object, ttl = " << particle->ttl <<", timestep = " << timeStep << ", steps = " << particle->ttl/timeStep <<", behaviour = " << particle->behaviour);
+                    return NULL;
+                } else { // then particle will not intersect object
+                    particle->behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
+                    particle->ttl = 100; // particle will be kicked
+                }
+            } else {
+                real distanceToCenterOfSatellite = Geometry::getDistanceBetweenPoints(satelliteObj.center,*particle);
+                resultf_(particle,&fieldPot,&fieldGrad); // get gradient of field in the current point
+                real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToCenterOfSatellite*distanceToCenterOfSatellite);
+                fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
+                particle->affectField(fieldGrad,timeStep);
+                index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,*particle);
+                if (index == -1 && sign(PARTICLE_CHARGE(particle->type)) == sign(satelliteObj.totalCharge)) {
+                    // particle will be repeled by satellite
+                    particle->behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
+                    particle->ttl = 100; // particle will be kicked
+                } else if (index != -1 && sign(PARTICLE_CHARGE(particle->type)) == -sign(satelliteObj.totalCharge)) {
+                    // particle will intersect satellite
+                    particle->behaviour = PARTICLE_WILL_INTERSECT_OBJ;
+                    particle->ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),*particle) /
+                            particle->speed.length();
+                    Globals::debug && COUT("particle will intersect satellite, ttl = " << particle->ttl <<", timestep = " << timeStep << ", steps = " << particle->ttl/timeStep <<", behaviour = " << particle->behaviour);
+                }
+            }
+        }
+        // ---------------------------------------------------------------------------------------------------------------------
+    } else { // modeling best applicable for drawing
+        // ---------------------------------------------------------------------------------------------------------------------
+        if (particle->behaviour == PARTICLE_WILL_INTERSECT_OBJ) {
+            *particle = *particle + particle->speed*timeStep;
+            particle->ttl -= timeStep;
+        } else { // particle->behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR
+            real distanceToSatellite = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,*particle);
+            int index;
+            if (distanceToSatellite == 0 || // if particle is inside satellite's sphere or too close to sphere and will be inside it soon
+                    (distanceToSatellite < particle->speed.length()*timeStep &&
+                    Geometry::doesLineIntersectSphere(Line(*particle,particle->speed),satelliteObj)))  {
+                index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,*particle);
+                if (index != -1) { // then particle will intersect object
+                    particle->behaviour = PARTICLE_WILL_INTERSECT_OBJ;
+                    particle->ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),*particle) /
+                            particle->speed.length();
+                    Globals::debug && COUT("particle will intersect object, ttl = " << particle->ttl <<", timestep = " << timeStep << ", steps = " << particle->ttl/timeStep <<", behaviour = " << particle->behaviour);
+                }
+            } else {
+                real distanceToCenterOfSatellite = Geometry::getDistanceBetweenPoints(satelliteObj.center,*particle);
+                resultf_(particle,&fieldPot,&fieldGrad); // get gradient of field in the current point
+                real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToCenterOfSatellite*distanceToCenterOfSatellite);
+                fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
+                particle->affectField(fieldGrad,timeStep);
+            }
+        }
+        // ---------------------------------------------------------------------------------------------------------------------
+    } // end of modelling branch
+    return NULL;
+}
+
 int processParticles(Object3D &satelliteObj,Particle* particles,
                      unsigned long long &electronsNumber,unsigned long long &ionsNumber,
                      double timeStep,GenerativeSphere electronsGenerativeSphere,
                      GenerativeSphere ionsGenerativeSphere) {
-    int finalizedNumber = 0;
-    Vector fieldGrad;
-    real fieldPot;
+
+
+    Globals::env.electronsGenerativeSphere = &electronsGenerativeSphere;
+    Globals::env.ionsGenerativeSphere = &ionsGenerativeSphere;
+    Globals::env.satelliteObj = &satelliteObj;
+    Globals::env.timeStep = timeStep;
 
     for(unsigned long long i = 0;i < electronsNumber + ionsNumber;++i) {
-        GenerativeSphere &gs = (particles[i].type == PTYPE_ELECTRON)? electronsGenerativeSphere: ionsGenerativeSphere;
-        if (Geometry::getDistanceBetweenPoints(gs.center,particles[i]) > gs.radius) { // kick paricle if it has left the modeling sphere
-            particles[i].ttl = -1;
-            continue;
-        }
-
-        if (Globals::drawTrajectories)
-            particles[i].addPreviousStates(particles[i]);
-
-            // ---------------------------------------------------------------------------------------------------------------------
-        if (Globals::modelingType == 1) { // modeling without affecting of field
-            // ---------------------------------------------------------------------------------------------------------------------
-            // if for some reason particle has left generative sphere - remove it
-            if (particles[i].behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR) {
-                real index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
-                if (index == -1) {
-                    particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
-                    particles[i].ttl = 100; // particle will be kicked
-                } else {
-                    particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
-                    particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
-                            particles[i].speed.length();
-                }
-            }
-            particles[i] = particles[i] + particles[i].speed*timeStep;
-            particles[i].ttl -= timeStep;
-            // ---------------------------------------------------------------------------------------------------------------------
-        } else if (Globals::modelingType == 2) { // most optimized modeling
-            // ---------------------------------------------------------------------------------------------------------------------
-            if (particles[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ || particles[i].behaviour == PARTICLE_WILL_NOT_INTERSECT_OBJ) {
-                particles[i] = particles[i] + particles[i].speed*timeStep;
-                particles[i].ttl -= timeStep;
-            } else { // particles[i].behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR
-                real distanceToSatellite = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,particles[i]);
-                int index;
-
-                if (distanceToSatellite == 0 || // if particle is inside satellite's sphere or too close to sphere and will be inside it soon
-                        (distanceToSatellite < particles[i].speed.length()*timeStep &&
-                        Geometry::doesLineIntersectSphere(Line(particles[i],particles[i].speed),satelliteObj)))  {
-                    index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
-                    if (index != -1) { // then particle will intersect object
-                        particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
-                        particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
-                                particles[i].speed.length();
-                        Globals::debug && COUT("particle will intersect object, ttl = " << particles[i].ttl <<", timestep = " << timeStep << ", steps = " << particles[i].ttl/timeStep <<", i = " << i <<", behaviour = " << particles[i].behaviour);
-                        continue;
-                    } else { // then particle will not intersect object
-                        particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
-                        particles[i].ttl = 100; // particle will be kicked
-                    }
-                } else {
-                    real distanceToCenterOfSatellite = Geometry::getDistanceBetweenPoints(satelliteObj.center,particles[i]);
-                    resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
-                    real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToCenterOfSatellite*distanceToCenterOfSatellite);
-                    fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
-                    particles[i].affectField(fieldGrad,timeStep);
-                    index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
-                    if (index == -1 && sign(PARTICLE_CHARGE(particles[i].type)) == sign(satelliteObj.totalCharge)) {
-                        // particle will be repeled by satellite
-                        particles[i].behaviour = PARTICLE_WILL_NOT_INTERSECT_OBJ;
-                        particles[i].ttl = 100; // particle will be kicked
-                    } else if (index != -1 && sign(PARTICLE_CHARGE(particles[i].type)) == -sign(satelliteObj.totalCharge)) {
-                        // particle will intersect satellite
-                        particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
-                        particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
-                                particles[i].speed.length();
-                        Globals::debug && COUT("particle will intersect satellite, ttl = " << particles[i].ttl <<", timestep = " << timeStep << ", steps = " << particles[i].ttl/timeStep <<", i = " << i <<", behaviour = " << particles[i].behaviour);
-                    }
-                }
-            }
-            // ---------------------------------------------------------------------------------------------------------------------
-        } else { // modeling best applicable for drawing
-            // ---------------------------------------------------------------------------------------------------------------------
-            if (particles[i].behaviour == PARTICLE_WILL_INTERSECT_OBJ) {
-                particles[i] = particles[i] + particles[i].speed*timeStep;
-                particles[i].ttl -= timeStep;
-            } else { // particles[i].behaviour == PARTICLE_HAS_UNDEFINED_BEHAVIOUR
-                real distanceToSatellite = Geometry::getDistanceBetweenPointAndSphere(satelliteObj,particles[i]);
-                int index;
-                if (distanceToSatellite == 0 || // if particle is inside satellite's sphere or too close to sphere and will be inside it soon
-                        (distanceToSatellite < particles[i].speed.length()*timeStep &&
-                        Geometry::doesLineIntersectSphere(Line(particles[i],particles[i].speed),satelliteObj)))  {
-                    index = Geometry::getIndexOfPolygonThatParicleIntersects(satelliteObj,particles[i]);
-                    if (index != -1) { // then particle will intersect object
-                        particles[i].behaviour = PARTICLE_WILL_INTERSECT_OBJ;
-                        particles[i].ttl = Geometry::getDistanceBetweenPointAndPlane(satelliteObj.polygons->at(index),particles[i]) /
-                                particles[i].speed.length();
-                        Globals::debug && COUT("particle will intersect object, ttl = " << particles[i].ttl <<", timestep = " << timeStep << ", steps = " << particles[i].ttl/timeStep <<", i = " << i <<", behaviour = " << particles[i].behaviour);
-                    }
-                } else {
-                    real distanceToCenterOfSatellite = Geometry::getDistanceBetweenPoints(satelliteObj.center,particles[i]);
-                    resultf_(particles + i,&fieldPot,&fieldGrad); // get gradient of field in the current point
-                    real electricField = satelliteObj.totalCharge/(4*M_PI*VACUUM_PERMITTIVITY*distanceToCenterOfSatellite*distanceToCenterOfSatellite);
-                    fieldGrad.resize(electricField); // resize gradient vector according to current satellite charge by formula 1 in the draft
-                    particles[i].affectField(fieldGrad,timeStep);
-                }
-            }
-            // ---------------------------------------------------------------------------------------------------------------------
-        } // end of modelling branch
-    } // end of loop
-
-
+        processSingleParticle(particles + i);
+    }
 
     // checking all particles excluding the last one
+    int finalizedNumber = 0;
     unsigned long long end = electronsNumber + ionsNumber;
     for(unsigned long long i = 0;i < end;) {
         if (particles[i].ttl <= 0) {
@@ -528,6 +554,7 @@ int main(int argc, char** argv) {
     }
 
     Graphics::quitGraphics(0);
+    pthread_mutex_destroy(&Globals::mutex);
 
     return 0;
 }
