@@ -1,5 +1,6 @@
 CXX = g++
-LIBS = fortran_modules/Kul.o `sdl-config --cflags --libs` -lGL -lGLU -lrt -lassimp -lgfortran -lpthread
+LIBS = fortran_modules/Kul.o -lGL -lGLU `sdl-config --cflags --libs` -lrt \
+       -lassimp -lgfortran -lpthread
 CXXFLAGS += -std=c++0x -Wno-write-strings -O3 -Wall
 INCLUDE = -I.
 
