@@ -31,7 +31,7 @@ set output \"$1.$format\"
 set terminal $format size $size
 set format y \"%.12f\"
 set format x \"%f\"
-plot \"${1}.filtered\" using $columns with lines
+plot \"${1}.filtered\" using $columns with lines title \"заряд\"
 quit
 " | gnuplot
 
